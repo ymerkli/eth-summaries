@@ -275,6 +275,84 @@ Control flow consists of various concepts, for an extensive list, please conside
 
 
 
+\subsection{Stateful objects}
+
+As mentioned in section \ref{operations}, variables have local scope and their value is not maintained across subsequent invocations. In order to build stateful apps, we thus need stateful objects. Match-action tables are one way of achieving persistent state, however the P4 \textit{v1model} offers more stateful objects as externs. 
+
+\subsubsection{Registers}
+
+Registers are assigned in arrays and are useful for storing (small amounts of) arbitrary data. We can read from and write to a specified register index in an array of registers. Further, registers can be read from the control plane.
+The syntax works as follows:\newline
+\indent \texttt{register<bit<48>>(16384) last\_seen; bit<48> last\_pkt\_ts;} \newline
+\indent \texttt{last\_seen.read(last\_pkt\_ts, flow\_id);} \newline
+\indent \texttt{last\_seen.write(flow\_id, standard\_metadata.ingress\_global\_timestamp);} \newline
+\noindent Registers can be used to build a stateful firewall, for example.
+
+\subsubsection{Counters}
+
+Counters are for counting (unsurprisingly). A counter can be increased from the data plane \textit{but} can only be read from the control plane. Like registers, counters are assigned in arrays and an index needs to be specified when executing a \texttt{count()} operation.
+Counters can be one of three different types: packets, bytes, packet\_and\_bytes (each type counts what it specifies to count). The syntax works as follows:\newline
+\indent \texttt{counter(512, CounterType.packets\_and\_bytes) port\_counter;} \newline
+\indent \texttt{port\_counter.count((bit<32>)standard\_metadata.ingress\_port);} \newline
+\noindent Reading from the control plane: \newline
+\indent \texttt{RuntimeCmd: counter\_read MyIngress.port\_counter 1} \newline
+\indent \texttt{MyIngress.port\_counter[1]= BmCounterValue(packets=13, bytes=1150)}
+
+\newpage
+
+\noindent Direct counters are a specially kind of counters that are attached to tables. We can specify a counter in the table definition and thus attach it to the table. Then, each table entry has a counter cell that counts when the entry matches. \newline
+\indent \texttt{direct\_counter(CounterType.packets\_and\_bytes) direct\_port\_counter;} \newline
+\indent \texttt{table count\_table \{} \newline
+\indent \indent ... \newline
+\indent \indent counters = direct\_port\_counters; \newline
+\indent \}
+
+\subsubsection{Meters}
+
+Meters are used for rate-limiting. Meters 'color' flows into green, yellow and red (see two-rate three-color meters, RFC2698). We have two threshold rates: the committed information rate (CIR) and the peak information rate (PIR). Green flows neither exceed the CIR nor the PIR. Yellow flows exceed the CIR but don't exceed the PIR. Red flows exceed the PIR. Like counters, meters can be one of three different types: packets, bytes, packet\_and\_bytes and they are assigned in arrays. And just like for counters, we also have direct meters which can be attached to tables. The syntax looks as follows:
+
+\indent \texttt{meter(32w16384, MeterType.packets) my\_meter;} \newline
+\indent	\texttt{my\_meter.execute\_meter<bit<32>>(meter\_index, meta.meter\_tag); //action}\\
+
+\noindent Executing the meter will yield one of 3 values: 0 (GREEN), 1 (YELLOW) or 2 (RED). This value will be copied to metadata field meta.meter\_tag
+
+\begin{figure}[t!]
+	\centering
+	\begin{subfigure}[t]{.33\textwidth}
+		\centering
+		\includegraphics[width=1\textwidth,scale=1]{figures/registers}
+		\caption{P4 registers \cite{advnet}}
+		\label{fig:registers}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.33\textwidth}
+		\centering
+		\includegraphics[width=1\textwidth,scale=1]{figures/counters}
+		\caption{P4 counters \cite{advnet}}
+		\label{fig:counters}
+	\end{subfigure}
+	\begin{subfigure}[t]{.33\textwidth}
+		\centering
+		\includegraphics[width=1\textwidth,scale=1]{figures/meters}
+		\caption{P4 meters \cite{advnet}}
+		\label{fig:meters}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[b!]
+	\centering
+	\includegraphics[width=0.6\textwidth,scale=1]{figures/stateful_objects_summary}
+	\caption{Stateful objects summary. 	\cite{advnet}}
+	\label{fig:stateful_objects_summary}
+\end{figure}
+
+\subsection{Hash functions}
+
+P4 \textit{v1model} offers hash functions: \newline
+\texttt{enum HashAlgorithm\{crc32,crc32\_custom,crc16,s,random,identity,csum16,xor16\}} \newline
+\texttt{extern void hash<O,T,D,M>(out O result, in HashAlgorithm algo, in T base, in D data, in M max);}
+
+
+
 
 
 

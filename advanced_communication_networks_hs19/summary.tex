@@ -539,6 +539,76 @@ Invertible Bloom Lookup Tables (IBLT) stores key-value pairs and allows for look
 
 \newpage
 
+\subsection{Sketches}
+
+Bloom filters allow us to do efficient insertion and membership queries at the cost of false positives. This way we can quickly filter only those elements that might be in the set. However, this is often not enough for monitoring use cases. We also want to approximate frequencies of elements in a data stream. Again, we use probabilistic measures which make this more efficient by allowing miscounting.
+
+\subsubsection{CountMin sketch}
+
+A CountMin sketch uses the same principles as a counting bloom filter, but is designed to have provable L1 error bounds for frequency queries. We use the following notation: a vector of frequencies (counts) of all distinct elements $x_i$: $\vec{x} = [x_1, x_2, ...]^T$.
+
+$$Pr[\hat{x_i} - x_i \geq \epsilon ||\textbf{x}||_1] \leq \delta$$
+
+\noindent with $\hat{x_i}$: estimated frequency, $x_i$: true frequency, $||\textbf{x}||_1$: sum of frequencies.\newline
+
+\noindent A CountMin Sketch uses multiple arrays and hashes. Let $d$ be the number of arrays, with one hash function per array and $w$ indices per array (range of hashes). We thus have $w*d$ counters. CountMin sketches are essentially Bloom filters where we increase the counter at each position indicated by the hashes. Hash collisions can cause over-counting.
+
+\begin{center}
+	\begin{tabular}{ |p{75mm}|p{75mm}| } 
+		\hline
+		Count a new element & Lookup the count of an element \\ 
+		\hline
+		for each hash function & for each hash function\\
+		\hspace{3mm} hash the element to find the index & \hspace{3mm} hash the element to find the index \\
+		\hspace{3mm} then at this index & \hspace{3mm} then at this index \\
+		\hspace{6mm} \textbf{increment} the count by one & \hspace{6mm} \textbf{lookup} the count \\
+		& return the min count \\
+		\hline
+	\end{tabular}
+\end{center}
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.5\textwidth,scale=1]{figures/countminsketch_recipe}
+	\caption{CountMin sketch recipe, with \textit{e}: Euler's number \cite{advnet}}
+	\label{fig:countminsketch_recipe}
+\end{figure}
+
+\begin{figure}[b!]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.7\textwidth,scale=1]{figures/countminsketch_count}
+		\label{fig:countminsketch_count}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.7\textwidth,scale=1]{figures/countminsketch_lookup}
+		\label{fig:countminsketch_lookup}
+	\end{subfigure}
+	\caption{CountMin sketches count and lookup \cite{advnet}}
+\end{figure}
+
+\newpage
+
+\begin{figure}[t!]
+	\centering
+	\includegraphics[width=0.7\textwidth,scale=1]{figures/sketches}
+	\caption{CountMin sketch and Count sketch \cite{advnet}}
+	\label{fig:sketches}
+\end{figure}
+
+\subsubsection{Count sketch}
+
+A Count sketch uses the same principles as a counting bloom filter, but is designed to have provable L2 error bounds for frequency queries. The Count sketch uses additional hashing to give L2 error bounds, but requires more resources.
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.5\textwidth,scale=1]{figures/countsketch_recipe}
+	\caption{Count sketch recipe \cite{advnet}}
+	\label{fig:countsketch_recipe}
+\end{figure}
+
 
 
 

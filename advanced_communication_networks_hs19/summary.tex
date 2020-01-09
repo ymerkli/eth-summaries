@@ -710,6 +710,104 @@ A compiler translates a given RMT logical pipeline (specified in P4) into a phys
 \noindent Building a RMT pipeline is only 15\% more expensive than building a fixed-function switching pipeline. The biggest cost is the memory not the processing logic.\\
 In conclusion, we can design a flexible chip using the RMT switch model, bring processing close to the memories (pipeline of many stages) and bring processing to the wires (224 action CPUs per stage). This only causes a 15\% cost increase.
 
+\subsection{Barefoot Tofino}
+
+Barefoot Tofino 6.5 Tbps backplane allows for several billion packets per second at line rate. Tofino relies on Packet Header Vector (PHV) to pass states between stages. Tofino uses four folded match-action pipeline in which the same stages are used for ingress and egress pipeline.
+
+\begin{figure}[hb]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=\textwidth,scale=1]{figures/tofino_blockdiagram}
+		\label{fig:tofino_blockdiagram}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=\textwidth,scale=1]{figures/unified_pipeline}
+		\label{fig:unified_pipeline}
+	\end{subfigure}
+	\caption{Barefoot Tofino pipeline \cite{barefoot}}
+\end{figure}
+
+\subsubsection{Packet Header Vector (PHV)}
+
+PHVs are a set of uniform containers (8, 16, 32 bit) that carry the headers and metadata along the pipeline. Fields can be packed into any container or their combination. PHV allocation step in the compiler decides the actual packing.
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.3\textwidth,scale=1]{figures/phv}
+	\label{fig:phv}
+\end{figure}
+
+\subsubsection{Basic structure}
+
+Tofino basically follows the RMT pipeline
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.6\textwidth,scale=1]{figures/tofino_rmt}
+	\caption{Barefoot Networks Tofino basic structure \cite{barefoot}}
+	\label{fig:tofino_rmt}
+\end{figure}
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.7\textwidth,scale=1]{figures/tofino_parser}
+	\caption{Barefoot Networks Tofino programmable parser \cite{barefoot}}
+	\label{fig:tofino_parser}
+\end{figure}
+
+\begin{figure}[b!]
+	\centering
+	\includegraphics[width=0.8\textwidth,scale=1]{figures/tofino_pipeline}
+	\caption{Barefoot Networks Tofino pipeline organization \cite{barefoot}}
+	\label{fig:tofino_pipeline}
+\end{figure}
+
+\newpage
+
+\noindent Each match action stage is regularly structured around: crossbars, memory units and ALUs.
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.7\textwidth,scale=1]{figures/tofino_match_action_stage}
+	\label{fig:tofino_match_action_stage}
+	\caption{Tofino match action stage \cite{barefoot}}
+\end{figure}
+
+\subsubsection{Parallel processing in Tofino}
+
+Most P4 programs have inherent parallelism. In Tofino, multiple tables allow multiple parallel lookups. All actions from all active tables are combined. Each PHV container has its own, independent processor.
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.7\textwidth,scale=1]{figures/tofino_parallelism}
+	\label{fig:tofino_parallelism}
+\end{figure}
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.7\textwidth,scale=1]{figures/tofino_parallelism_phv}
+	\label{fig:tofino_parallelism_phv}
+	\caption{How Tofino supports parallelism \cite{barefoot}}
+\end{figure}
+
+\newpage
+
+\subsection{P4 switch design}
+
+
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item 64 x 10Gb ports (960M packets/second, 1Ghz pipeline)
+	\item Programmable parser
+	\item 32 match/action stages
+	\item Huge TCAM (10x current chips): 64k TCAM words x 640b
+	\item SRAM hash tables for exact matches (128k words x 640b)
+	\item 224 action processors per stage
+\end{itemize}
+\vspace{-\topsep}
 
 
 

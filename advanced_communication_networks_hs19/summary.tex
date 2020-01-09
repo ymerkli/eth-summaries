@@ -609,6 +609,107 @@ A Count sketch uses the same principles as a counting bloom filter, but is desig
 	\label{fig:countsketch_recipe}
 \end{figure}
 
+\newpage
+
+\section{P4 hardware targets}
+
+How can we allow network programmability in the field, at reasonable cost, and without sacrificing speed. Let's look at a concrete design: Reconfigurable Match Tables (RMT) \cite{rmt}. This paper argues that flexibility does not come at the price of performance or cost.\\
+Let's first look at a fixed-function switch composed of a (de-)parser and a sequence of processing stages. In such a switch, each stage is particularized to its usage. This specificity makes it impossible to trade memory size for another, add a new table, support new headers or new actions.
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.5\textwidth,scale=1]{figures/fixed_function_switch}
+	\label{fig:fixed_function_switch}
+\end{figure}
+
+\noindent SDN wants multiple stages of match-action (flexible allocation), flexible actions and flexible header fields (OpenFlow was designed with these goals in mind). Alternative ways to enable flexibility don't compare in terms of cost-performance ratio: software is 100x too slow and expensive, NPUs are 10x too slow and expensive and FPGAs are 10x to slow and expensive.\\
+
+The solution to all these problems are \textbf{Reconfigurable Match Tables (RMT)}. However, this is challenging to achieve. What kind of switch architecture could support flexibility and yet run at Terabits per second.  At 1Tbps, packet size of 1000bits and 10 operations per packet, we'd need 10 billion operations per second. With a single processor, this would require a 10Ghz processor, which is not feasible. Parallelizing things with a packet-parallel architecture allows to have lower CPU speeds through duplication of the processing units. However, one issue is to scale the memory-to-CPU bandwidth. Replicating memory comes at a huge cost in die area.\\
+\noindent The solution is to organize the processing as a pipeline. Pipelined architectures organize processing through a sequence of processing units and local memory. For flexibility, each processing unit/memory can be made generic. Each CPU can process distinct packets, with up to 10 packets going through the pipeline simultaneously.
+
+\begin{figure}[hb]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.9\textwidth,scale=1]{figures/switch_pipeline}
+		\caption{Pipeline switch architecture}
+		\label{fig:switch_pipeline}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.9\textwidth,scale=1]{figures/matchaction_forwarding_model}
+		\caption{Match/Action Forwarding Model}
+		\label{fig:matchaction_forwarding_model}
+	\end{subfigure}
+\end{figure}
+
+\newpage
+
+\subsection{Parsing}
+
+Parsing is the (complex) process of identifying and extracting the appropriate fields in a packet header. Parsing faces multiple challenges:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Throughput: Parser must run at line-rate (parse 1 packet every 70ns on a 10Gbps link)
+	\item Dependency: Parsing involves sequential processing as headers typically point to the next
+	\item Incompleteness: Some headers do not even identify the subsequent headers
+	\item Heterogeneity: Many header formats exist that can appear in various orders/locations
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent Parse graphs are directed acyclic graphs encoding header types and their sequence. A parser can be divided into two separate blocks: header identification and field extraction. In a programmable parser, the two modules rely on runtime information (stored in memory, e.g. in RAM and/or TCAM) instead of hard-coded logic.
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.7\textwidth,scale=1]{figures/hardware_parser}
+	\caption{Programmable hardware parser}
+	\label{fig:hardware_parser}
+\end{figure}
+
+\subsection{Logical pipeline}
+
+A compiler translates a given RMT logical pipeline (specified in P4) into a physical one. Each physical stage contains dedicated SRAM, for exact matches, and TCAM, for ternary matches. The compiler maps each individual logical stage to one or more physical stage. Small tables can share a stage (up to 16 per stage), while large tables can span multiple ones.\\
+
+\begin{figure}[hb]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.9\textwidth,scale=1]{figures/rmt_logical_pipeline}
+		\label{fig:rmt_logical_pipeline}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.9\textwidth,scale=1]{figures/rmt_physical_stages}
+		\label{fig:rmt_physical_stages}
+	\end{subfigure}
+	\caption{Logical pipeline \cite{gibb2013design}}
+\end{figure}
+
+\newpage
+
+\noindent The RMT pipeline relies on many Arithmetic Logic Units (ALU) to perform actions on the result of a match. Each ALU modifies only one word of a header (a header is composed of many words). Each stage of the RMT pipeline contains one ALU per word of the header vector (that's a lot of ALUs).
+
+\begin{figure}[hb]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.7\textwidth,scale=1]{figures/action_processing_model}
+		\label{fig:rmt_logical_pipeline}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.7\textwidth,scale=1]{figures/multi_action_processing}
+		\label{fig:rmt_physical_stages}
+	\end{subfigure}
+	\caption{Logical pipeline \cite{gibb2013design}}
+\end{figure}
+
+\noindent Building a RMT pipeline is only 15\% more expensive than building a fixed-function switching pipeline. The biggest cost is the memory not the processing logic.\\
+In conclusion, we can design a flexible chip using the RMT switch model, bring processing close to the memories (pipeline of many stages) and bring processing to the wires (224 action CPUs per stage). This only causes a 15\% cost increase.
+
 
 
 

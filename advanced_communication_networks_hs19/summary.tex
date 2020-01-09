@@ -351,7 +351,193 @@ P4 \textit{v1model} offers hash functions: \newline
 \texttt{enum HashAlgorithm\{crc32,crc32\_custom,crc16,s,random,identity,csum16,xor16\}} \newline
 \texttt{extern void hash<O,T,D,M>(out O result, in HashAlgorithm algo, in T base, in D data, in M max);}
 
+\newpage
 
+\section{Probabilistic data structures}
+
+P4 provides us with built-in stateful data structures such as arrays of registers, counters or meters. However, with these we need to deal with severe limitations such as limited number of operations and memory. That's why we consider more advanced stateful data structures.
+
+\subsection{Bloom filter}
+
+We want a data structure for insertion and membership queries. In order to get a deterministic number of required operations, the data structure should be probabilistic. A simple approach would be a basic fixed size table with $M$ 1-bit cells for $N$ elements. If we observe an element, we hash it and set the bit at the corresponding index to 1. Due to hash collision ($N > M$), we get a false positive rate of $FPR = 1 - (1-\frac{1}{M})^N$. The advantage of this approach is that only one operation is required per insertion or query. However, roughly 100x more cells are required than the number of element we want to store for a 1\% false positive rate. \newline
+
+Bloom filters are a more memory-efficient approach for insertions and membership queries. Bloom filters consist of a fixed size table \texttt{bf} with $M$ 1-bit cells and $K$ hash functions and we write a 1 at each position indicate by each hash function.
+
+\begin{figure}[hb]
+	\begin{minipage}[t]{.5\textwidth} 
+		\vspace{0pt}
+		\centering 
+		\includegraphics[width=0.45\textwidth]{figures/bloom_filter}
+		\caption{Bloom filter. 	\cite{advnet}}
+		\label{fig:bloom_filter}
+	\end{minipage} 
+	\begin{minipage}[t]{.5\textwidth} 
+		\vspace{10pt} 
+		\begin{itemize}
+			\setlength{\itemsep}{0pt}
+			\setlength{\parskip}{0pt}
+			\item Insert \textit{e} into \texttt{bf}: 
+				\begin{enumerate}
+					\item $\forall i \in [1,K]$, calculate $h_i(e)$
+					\item $\texttt{bf}[h_i(e)] = 1, \forall i \in [1,K]$
+				\end{enumerate}
+			\item Membership query \textit{e}:
+				\begin{enumerate}
+					\item if $\texttt{bf}[h_i(e)] == 1, \forall i \in [1,K]$ 
+					\newline $\rightarrow$ $e$ is in \texttt{bf}
+					\item else 
+					\newline $\rightarrow$ $e$ is not in \texttt{bf}
+				\end{enumerate}
+			\end{itemize}
+	\end{minipage} 
+\end{figure}
+
+The advantage of bloom filters is that they use about 10x less memory than the simple approach. However, they require slightly more operations.
+
+\subsubsection{Dimension your bloom filter}
+\label{bloom_filter_dimension}
+
+$N$ elements, $M$ cells, $K$ hash functions, $FP$ false positive rate.
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item probability that one hash function returns the index of a particular cell: $\frac{1}{M}$
+	\item probability that one hash function does not return the index of a particular cell: $1 - \frac{1}{M}$
+	\item probability of a cell to be 0: $(1 - \frac{1}{M})^{KN}$
+	\item false positive rate P(FP): $(1 - (1 - \frac{1}{M})^{KN})^K$
+	\item false negative rate: 0
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent For an approximation, use: $p := P(FP) = (1 - (1 - \frac{1}{M})^{KN})^K \approxeq (1 - e^{-KN/M})^K$. \newline
+
+\noindent $FN = 0$ since if we have seen an element once, all cells corresponding to its hashes will have been set to 1. Since we never delete elements, $FN = 0$. If we were to delete elements from a bloom filter (i.e. set all cells corresponding to an element to 0), false negatives would be possible.
+Because deletions are not possible, the controller may need to regularly reset the bloom filter. Resetting a bloom filter takes some time during which it is not usable. A common trick is to use two bloom filters and use one when the controller resets the other one.
+
+\newpage
+
+\noindent We can't just keep increasing $K$ to lower $FP$ since for too many hash functions, we will have lots of 1s in the table and a lower chance of finding 0s, which increases $FP$. 
+
+\noindent There's a global minimum when $K = \ln(2) * \frac{M}{N}  \approx 0.7*\frac{M}{N}$, found by taking derivative of $P(FP)$. For that choice of $K$, resulting $p := P(FP) = 2^{-K} \approx 0.6185^{M/N}$.\\
+Given optimal $K$, choice of optimal $M = -\frac{N \ln p}{(\ln2)^2}$ $\rightarrow O(N)$ space.
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.55\textwidth,scale=1]{figures/bloom_filter_p4}
+	\caption{Bloom filter with $K = 2$ hash functions implemented in $P4_{16}$. \cite{advnet}}
+	\label{fig:bloom_filter_p4}
+\end{figure}
+
+\subsection{Counting bloom filter}
+
+Since we cannot delete items from a bloom filter, we extend them to handle deletions. For counting bloom filters, to add an element, increment the corresponding counters by 1. The cells are thus no longer 1-bit but larger. To delete an element, decrement the corresponding counters by 1. An element is considered in the table if all counters are larger than 0. All of our prior analysis for standard bloom filters applies to counting bloom filters. We still have $FN = 0$ since a counter of a cell only reaches 0 if all elements mapped to that cell were deleted. Unless we have counter overflow. If a counter gets too large and wraps around to 0, false negatives are possible. Counters must be large enough to avoid overflow. Poisson approximation suggests 4 bits/counter.
+
+Thus, Counting Bloom Filters do handle deletions at the price of using more memory
+\vspace{0pt}
+\begin{figure}[b!]
+	\begin{minipage}[t]{.5\textwidth} 
+		\vspace{0pt}
+		\centering 
+		\includegraphics[width=0.45\textwidth]{figures/counting_bloom_filter}
+		\caption{Counting bloom filter. \cite{advnet}}
+		\label{fig:counting_bloom_filter}
+	\end{minipage} 
+	\begin{minipage}[t]{.5\textwidth} 
+		\vspace{10pt} 
+		\begin{itemize}
+			\setlength{\itemsep}{0pt}
+			\setlength{\parskip}{0pt}
+			\item Insert \textit{e} into \texttt{cbf}: 
+			\begin{enumerate}
+				\item $\forall i \in [1,K]$, calculate $h_i(e)$
+				\item $\texttt{cbf}[h_i(e)] \mathrel{+}= 1, \forall i \in [1,K]$
+			\end{enumerate}
+			\item Membership query \textit{e}:
+			\begin{enumerate}
+				\item if $\texttt{bf}[h_i(e)] \geq 1, \forall i \in [1,K]$ 
+				\newline $\rightarrow$ $e$ is in \texttt{cbf}
+				\item else 
+				\newline $\rightarrow$ $e$ is not in \texttt{cbf}
+			\end{enumerate}
+		\end{itemize}
+	\end{minipage} 
+\end{figure}
+
+\newpage
+
+\subsection{Invertible Bloom Lookup Tables (IBLT)}
+
+Invertible Bloom Lookup Tables (IBLT) stores key-value pairs and allows for lookups and a complete listing. Each cell contains three fields:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item count: counts the number of entries mapped to this cell
+	\item keySum: the sum of all keys mapped to this cell
+	\item valueSum: the sum of all the values mapped to this cell
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent In many settings, we can use XORs in place of sums, for example to avoid overflow issues.
+
+\begin{center}
+	\begin{tabular}{ |p{75mm}|p{75mm}| } 
+		\hline
+		Add a new key-value pair & Delete a key-value pair (assuming it's in set) \\ 
+		\hline
+		for each hash function & for each hash function\\
+		\hspace{3mm} hash the key to find the index & \hspace{3mm} hash the key to find the index \\
+		\hspace{3mm} then at this index & \hspace{3mm} then at this index \\
+		\hspace{6mm} \textbf{increment} the count by one & \hspace{6mm} \textbf{substract} one from the count \\
+		\hspace{6mm} \textbf{add} key to keySum & \hspace{6mm} \textbf{substract} key from keySum \\
+		\hspace{6mm} \textbf{add} value to valueSum & \hspace{6mm} \textbf{substract} value from valueSum \\
+		\hline
+	\end{tabular}
+\end{center}
+
+\noindent The value of a key can be found if the key is associated to \textbf{at least} one cell without a hash collision, i.e. a cell with $count = 1$ (see \ref{fig:iblt_lookup}).
+
+\begin{center}
+	\begin{tabular}{ |p{100mm}| } 
+		\hline
+		Listing the IBLT \\
+		\hline
+		\textbf{While} there is an index for which count = 1 \\
+		\hspace{3mm} \textbf{Find} the corresponding key-value pair and return it \\
+		\hspace{3mm} \textbf{Delete} the corresponding key-value pair \\
+		\hline
+	\end{tabular}
+\end{center}
+
+\noindent A complete listing is not possible if there is a key that has $count > 1$ at each cell indicated by the hash of the key. Unless the number of iterations is very low, loops can’t be implemented in hardware. The listing is done by the controller.
+
+\begin{figure}[hb]
+	\centering
+	\begin{subfigure}[t]{.33\textwidth}
+		\centering
+		\includegraphics[width=1\textwidth,scale=1]{figures/iblt_1}
+		\caption{IBLT insert key:7, value:98}
+		\label{fig:iblt_insert}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.33\textwidth}
+		\centering
+		\includegraphics[width=1\textwidth,scale=1]{figures/iblt_2}
+		\caption{IBLT lookup key:7}
+		\label{fig:iblt_lookup}
+	\end{subfigure}
+	\begin{subfigure}[t]{.33\textwidth}
+		\centering
+		\includegraphics[width=1.25\textwidth,scale=1]{figures/iblt_3}
+		\caption{IBLT delete key:7,  value:98}
+		\label{fig:iblt_delete}
+	\end{subfigure}
+	\caption{Invertible Bloom Lookup Tables (IBLT) insertion and lookup \cite{advnet}}
+\end{figure}
+
+\newpage
 
 
 

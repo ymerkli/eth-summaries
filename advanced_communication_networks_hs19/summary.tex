@@ -809,7 +809,108 @@ Most P4 programs have inherent parallelism. In Tofino, multiple tables allow mul
 \end{itemize}
 \vspace{-\topsep}
 
+\section{P4-based applications}
 
+Current research in data plane programmability includes:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Data plane programmability for performance, monitoring, applications offloading
+	\item Platforms, correctness, management for data plane programmability
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent A few papers that I found interesting and insightful to read are:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Fast network congestion detection and avoidance using P4
+	\item Herding the Elephants: Detecting Network-Wide Heavy Hitters with Limited Resources
+	\item Network-Wide Heavy Hitter Detection with Commodity Switches
+	\item NetPaxos: Consensus at Network Speed
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent A large set of papers on programmable data planes aim at improving performance, esp. load balancing.
+
+\subsection{CONGA: Distributed Congestion-Aware Load Balancing for Datacenters}
+
+The main thesis of CONGA \cite{conga} is that datacenter load balancing is best done in the network instead of the transport layer, and requires global congestion-awareness to handle asymmetry. Unlike local schemes such as ECMP and Flare, CONGA seamlessly handles asymmetries in the topology or network traffic. CONGA leverages an existing datacenter overlay to implement a leaf-to-leaf feedback loop and can be deployed without any modifications to the TCP stack.\\
+CONGA senses the distant drumbeats of remote congestion and orchestrates flowlets to disperse evenly through the fabric. We leave to future work the task of designing more intricate rhythms for more general topologies.
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.5\linewidth]{figures/conga}
+	\caption{CONGA: Distributed Congestion-Aware Load Balancing for Datacenters}
+	\label{fig:conga}
+\end{figure}
+
+\subsection{INT: In-band Network Telemetry}
+
+INT is a mechanism for collecting network state in the dataplane:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item As close to realtime as possible
+	\item At current and future line rates
+	\item With a framework that can adapt over time
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent Examples of network state are: (switch id, ingress port id, egress port id), egress link utilization, hop latency, etc. P4 enables flexible packet parsing and modification for INT. P4 allows INT to adapt to any encapsulation format, any state required to be collected, any feature, protocol (current and future).\\
+For example, HULA uses periodic INT probes to disseminate path utilization to switches. Further, flowlet detection and path selection happens at all switches which allows hop-by-hop adaptive routing and load balancing. HULA offers better scalability than CONGA.\\
+
+\noindent In summary, INT provides real-time network state directly in the dataplane while scaling to arbitrarily large networks, scaling to current and future link speeds and being able to adapt to any network, any encap, any application. Knowledge of real-time network state opens up new possibilities such as enhanced monitoring and troubleshooting, network-state aware routing etc.
+
+\subsection{NetCache: Balancing Key-Value Stores with Fast In-Network Caching}
+
+NetCache \cite{netcache} is a rack-scale key-value store that leverages in-network data plane caching to achieve billions QPS troughput with $\approx 10 \mu s$ latency even under dynamic, skewed (i.e. few hot items) workload. It solves the problem of load-balancing in key-values stores observing dynamic, skewed workload. It leverages that a small but very fast cache can provide perfect load-balancing. NetCache relies on the O(billion) throughput of programmable network devices to achieve it in practice. It relies on a tailored UDP-based protocol, an de/encoding scheme for storing variable length values, and sketches. The challenge is to cache the hottest $O(N \log N)$ items with limited insertion rate. The goal is to react quickly and effectively to workload changes with minimal updates.
+
+\subsection{p4v: Practical Verification for Programmable Data Planes}
+
+How do you make sure that a programmable network works as it should? P4 is a low-level language $\rightarrow$ many gotchas. Several problems can arise:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item header validity: it's hard to always keep validity in your head
+	\item unambiguous forwarding: forwarding behavior depends on hardware
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent Challenges:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item imprecise semantics: P4 language spec doesn't give precise semantics
+	\item modeling the control plane: Table rules are not statically known, populated by the control plane at runtime.
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent p4v \cite{p4v} is an automated tool for verifying P4 programs. It considers all paths while still being practical for large programs.
+
+\subsection{Others}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item LossRadar, FlowRadar: Develop techniques and tools to monitor all flows by relying on in-switch data structures (Bloom Filters) and decoding them at the controller-level.
+	\item DAPPER, Network-wide HH: Develop P4-based detection mechanisms to diagnose TCP performance issue (e.g. small receiver buffers)	heavy-hitter (e.g. port scanners, superspreader, DDoS).
+	\item SketchLearn, ElasticSketch, UnivMon: Introduce techniques to make sketch-based monitoring
+	more practical (by making sketches adaptive or "universal")
+	\item SwingState: manage programmable network: we need an OS for the data plane! SwingState is a state management framework with 1 primitive: moveStates.
+\end{itemize}
+\vspace{-\topsep}
 
 
 

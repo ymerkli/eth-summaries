@@ -298,6 +298,103 @@ How does CT handle revocation? The certificates stay on the log forever: Merkle 
 
 
 
+\newpage
+
+\section{TLS}
+
+Perfect forward secrecy: when obtaining a private key, I can only decrypt future sessions, not past ones.
+
+\subsection{Cipher suites}
+
+\texttt{TLS\_\{KEY\_EXCHANGE\}\_\{AUTHENTICATION\}\_WITH\_\{BULK\_ENCRYPTION\}\_\{MAC\}}
+
+\noindent Example: \texttt{TLS\_DHE\_RSA\_WITH\_AES\_128\_GCM\_SHA256}\\
+Key exchange: Ephemeral Diffie-Hellman, Authentication: RSA, Encryption: 128-bit AES GCM mode, MAC: 256-bit SHA-2
+
+\subsection{Handshake protocol}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Establishes keys needed by the Record Protocol, via establishment of the TLS mastersecret and subsequent key derivation.
+	\item Provides authentication of server (usually) and client (rarely), using public key cryptography supported by digital certificates or pre-shared key (less common, used in IoT).
+	\item Protects negotiation of all cryptographic parameters. SSL/TLS version number, encryption and hash algorithms, authentication and key establishment methods. This prevents version rollback and cipher suite downgrade attacks.
+\end{itemize}
+\vspace{-\topsep}
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.4\linewidth]{figures/tls_key_derivation}
+	\caption{TLS key derivation. The premastersecret is either a client-generated random-value (RSA) or the negotiated DH shared secret (DH). Nonces are public. All symmetric keys come from the key\_block (48 bytes). The split of the key\_block depends on the cipher suite.}
+	\label{fig:tlskeyderivation}
+\end{figure}
+
+
+\subsubsection{Key establishment options}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item RSA: RSA key generation is expensive, that's why keys are reused. Thus, RSA does not provide perfect forward secrecy.
+	\item Static Diffie-Hellman: Server certificate contains DH parameters (group, generator g)
+	and static DH value $g^x$. Client chooses y, computes $g^y$ and sends to server. $$premastersecret = g^{xy}$$
+	Thus, Static Diffie-Hellman does not provide perfect forward secrecy.
+	\item Anonymous Diffie-Hellman: Each side sends Diffie-Hellman values in group chosen by
+	server, but no authentication of these values. Vulnerable to man-in-middle attacks even if only offered.
+	\item The key exchange is called “ephemeral” if the client and server both choose a new key pair for every exchange. Ephemeral key exchanges offer PFS.
+	\item (EC)DHE: Offers perfect forward secrecy.
+\end{itemize}
+\vspace{-\topsep}
+
+\newpage
+
+\subsection{Record protocol}
+
+TLS Record Protocol uses symmetric encryption, using the keys negotiated during the handshake protocol. It provides:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Data origin authentication, integrity using a MAC.
+	\item Confidentiality using a symmetric encryption algorithm.
+	\item Anti-replay using sequence numbers protected by the MAC.
+	\item Optional compression.
+	\item A stream-oriented API for applications making use of it.
+	\item Hence TLS may fragment into smaller records or coalesce into larger records any data supplied by the calling application.
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent Different record layer encryption schemes:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item AES is secure in both 128-bit and 256-bit mode (and more), however if CBC mode is used, padding oracle attacks are possible. GCM mode is secure.
+	\item DES is not secure.
+	\item RC4 is not secure (see \ref{attack_on_rc4})
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent The TLS record protocol uses MAC-then-encrypt: this is \textit{really really bad} since this opens up the possibility of padding oracle attacks!
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.4\linewidth]{figures/tls_record_protocol}
+	\caption{TLS Record Protocol: MAC-Encode-Encrypt}
+	\label{fig:tlsrecordprotocol}
+\end{figure}
+
+\subsubsection{TLS Record Protocol Sequence Numbers}
+
+When the handshake is done, both client and server set the sequence number to 0 and start counting. Sequence number is 64 bits in size and is incremented for each new message. Once we reach the top (overflow), we throw away the keys and rerun the handshake (however this will rarely happen.. $2^{64}$ is very large).\\
+Server and client both each maintain a copy of two seq. numbers: one for sending, one for receiving. Sequence numbers are not transmitted as part of message (TCP already provides reliable transport), however they are included in the MAC. Sequence numbers and MAC together give replay protection.\\
+A wrong sequence number leads to a failure of the MAC verification. TLS is thus reliant on TCP to deliver messages in order.
+
+
 
 
 

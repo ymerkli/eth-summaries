@@ -395,6 +395,53 @@ Server and client both each maintain a copy of two seq. numbers: one for sending
 A wrong sequence number leads to a failure of the MAC verification. TLS is thus reliant on TCP to deliver messages in order.
 
 
+\newpage
+
+\section{Attacks against TLS}
+
+\subsection{Attack on RC4}
+\label{attack_on_rc4}
+
+In RC4, we have biases towards certain byte values in the first 256 bytes of the RC4 cipher outputs. For example, at position 16, byte 240 is much more likely.\\
+By analyzing \textbf{many} ciphertexts, we can do bayesian analysis and check which byte was most likely at each position. This then allows to recover the plaintext. For example, we could analyze the values at position 16 and XOR the most likely value with 240, which gives the plaintext.\\
+An example on how to exploit this is: You want to target a secure cookie in the HTTPS session between a client running a web browser B and a web server W . You know W serves secure cookies over HTTPS, and you control a second web server, E, the client visits. The client will run javascript code served from E. While this code cannot directly access cookies from W (due to the same-origin policy, SOP), it can make requests to W : the cookies will be automatically attached by the browser to the new requests. The javascript can repeat enough requests to make the attack succeed — allowing the attacker to recover the plaintext cookie.
+
+\subsection{FREAK attack}
+
+\begin{figure}[hb]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/tls_freak_1}
+		\label{fig:tls_freak_1}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/tls_freak_2}
+		\label{fig:tls_freak_2}
+	\end{subfigure}
+\end{figure}
+
+In a FREAK attack, an active MiTM attacker forces a TLS session to use insecure export ciphers. Export ciphers are intentionally weak ciphers that were offered by the US in the 90s. During that time, these ciphers were only breakable with huge resources and a large budget. Today, they are breakable with 100\$ of AWS credit.\\
+The active MiTM attacker alters the unencrypted ClientHello message to request Export RSA as the
+cipher suite. Similarly, ServerHello message is changed to reflect the original ClientHello. The ServerFinished message also needs to reflect the original ClientHello and ServerHello, with the unchanged cipher suite, otherwise the client would fail transcript verification.\\
+The attacker needs to be able to pre-factor the RSA key, (or factor an on-the-fly RSA key “in real time”) and craft a new ServerFinished message, removing the original from the communication channel. Since servers reuse RSA keys, the attacker can just connect to the server in advance and factor the key. Once the attacker has the key, she can decrypt the pre-mastersecret and then generate the mastersecret, using the nonces (which are in plaintext, thus public).\\
+This attack was only possible due to buggy TLS client: when requesting export RSA, the server responds with a ServerKeyExchange message which contain the RSA pubKey and RSA signatures on nonces and parameters. For normal RSA (which the client thinks he's using) we would not get this message. Buggy TLS client accepted the weak key and used it, even though a different cipher was requested.\\
+FREAK requires an active MiTM. The attacker needs to keep impersonating the server for all new sessions or for possible future CCS+Finish.
+
+\subsection{Heartbleed}
+
+The Heartbeet protocol of TLS is equivalent to ping (icmp), just for TLS. You send a msg to a server, server sends the exact msg back. Turns out, OpenSSL didn't do proper bound checking on the received msg. If you send a short msg but tell the server it's a long message, the server would send a long msg. The server would then just read over the buffer and read into memory. By doing this over and over (and being lucky) you could receive sensitive data such as passwords or private keys.
+
+\subsection{Apple \texttt{goto fail}}
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.5\linewidth]{figures/apple_goto_fail}
+	\caption{Apple goto fail in iPhone and Mac TLS library}
+	\label{fig:applegotofail}
+\end{figure}
+
 
 
 

@@ -1,0 +1,103 @@
+\documentclass[11pt,oneside,a4paper]{article}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{lscape}
+\usepackage{psfrag}
+\usepackage[usenames]{color}
+\usepackage{bbm}
+\usepackage[update]{epstopdf}
+\usepackage[bookmarks,pdfstartview=FitH,a4paper,pdfborder={0 0 0}]{hyperref}
+\usepackage{verbatim}
+\usepackage{listings}
+\usepackage{textcomp}
+\usepackage{fancyhdr}
+\usepackage{multirow}
+\usepackage{tikz}
+\usepackage{lipsum}
+\usepackage{xcolor}
+\usepackage{wrapfig}
+\usepackage[margin=1in]{geometry}
+\usepackage{pdfpages}
+\newcommand{\hint}[1]{{\color{blue} \em #1}}
+
+\makeatletter
+\def\cleardoublepage{\clearpage\if@twoside \ifodd\c@page\else%
+\hbox{}%
+\thispagestyle{empty}%
+\clearpage%
+\if@twocolumn\hbox{}\clearpage\fi\fi\fi}
+\makeatother
+
+\sloppy
+% \widowpenalty=10000
+% \clubpenalty=10000
+
+\title{
+    \vspace*{0.0mm}
+    \LARGE\bf\sf Network Security (Fall 2019)
+    \vspace*{10.0mm} \\
+    %
+    \Huge\bf\sf Summary
+    %
+    \vspace*{30.0mm} \\
+    \normalsize
+    %
+    \sf Author:\\[5pt]
+    \sf Yannick Merkli\\ [5pt]
+    \sf \pageref{lastpage} Pages
+}
+\date{}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\raggedbottom
+\clearpage
+
+\pagenumbering{roman}
+
+\clearpage
+\setcounter{tocdepth}{2}
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+\begin{center}
+	\noindent \textbf{\LARGE Disclaimer: Legal use of the material}
+	
+	\noindent Some knowledge, technologies, code is usable for attacks, it is illegal to use them for criminal activities. It is also illegal to make available such technologies and code without proper measures.\\
+	This summary is based on \cite{netsec}.
+\end{center}
+
+
+\newpage
+
+
+
+
+
+
+
+
+
+
+
+
+
+\label{lastpage} % this must stay here
+\clearpage
+\addcontentsline{toc}{section}{References}
+\bibliographystyle{acm}
+\bibliography{refs}
+
+\clearpage
+\appendix
+\pagenumbering{Roman}
+
+\end{document}

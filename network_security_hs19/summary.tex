@@ -442,6 +442,40 @@ The Heartbeet protocol of TLS is equivalent to ping (icmp), just for TLS. You se
 	\label{fig:applegotofail}
 \end{figure}
 
+\section{TLS 1.3}
+
+Main objectives of TLS 1.3:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Protocol simplification (reducing options and removing broken cipher suites).
+	\item Reduce latency of initial secure data communication (1-RTT and 0-RTT for resumed sessions).
+	\item Improve security and privacy.
+	\item Remove compression, RC4, MAC-then-Encrypt, RSA key transport,	custom DH and ECDH groups, renegotiation.
+	\item A stream-oriented API for applications making use of it.
+	\item Hence TLS may fragment into smaller records or coalesce into larger records any data supplied by the calling application.
+\end{itemize}
+\vspace{-\topsep}
+
+\subsection{TLS 1.3 1-RTT handshake}
+
+Basic idea: client sends Hello message which already includes its DH pubKey $g^x$. For this to work, the client needs to guess which DH groups the server supports.
+Assuming the server actually supports the DH group it sends a ServerHello with the server DH pubKey AND it can already encrypt data since the server knows the nonces and both DH values.
+DH and ECDH groups: A limited set of DH and ECDH groups are supported in TLS 1.3. This reduces likelihood of fall-back to 2-RTT and removes complexity from implementations.
+
+\subsection{TLS 1.3 - Resumption}
+
+Resumption uses pre-shared keys (PSK) which were established in prior session. The client sends a list of PSK IDs, one of which is selected by the server.
+
+\includepdf{doc/tls_summary_1}
+
+\includepdf{doc/tls_summary_2}
+
+\includepdf{doc/tls_summary_3}
+
+\includepdf{doc/tls_summary_4}
 
 
 

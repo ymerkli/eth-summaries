@@ -625,6 +625,170 @@ ECDH session key exchange guarantee PFS.
 
 Since VPN servers need to do expensive crypto, they are susceptible to (D)DoS attacks. A WireGuard implementation can choose to respond with a cookie instead of processing the handshake: the initiator will then use this cookie as a key for computing HMACs of their message. The cookie mechanism of IKEv2 is very similar to the one just described. However, an important difference between the two is that Wireguard requires an additional MAC on the handshake message — using the public key of the responder as HMAC key. This allows the responder to stay completely silent — not responding even with a cookie — unless the initiator knows its public key. (Remember that “public” key do not need to be publicly accessible, often they are not).
 
+\newpage
+
+\section{Anonymous communication systems}
+
+Why are VPNs not enough? VPN server still sees metadata such as srcIP, dstIP, ports, metadata etc. We need something stronger for anonymous communication. 
+
+\subsection{Terminology: “anonymity”}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Sender anonymity: adversary knows receiver, may learn message, sender is unknown. The sender anonymity set is the set of all possible senders, which can be used as a (rough) metric. A small set means little anonymity.
+	\item Receiver anonymity: Adversary knows sender, may learn message, receiver is unknown. The sender needs a return address: the receiver provides a token (since the sender doesn't know the receiver) and the token will be used to direct the message. Receiver anonymity set is the set of all possible receivers.
+	\item (Sender-receiver) unlinkability: Adversary knows senders, knows receivers, link between senders and	receivers is unknown. Multiple users need to communicate at the same time.
+	\item Unobservability: Adversary cannot tell whether any communication is taking place.
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent The following holds: $Unobservability \rightarrow Anonymity \rightarrow Unlinkability$
+
+\subsection{How to send a message anonymously}
+
+\subsubsection{Broadcast}
+
+Receiver anonymity is guaranteed, sender can be de-anonymized (localization through triangulation)!. Alternative: hijacked connection (burner phone, hacked WiFi, network ID ≠ personal sender ID).
+
+\subsubsection{Mixnets}
+
+Simple idea: use a proxy or VPN. The proxy has to be trusted $\rightarrow$ to avoid fully trusting the proxy: Layered encryption. However, the adversary may be able to link inputs
+and outputs (timing)!\\\
+The proxy should perform \textbf{batching and mixing}. Batching: collect a number of messages
+before forwarding (threshold). Mixing: change the order of (mix) the messages.\\
+An adversary can still mount an intersection attack: Often, users only communicate with a
+small subset of other users. Idea: every time a message is seen by the target, register the sets of destinations. To achieve full unobservability, use \textbf{cover traffic}, both for sending and receiving. Now we are fully anonymous... as long as the mix is trusted!. We should use multiple mixes to avoid single point of failure (cascade). Each mix should only know its direct neighbor and only the first mix should know the sender and only the last mix should know the receiver.\\
+\indent How do we handle return addresses? Alice prepares a return address and encloses it in her first message. That address contains layered information.
+
+\subsection{Circuit-based systems (AKA onion-routing system)}
+
+Mix-nets are very secure but very slow. We want a system that can support web browsing. Main ideas: use layered encryption, no batching and mixing, no cover traffic. Flow-based: establish a virtual circuit (keys) once per flow, reuse it for all packets in the flow using only symmetric key crypto. The threat model is constrained: only a local adversary (e.g. ISP) which cannot launch confirmation attacks.\\
+\indent \textbf{Terminology:} Circuit-based anonymous communication systems, commonly known as Onion Routing Systems. The nodes are called relays (also nodes or routers). The virtual circuit is also called tunnel.
+
+\subsubsection{Circuit setup}
+
+The sender negotiates shared keys with all relays on the path (this requires expensive asymmetric key cryptography).\\
+\noindent \textbf{Direct circuit setup:} a packet is sent through the whole system and returned and at each step the state is generated. The encryption keys of data are only based on public keys of relays. Thus (immediate) FS does not hold since no ephemeral information is used.\\
+\noindent \textbf{Telescopic circuit setup:} Keys are negotiated one relay at a time. The circuit is “extended” by one hop at a time (that’s why it is called telescopic). Ephemeral session keys are negotiated before the circuit is extended. This setup is slower... but it offers immediate forward secrecy: As soon as the circuit is closed, the session keys are deleted.
+
+\subsubsection{Data forwarding}
+
+The sender has established a circuit (keys and per-link IDs). A data packet is encrypted as usual (layered encryption). The ID of the next relay is added in clear text. To protect against network adversaries, links can be encrypted (TLS).
+
+\subsubsection{Circuit tear-down}
+
+Can be initiated both by sender and by intermediate relays. The sender communicates the tear-down to one relay at a time, starting from the furthest away. The exit relay may tear down the circuit if a corrupt packet is detected, or some other attack. Circuits have a limited lifetime, so they will eventually be destroyed.
+
+\subsection{Attacks on circuit-based anonymous-communication systems}
+
+Many attacks have been proposed, however for many it is unclear if they fit the standard threat model. Some of them are practical, requiring limited resources. Others are only achievable by state-level adversaries (Five Eyes).
+
+\subsubsection{Fingerprinting}
+
+One general attack is fingerprinting. This can be done in multiple ways:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Passive traffic analysis: The adversary observes the edges of the network, recording traffic patterns.
+	\item Active traffic analysis: 
+	\begin{itemize}
+		\item The adversary actively modifies packet timings: Inter-packet timings (delaying/reordering packets), packet drops also possible but detectable
+		\item Flow watermarking: inject one bit of information (marked or not)
+		\item Flow fingerprinting: inject multiple bits (e.g., sender IP address!)
+	\end{itemize}
+	\item Website fingerprinting: Many websites have a distinct pattern of traffic they receive and send. Adversary can keep a database of patterns and compare traffic recorded from a single observation point (ISP, WiFi users,...)
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent There are two possible approaches on how to defend against fingerprinting:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Randomization: make the fingerprint look random, each user always has a new, random fingerprint.
+	\item Uniformity: make all the fingerprints look the same, all the users share a common	fingerprint. This is what the TOR browser tries to enforce. All Tor Browser user supposedly share the same fingerprint, increasing their anonymity set. Numerous patches are used to limit plugins, ask permission for HTML Canvas, restrict WebSockets, reduce available fonts, standardize the User-Agent header, and limit many other fingerprinting techniques. Even window size is considered sensitive: the browser will warn you if you attempt to maximize its window (you would leak the size of your monitor).
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent In order to prevent fingerprinting, you should omit \textit{everything} that makes you stand out: don't install any plugins, never use TOR in fullscreen mode (gives away your screen resolution), don't type inside the browser, type inside a text-editor and copy-paste messages into webforms, etc.
+
+\subsubsection{Higher-layer attacks}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item OS Network stack fingerprinting (OS, browser, window size, user-agent, browser plugins, etc.)
+	\item Most deanonymization is still done through other means: Trick user into downloading malware, trick user into downloading file that will access the Internet directly, analyze user behavior like texts.
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent To achieve anonymity, all layers need to be anonymized: Any gap will break anonymity!
+
+\subsection{TOR}
+
+TOR basics:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Circuits established over 3 relays
+	\item Telescopic setup (forward secrecy!)
+	\item Per-hop TCP, established on the fly to avoid TCP stack fingerprinting
+	\item Per-hop TLS (except on the last hop). Multiple circuits over same TLS connection. End-to-end HTTPS is possible.
+	\item Main tool: Tor browser (Firefox)
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent TOR additional features:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Exit policies (exit can restrict the destinations	they connect to)
+	\item Multiple streams per circuit (helps with performance, weakens anonymity)
+	\item Censorship resistance (bridges)
+	\item Hidden services: Provide receiver anonymity, use .onion URL (not in DNS). The name is the hash of the HS’s public key.
+\end{itemize}
+\vspace{-\topsep}
+
+\subsubsection{Cells}
+
+If a relay obtains a cell: it looks up keying material from circuit id and will decrypt the payload which contains sets of fields. The relay then checks the digest and if it matches it looks at the cmd.
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.7\linewidth]{figures/tor_cell}
+	\caption{TOR cell}
+	\label{fig:torcell}
+\end{figure}
+
+\subsubsection{Directory authorities}
+
+How do the clients know what relays there are? 10 directory authorities (servers) running a consensus algorithm. The authorities track the state of relays, store their public keys. Client software (Tor browser) comes with a list of the authorities’ keys (If an adversary can supply the list, de-anonymization is trivial!). A client accepts a consensus document if signed by ≥ 50\%. The centralized authorities are an important weakness of Tor. An adversary compromising 5 authorities can compromise Tor. Every relay periodically reports a signed statement (state, stats.) DAs also act as bandwidth authorities: verify bandwidth of nodes.\\
+Sybil protection: DAs limit the number of relays per IP subnet.
+
+\subsubsection{Censorship resistance in Tor}
+
+The Tor network contains a number of bridge relays (or bridges). Not (all) publicly listed, instead distributed through friends networks. This is used to circumvent censors which black-list Tor relays. Problem: deep packet inspection allows detection of Tor traffic
+Solution: obfuscate the traffic (pluggable transports)
+
+\subsubsection{Circuit setup}
+
+Who is authenticated on the first hop? Alice is \textit{not}. The entry guard is since Alice encrypted her ephemeral DH value $g^{x_1}$ with the entry guard's pubKey. The entry guard then sends back $g^{y_1}$ and a hash of $g^{x_1y_1}$ which it can only do if it was able to decrypt $g^{x_1}$ which it can only do if it has the privKey.
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.9\linewidth]{figures/tor_circuit_setup}
+	\caption{Circuit setup with three hops}
+	\label{fig:torcircuitsetup}
+\end{figure}
 
 
 

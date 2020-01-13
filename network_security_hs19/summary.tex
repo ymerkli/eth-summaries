@@ -790,6 +790,185 @@ Who is authenticated on the first hop? Alice is \textit{not}. The entry guard is
 	\label{fig:torcircuitsetup}
 \end{figure}
 
+\section{DNS Security}
+
+The Internet is a critical infrastructure, yet its operation depends on the fundamentally insecure DNS. DNS provides a mapping of names to resources of several types. However, DNS, as a robust key protocol of the Internet, is also a formidable attack vector for cyber criminals:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item DNS helps cybercriminals to setup services that are hard to hunt-down or shut-
+	down (Botnets, Fast- \& Domain Flux)
+	\item DNS helps building hidden channels (tunneling)
+	\item is abused for powerful denial of service attacks
+	\item is abused for various impersonation attacks
+\end{itemize}
+\vspace{-\topsep}
+
+\subsection{Domain Name System (DNS)}
+
+DNS uses hierarchical namespaces to scale: tree structure down from root level ".", to top-level domains (TLD, e.g. .com) to second-level domains (SLD, e.g. google.com). A fully qualified domain name (FQDN) for example is mail.ethz.ch. The hierarchy descends from right to left. Domains are namespaces: verything below .com is the \textit{com} domain, everything below .ibm.com. is the \textit{ibm.com} domain.
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.6\linewidth]{figures/dns_namespace_hierarchy}
+	\caption{DNS Namespace Hierarchy}
+	\label{fig:dnsnamespacehierarchy}
+\end{figure}
+
+\noindent \textbf{DNS protocols \& elements}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Protocol: simple client-server protocol, operating on TCP/UDP port 53. No encryption, authentication nor integrity built into original protocol.
+	\item Name server: Servers that map names to objects (= resource records RR). Authoritative: server is authoritative for a specific zone. Caching/Resolver: server resolves domains recursively, caches	results.
+	\item Resolver: Client side of DNS resolution, responsible for initiating and sequencing the queries that ultimately lead to a full resolution. Stub resolver: piece of software running on a client that sends recursive DNS requests to a recursive resolver. Recursive resolver: processes DNS resolution iteratively to	provide full answer: it contacts all the different servers at the different domain levels to get the final answer.
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent Each DNS response has a TTL. Caching resolvers will redo a recursive lookup once the TTL for a cached response has expired. A shorter TTL leads to shorter living cache entries, leading to faster refreshes for end users in case of an update. However, this means that there will be more load on the DNS servers for doing the recursive lookup again.
+
+\subsubsection{Root servers}
+
+DNS root name servers are the key to the Internet kingdom: the DNS root zone is served by 13 root server clusters which are authoritative for queries for the top level domains. Every name resolution in the Internet either starts with a query to a root server, or, uses information that was once obtained from a root server. DNS root name servers have the official names a.root-servers.net to m.root-servers.net. They only resolve the IP addresses for the top-level name servers (TLD).
+
+\subsubsection{Top-Level name servers}
+
+A domain name registrar is an organization that manages the reservation of second-level Internet domain names (SLD) below a given top-level domain (TLD). A domain name registrar must be accredited by a top-level domain registry and/or a country code top-level domain (ccTLD) registry. Based on the domain registration database, the top-level name server points resolvers to the authoritative name server of the SLD.
+
+\subsubsection{Authoritative Domain Server}
+
+The authoritative name server for a second-level domain is managed by private entities or on behalf of private entities that have registered a domain name. The authoritative name server has all records for a zone configured and can provide the final / authoritative information.
+
+\subsubsection{Name Server Roles}
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.7\linewidth]{figures/dns_name_server_roles}
+	\caption{DNS - Name Server Roles}
+	\label{fig:dnsnameserverroles}
+\end{figure}
+
+\subsection{DNS spoofing}
+
+\textbf{Attack Methodology:} Insertion of incorrect resolution information by a host that has no authority to provide that information. DNS requests rely on UDP. Each request is assigned a unique identifier (TXID) to help manage multiple requests. DNS server responds, including the same TXID, client ignores responses with different TXIDs.\\
+\textbf{Example:} Client requests www.bank.com. If the attacker is on the same network, she can sniff traffic and look for specific DNS requests. As soon as shes sees the request, she can immediately send back a DNS reply for www.bank.com however with a spoofed IP that points to some location she owns. General rule: first reply wins! When to legitimate reply arrives a bit later, it is ignored. Most likely, the attacker is faster: physically closer, she can drop packets, recursive resolution takes a lot of time, attacker could overload resolver. The TXID can be sniffed or guessed.
+
+\subsection{Distributed Reflection / Amplification DDoS}
+\label{dns_ddos}
+
+\textbf{Attack Methodology:} DNS queries are typically transmitted over UDP - they are fire and forget. The source IP can be spoofed and the receiver has no way of determining its veracity before responding. The attacker will spoof the srcIP to the victim's IP - the response will thus be reflected to the victim and overload his servers. DNS also is capable of generating a much larger response than query (e.g. \texttt{dig ANY isc.org @x.x.x.x} query is 64 bytes, the response is 3,223 bytes). There are many powerful and well connected DNS servers, which can be abused to redirect large DNS responses to any target. The key to this attack are \textit{open} DNS resolvers (recursive resolver that replies to any DNS query, coming from any device
+on the Internet).\\
+\noindent \textbf{Key ingredients of a reflection/amplification attack:} stateless protocol (UDP), can spoof the srcAddr (reflection), small request generates large response (amplification). Other protocols that also fulfill these criteria: memcached, NTP.\\
+\noindent \textbf{Mitigation:} Source IP verification (reject packets with source addresses not reachable via the actual packet’s path), disable recursion on authoritative name servers, limit recursion to authorized clients, Response Rate Limiting (RRL).\\
+However, the main mitigation is hosting a service on different locations in the internet, s.t. it gets harder for an attacker to target all possible locations. Using BGP anycast, the same IP address is advertised on different locations on the internet.\\
+A user is directed to the nearest service location. This helps to distribute the load on different sites. There are CDN services like Akamai or CloudFlare that offer this as a service.
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.7\linewidth]{figures/dns_reflection_amplification_ddos}
+	\caption{Distributed Reflection / Amplification DDoS}
+	\label{fig:dnsreflectionamplificationddos}
+\end{figure}
+
+On TCP, this attack would not work as is since the second message after the TCP SYN is not the DNS response but the TCP SYN ACK. The TCP ACK would go to the victim (due to the srcIP spoofing). The DNS response would be the second message sent by the server. However, the attacker could reply with the third handshake message + payload after inter-epting the replies and dropping them. If the attacker is not Dolev-Yao, which is often the case, the attack would become tricky to perform.
+
+\subsection{DNS Cache Poisoning}
+
+\textbf{Attack Methodology:} Attacker abuses caching capability of domain name system. Inject faked Domain\textgreater IP information into cache of caching name server. Subsequent requests by any user to this server are served this fake information from cache.\\
+\textbf{Example:} Attacker owns authoritative name server for bad.com and tricks user to resolve bad.com (phishing, hacked site, attachment, hidden picture, ..). Attacker adds multiple resolution entries for e.g. bank.com into the \texttt{ADDITIONAL SECTION} of the DNS reply  for bad.com. The client will cache this information even though he didn't ask for it.\\
+\noindent \textbf{Mitigation:} The example attack is no longer really a problem since software no longer accepts entries from additional section which are for different domains.
+
+\subsection{DNS/Domain Hijacking}
+
+\textbf{Attack Methodology:} Domains are registered with a domain registrar. The DNS information is as secure as the Web App, backend processes, or the passwords of the registrar and the domain owner. An attacker could for example hack the web app of the domain registrar (e.g. godaddy, namecheap, etc.), brute-force user passwords (or get it from data breach) and then manipulate the domain registration entries directly at the registrar (change name servers, and password of registrars Web App).\\
+\textit{Your DNS security is as good as the security of the domain registrar, and your credentials.}
+
+\subsection{Local Host / Network LAN \& WAN}
+
+\textbf{Attack Methodology:} Manipulate DNS settings on local host, or provisioning of DNS settings in local network. Have target point to attackers name server.Various attack vectors:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Network attack:
+	\begin{itemize}
+		\item WAN: Attack poorly protected client router of Internet Service Providers (ISP)
+		\item LAN: Attack the DHCP exchange in local network. DHCP has no authentication and includes the default name server -\textgreater spoof it. Again, the attacker will be able to outpace the DHCP response of the DHCP server.
+	\end{itemize}
+	\item Host Attack: Upon compromise of target, manipulate local hosts file (e.g. \texttt{/etc/hosts} for linux) (e.g. after infection). The attacker could for example add a static mapping for www.bank.com to an IP she owns. Malware often adds static mapping to hosts file for antivirus domains (e.g. map to loopback). This way, signatures are not updated.
+	\item DNS Changer Botnet: Botnet changes DNS settings on infected hosts. Name server configuration now points to name server of attacker. Possible exploits are ad manipulation (Google ads), phishing (credit cards, online banking) or selling software (fake iTunes shops).
+\end{itemize}
+\vspace{-\topsep}
+
+\subsection{Botnet Control - Controlling compromised machines}
+
+Cyber criminals organize compromised machines and devices in centrally controlled botnets, consisting of thousands or millions of agents/bots. Bots are used to send spam, DDoS attacks, banking and click-fraud, bitcoin mining, etc. Criminals want to control their botnets and protect their infrastructure from take-down attempts and competitors.\\
+\textbf{Botnet management requirements (criminals view):}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Bot must receive new instructions and malicious capabilities ..
+	\item Robustly manage 10,000+ globally distributed bots ..
+	\item Botnet shall be resistant to hijack and shut-down attempts ..
+\end{itemize}
+\vspace{-\topsep}
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.7\linewidth]{figures/dns_botnet_architecture}
+	\caption{DNS Botnet architecture}
+	\label{fig:dnsbotnetarchitecture}
+\end{figure}
+
+\noindent The ability of a bot agent to locate the command and control (CnC) infrastructure
+is a critical requirement for maintaining control of the entire botnet. However, criminals want to evade law enforcement. By using \textit{fixed IPs} it would be easy to identify bot agent and controller and blocking the botnet would be easy (one firewall rule). By using \textit{fixed domains} it would be easy to identify bot agent, harder to identify controller. Shutting down the botnet would also be harder (DNS caches). More flexibility is obtained through IP flux or domain flux: domain names and/or IP addresses change frequently both technologies are extensively used by professional botnet operators very dynamic, moving target, hard to shut down botnet.
+
+\subsubsection{Fluxing Approaches}
+
+A CnC resource with a given domain name (FQDN) is mapped to a new set of IP addresses as often as every few minutes: a bot agent connecting to the same FQDN actually connects to a different CnC server every 3 minutes this rapid changing aspect is commonly referred to as “Fast-Flux” the IP of unresponsive CnC nodes are taken out of flux and availability is always maintained (Quality of Service).
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item \textbf{IP Flux:} frequent change of IP address information related to a particular fully-qualified domain name (FQDN). Example: cnc.net \textgreater multiple changing IP addresses.
+	\item \textbf{Domain Flux:} frequent change and allocation of multiple fully-qualified domain names (FQDN). Example: cnc.net, cnc.ru, abc.com, xyz.ch \textgreater multiple changing IP addresses. Each bot uses a domain generation algorithm (DGA) to periodically compute a list
+	of new domain names. From a practical standpoint, domain flux generates a list of “rendez-vous” points that may be used by the bot masters to control their bots.
+\end{itemize}
+\vspace{-\topsep}
+
+\subsection{DNS over HTTPS (DoH)}
+
+DOH would solve some attacks on DNS such as DNS spoofing, mass-logging of DNS requests, DNS amplification/reflection, cache poisoning, etc. However, there are disadvantages. With DOH, local caches are no longer possible – each query needs to reach the remote DoH resolver. In the case of large providers, load and latency are not a problem: anycast is used to respond to the queries in a geographically distributed way. However, this concentrates even more power in the hands of a few companies (Google, Cloudflare, etc.); the internet gets even more centralized.
+
+\subsection{Domain Name System Security Extensions (DNSSEC)}
+
+DNSSEC attempts to add security, while maintaining backward compatibility to the
+existing DNS. DNSSEC is a set of extensions to DNS to provide resolvers: origin authentication of DNS data, authenticated denial of existence, integrity. But not availability or confidentiality.\\
+DNSSEC zone data is digitally signed using a private key for that zone. A DNS server receiving DNSSEC signed zone data can verify the origin and integrity of the data by checking the signature using the public key for that zone.\\
+\textbf{Process:} (1) Each DNS zone signs its data using a private key (recommended to do offline). (2) A query for a particular record returns: The requested resource record set, a signature (SIG) of the requested resource record set. (3) The resolver authenticates response using public key.
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.8\linewidth]{figures/dnssec_resource_records}
+	\caption{DNSSEC Resource Records}
+	\label{fig:dnssecresourcerecords}
+\end{figure}
+
+\noindent \textbf{DS record:} The DS record contains a hash of the KSK (key signing key) belonging to the
+child zone. Once the DNS resolver knows the contents of DS, it can retrieve the KSK and ZSK (zone
+signing key) belonging to the child zone. KSK is checked against DS. ZSK is validated using
+the KSK. Finally, if the child zone is the actual target of the query, the answer
+can be checked by using the ZSK.
+
+
 
 
 

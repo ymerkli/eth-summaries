@@ -1188,6 +1188,112 @@ Mirai infected devices were fingerprinted by the fact that Mirai generated probe
 
 Stuxnet is the first (publicly know) cyberweapon - a complex malware, widely believed to have targeted uranium enrichment infrastructure in Iran. Stuxnet used various infection vectors such as WinCC machines, network shares, print spooler zero-day, removable drives (to jump airgaps). Stuxnet installed a driver, signed with a legitimate Realtek certificate. This driver intercepts I/O requests, making the files installed by the malware invisible. It also registers as a boot start service, acting as load point at reboots. This driver behaves very much like a legitimate Windows driver: this, and its legitimate Realtek signature, make it very hard to detect even for an experienced sysadmin. Stuxnet would survive manual inspection, OS updates and antivirus scans. This required legitimate certificates. Using fake certificates would have also been possible but surviving system updates would become harder. Hiding in plain sight is often a winning strategy. Stuxnet often injected itself into the privileged antivirus process to ease the infection. Depending on the antivirus, it alternatively ignored it and injected itself in a Windows system process. 
 
+\section{Internet of Things (IOT)}
+
+\label{iot}
+
+Safety = protection against accidents (environment doesn't adapt to bypass safety measures). Security = protection against targeted attacks (adaptive attacker).\\
+
+The biggest challenge in cyber security is the misconception of risk. Humans perceive fire as risky. (Most) humans don't perceive their smart toaster as a risk, although it is. People need highly visible incidents before they act.\\
+We no longer live in a complicated system but in a complex adaptive system \textbf{CAS}:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Connectivity: A decision in one part of the system will affect other related or distant parts.
+	\item Sensitive dependence: Non-linearity, cascades.
+	\item Emergent order: Emergent and unpredictable behavior, which cannot be predicted even with full knowledge of all elements.
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent We have to adopt to permanent change, high dynamics, and decreased predictability.\\
+
+Humans and nature take different approaches to handle unpredictability: humans prevent shock (reliant on accuracy, fragile, short-term strategy), nature absorbs shocks (anti-fragile, long-term strategy). Degree of optimization: Tradeoff between short term gains vs. long term survival.
+
+\noindent Consequences from properties of CAS for cyber security: new \& innovative attacks, predicability of attacks decreases, remote effects \& cascades.
+
+\subsection{IoT (and IIOT, ICS, SCADA, OT\&OT)}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Information Technology (IT): The entire spectrum of technologies for information processing, including software, hardware, communications technologies and related services. Generally does not include embedded devices.
+	\item Operational Technology (OT): Hardware and software that detects or causes a change through the direct monitoring and/or control of physical devices, processes and events in the
+	enterprise.
+	\item Industrial Control Systems (ICS): Systems that are used to monitor and control industrial processes focused on automation, computerized monitoring and control of physical industrial processes (e.g. oil refining). Typically considered to be mission-critical applications with a high-availability requirement.
+	\item Internet of Things (IOT): High level concept of a global network of “smart” physical objects of various kinds (wearables, smart toaster,...)\
+	\item Industrial Internet of Things (IIOT): Subset of IoT specific to industry (e.g. advanced field sensors)
+	\item Critical Infrastructure (CI): Critical infrastructure refers to processes, facilities, technologies, networks and systems (including IIOT and ICS) that control and manage essential services. Disruptions of critical infrastructure could result in catastrophic consequences.
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent Our world is quickly changing in an irreversible move towards IT/OT convergence. Extending security models to include the OT domain introduces many challenges: conventional IT security thinking hasn't reached (I)OT industry yet, OT devices must not be assumed to be ‘just another end point’.
+
+\noindent \textbf{Key Differences between IT and OT:}
+
+\begin{tabular}{|c|c|}
+	\hline 
+	OT& IT \\ 
+	\hline 
+	\textbf{availability \& integrity} & \textbf{confidentiality} (integrity, availability)  \\ 
+	at edge of the network & at the center of the network (consumer at edge) \\
+	long life cycle & short life cycle \\
+	slow response to threats & rapid response to threats \\
+	Limited data capacity and computing power & High data capacity and computing power \\
+	Safety Operations is critical & Few safety critical operations \\
+	\hline 
+\end{tabular} 
+
+\subsection{IOT	Attack Surface}
+
+IOT connects innumerable everyday devices and systems. Previously closed systems are opened up to remote access and control. This opens up a large attack surface:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Device: insecure software, lacking update mechanism
+	\item Communication: insecure communication, weak or no cryptography, lack of authentication
+	\item Backend services: Central control, erosion of privacy, data breaches
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent Further, user perception of risks in cyber security is usually wrong: most users perceive their PC as exposed to malware and fear getting malware but think their smart TV, smart toaster, smart everything (\href{https://twitter.com/internetofshit}{@internetofshit}) are great and don't pose any risks. In reality, the opposite is the case: PC security is rather sophisticated (hardened over 20 years) and we have frequent security updates (e.g.finding a vulnerability in Win10 is hard). But IoT devices ran in isolation for years and only recently became connected. They are designed for high availability and safety, \textit{not} security. Further, IoT devices rarely get security updates. However, the threat environment only gets worse over time, thus we rapidly create a huge future liability with devices lacking an automated and robust protection functionality.\\
+To make matters worse:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item IoT devices typically have a much longer lifetime (1-20+ years) than phones/PCs. That's a long time: vendor could go bankrupt. Solutions: Code escrow (copy source code at trusted third party), open source software
+	\item Certification vs. Security: operation critical devices (e.g. flight management system) need certification. However, digital products constantly require security updates which invalidates the certificate. Thus, we need to re-certificate after every patch. BUT: Certification timeline is outpaced by cyber security.
+	\subitem \textit{You're doomed if you patch - you're doomed if you don't.}
+\end{itemize}
+\vspace{-\topsep}
+
+\subsection{Possible approaches to make things better}
+
+IOT security is part of a complex and evolving ecosystem of diverse domains. Technology based security solutions have to complement other domains to achieve the desired security level.
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item \textbf{enforce some minimal security standards and testing for IoT devices}
+	\item Design systems with redundancy and resiliency.
+	\item Active management of vulnerabilities (coordinated disclosure, bug bounty)
+	\item Robust and scalable process to deploy security updates timely and efficiently - on any connected device
+	\item Industry-wide systematic security and integrity testing of all critical components
+\end{itemize}
+\vspace{-\topsep}
+
+\newpage
+
+\subsection{TRENDnet Security Breach}
+
+IP cameras by Trendnet had vulnerability that allowed attackers to view live video stream of any camera. The root directory of the camera’s server had, next to the management directory, another script called mjpg.cgi This script, accessible at \texttt{https://IP\_ADDR/anony/mjpg.cgi}, streamed the captured video in real-time without the need of any authentication. Shodan (\href{https://www.shodan.io/}{shodan.io}) was used by attackers to find IPs with that camera behind.
 
 
 

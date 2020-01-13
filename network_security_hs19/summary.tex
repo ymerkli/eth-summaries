@@ -968,6 +968,226 @@ signing key) belonging to the child zone. KSK is checked against DS. ZSK is vali
 the KSK. Finally, if the child zone is the actual target of the query, the answer
 can be checked by using the ZSK.
 
+\newpage
+
+\section{Firewalls, IDS \& Detection \& Evasion}
+
+\subsection{Firewalls}
+
+A firewall is a system used to protect or separate a trusted network from an untrusted network, while allowing authorized communications to pass from one side to the other.
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item \textbf{Network Firewall:} Network firewalls are a software appliance running on specific hardware or as virtual instance that filter traffic between two or more networks.
+	\item \textbf{Host Firewall:} Host-based firewalls provide a layer of software on one host that controls network traffic in and out of	that single machine.
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent Host based firewalls have context, know exactly what is running on a host. This allows for more fine-grained decisions. Host based firewalls are good for mobile devices (e.g. phones). Network firewalls are good if you e.g. can't install a firewall on a device (e.g. printer).\\
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item \textbf{Stateless Firewall:} look at each packet on the network layer individually, no state maintained. Decisions based on packet header information. This is fast, scalable and simple but very limited.
+	\item \textbf{Stateful Firewall:} keep also track of the state of the network connections, decision also based on session state. This is more powerful but: state explosion, inconsistencies, state for UDP.. The problem with state explosion: an attacker can exhaust the memory of a firewall. Then, the default rule matches: if default accept: all traffic is allowed. If default deny: server is DoSed.
+\end{itemize}
+\vspace{-\topsep}
+
+Firewalls have ingress (incoming traffic) and egress (outgoing traffic) rules. Packets can be dropped (silent) or rejected (ICMP reply). Firewall rules are processed in order: the first rule that matches is picked. Thus, ordering of rules is very important.\\
+
+\textbf{Problems:} Firewalls \textit{need} to allow traffic (HTTP(S), SSH, various new protocols that use various ports, e.g. instant messaging). Thus, some malicious traffic will go through. We need an advanced notion of Firewalls.
+
+\subsubsection{Next Generation Firewall (NGFW)}
+
+\textbf{Functionality:} deep packet (content) inspection, take application and protocol state into
+account for security decision. This allows for protocol \& application awareness but requires support for many (badly documented) protocols, has performance and scalability issues and introduces inconsistencies between host/app and FW.
+
+\subsubsection{Web Application Firewall (WAF)}
+
+Protect web-based applications from malicious requests. Request filtering: request pattern, SQL injection, XSS, buffer overflow attempts, etc. Often implemented as a reverse proxy.
+
+\subsubsection{Organizational Challenges}
+
+Managing and maintaining firewall rules in a company is challenging. Firewall rules are complex and if the employee that created them leaves, someone else has to understand the monster. Further, security and network operation teams have opposing interests: security team wants to provide secure access, network team wants to provide high availability.
+
+\subsection{Intrusion Detection \& Prevention}
+
+\textit{Make decision whether some traffic is good or bad.}
+
+\noindent This faces many challenges: encrypted traffic (can't inspect content, only headers and statistical analysis), high number of false positives, high link speeds, induced latency, application level attacks (JavaScript, ..), etc.
+
+\noindent Accurate = right direction, on target. Precise = clustered values with low scatter.\\
+
+\textit{“It is better to be roughly right than precisely wrong.”}\\
+
+\noindent Never believe an IDS that advertise perfect detection with 0\% FNR or 0\% FPR:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item \textbf{0\% FNR:} Always predict 'Attack!'
+	\item \textbf{0\% FPR:} Always predict 'No attack!
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent The difficulty: Build a detector with optimal balance between FP and FN. FNR and FPR should never be considered in isolation. Ideally, consider a joint detection metric such as the F1 score.\\
+Accurate detection is very challenging when rate of attacks is very low. If we have lots of traffic but very few attacks, we'll have lots of false positives, which lowers trust in the detector. 
+
+\subsection{Detection Methods}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Reactive: system can only detect already known attacks
+	\item Proactive: system can detect known and yet unknown attacks
+	\item Deterministic: system always performs the same given the same input (blacklist, signatures)
+	\item Non Deterministic: system detection is fuzzy (heuristics, machine	learning, sandboxing) and depends on current state of the world. The reason for alert is typically not known.
+\end{itemize}
+\vspace{-\topsep}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Signature based systems: Promptly identify and label threat. But I can only identify threats that I've already seen before. Frequent updates to signature database or online lookups.
+	\begin{itemize}
+		\item One-Dimensional: blacklist/ whitelist (e.g based on MD5 hashes). This is fast and low FPR. But it's reactive and needs frequent updates.
+		\item Two-Dimensional: classic regular-expression functions and string matching. This is more flexible and has low FPR and low/medium resource requirements. But it's still reactive and needs frequent updates.
+		\item Multi-Dimensional: instead of triggering on a single signature, a	multi-dimensional signature was created. More efficient and effective than single approach.
+	\end{itemize}
+	\item Sandboxing: Run (potential) malware in a VM and examine its behavior. This is proactive and doesn't need signature updates but is resource intensive and difficult to scale. Malware can further evade sandboxing (e.g. malware could wait for 3 days before becoming malicious).
+	\item Machine Learning: Apply supervised and unsupervised machine learning algorithms to detect malicous traffic, malware, etc. Problem with SL models: training data \textit{needs} to be clean (no unknown attacks), otherwise the SL model learns something wrong. With USL models, interpretability is an issue (also with SL).
+\end{itemize}
+\vspace{-\topsep}
+
+\subsection{Attack methods}
+
+Lots of techniques exist to evade detection:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item IP Source Spoofing
+	\item Artificial Fragmentation: Fragment packets to bypass rules. The FW needs to reassemble packets to obtain a complete picture.
+	\item Vulnerabilities: exploit bugs in FW software, firmware, OS
+	\item (D)DoS: state explosion, exploit FW default rule
+	\item Tunneling/ Covert Channels: data in ICMP pings, DNS request, use VPN
+	\item Encodings: Confuse the inspection engine by using encodings that will be ignored by the final application but the engine will see it (e.g. use characters that are not part of base64 -\textgreater will be seen by engine but ignored by base64 decoder)
+\end{itemize}
+\vspace{-\topsep}
+
+\subsection{Malware Development	\& Detection Evasion}
+
+Basic detection approaches:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Static (Signatures): reliable, low FPR, but reactive and reliant on updates
+	\item Behavior (Dynamic): proactive, detects unknown threats, but complex and computationally expensive, higher FPR
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent Malware development lifecycle with detection evasion by design:
+
+\vspace{-\topsep}
+\begin{enumerate}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Develop new malware with desired functionality
+	\item Automatically create an array of unique/permutated samples of the	initial malware at massive scale:
+	\begin{itemize}
+		\item Create serial variants (many different variants of a malware)
+		\item trickle release different variants to constantly stay ahead of AV updates
+	\end{itemize}
+
+	\item Protect samples from analysis:
+	\begin{itemize}
+		\item Use \textit{crypter} to encrypt malware s.t. detection systems and static analysis processes are ineffectual.
+		\item Upon execution only decrypt sections of code that are in the process of being executed on the victim’s computer.
+		\item Use \textit{packers} to make binary files smaller (faster infection), make it more difficult for AV to detect malicious payload. Advanced packers employ polymorphic output capabilities (restructure malware binary everytime it's executed)
+	\end{itemize}
+
+	\item Make samples aware of sandboxing/detection technologies
+	\begin{itemize}
+		\item Use \textit{protector} to add anti-debugging features to malware that prevent security researchers and automated sandbox analysis technologies from dissecting samples.
+		\item “protector” technology was originally designed as a DRM protection technology
+		\item Protectors detect the use of debuggers or virtualization techniques if seen, the malware then causes different operations
+	\end{itemize}
+	\item Quality Assurance: Test samples against all current anti-malware solutions before deployment (\texttt{goto 2}):
+	\begin{itemize}
+		\item Check if the malware is detected by common AV software. Only testing services that do not submit malware samples to antivirus vendor are used (otherwise the malware would already be known).
+	\end{itemize}
+\end{enumerate}
+\vspace{-\topsep}
+
+\noindent The malware used in a targeted attack will not be detected by anti-malware tools at the time of attack – because it was tested beforehand.
+
+\noindent \textbf{Polymorphism technique:} Swapping equivalent code constructs, changing the order of code, insert noise, compiler modulation.
+
+\noindent \textbf{Binders:} Binders are used by malware authors to “embed” and Trojan other software packages (e.g. add trojan to Adobe Photoshop torrent). This helps to propagate malware, trick users into downloading and executing seemingly legit software. 
+
+\subsection{Layered defense}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Direct attack: “server-side” exploits, the threat/exploit is executed remotely by the attacker against a vulnerable application and/or operating system
+	\item Indirect attack: the threat/exploit is initiated by the vulnerable target. The attacker has little or no controll over when the target user executes the threat.
+\end{itemize}
+\vspace{-\topsep}
+
+\subsection{Botnets}
+
+Basic components:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Bots: devices under control of the attackers – often vulnerable hosts that have been
+	infected with a malware.
+	\item Command and Control infrastructure: often owned by the attackers, is it used to push
+	commands to the bots.
+\end{itemize}
+\vspace{-\topsep}
+
+\subsubsection{Mirai botnet}
+\label{mirai_botnet}
+
+Mirai mainly targeted IoT devices. IoT devices are a very interesting attack vector since there are lots of IoT devices (ca. 10 billion for 2019), they are configure-and-forget (owners don't update them and don't realize when they're compromised) and security is often lacking in IoT devices.\\
+Mirai has been used mainly for Distributed Denial of Service attacks. DDoS is much harder to track and take down than a regular DoS. This allows the attacker to hide his identity behind the botnet. Additionally, a DDoS enables the attacker to have a virtually unlimited bandwidth for flood attacks.\\
+Mirai infection technique:
+
+\vspace{-\topsep}
+\begin{enumerate}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Scan: infected device scans network for open Telnet ports (send TCP SYN packets to random IPv4 addresses)
+	\item Brute force: the bot tries to log in using 10 random user/pass combinations taken from
+	a hardcoded list of 62. These represent default credentials of existing devices.
+	\item Report: upon login success, the bot reports the target to a Report Server. It lists IP
+	address, type of device (if available) and successful credentials.
+	\item Infection: a Loader program gets a detail of the target from the Report Server, connects
+	to Telnet and uploads the correct malware binary to the machine.
+\end{enumerate}
+\vspace{-\topsep}
+
+\noindent Mirai is non-persistent: the binary is loaded into memory and immediately deleted from disk. Rebooting will remove the malware, but the device can still be reinfected. This makes detection and forensic analysis more difficult, especially for IoT devices.\\
+Mirai infected devices were fingerprinted by the fact that Mirai generated probe packets had their sequence number equal to the IP of the scanned device. Probability of this happening is $\frac{1}{2^{32}}$.
+
+\subsection{Stuxnet}
+
+Stuxnet is the first (publicly know) cyberweapon - a complex malware, widely believed to have targeted uranium enrichment infrastructure in Iran. Stuxnet used various infection vectors such as WinCC machines, network shares, print spooler zero-day, removable drives (to jump airgaps). Stuxnet installed a driver, signed with a legitimate Realtek certificate. This driver intercepts I/O requests, making the files installed by the malware invisible. It also registers as a boot start service, acting as load point at reboots. This driver behaves very much like a legitimate Windows driver: this, and its legitimate Realtek signature, make it very hard to detect even for an experienced sysadmin. Stuxnet would survive manual inspection, OS updates and antivirus scans. This required legitimate certificates. Using fake certificates would have also been possible but surviving system updates would become harder. Hiding in plain sight is often a winning strategy. Stuxnet often injected itself into the privileged antivirus process to ease the infection. Depending on the antivirus, it alternatively ignored it and injected itself in a Windows system process. 
+
 
 
 

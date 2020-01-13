@@ -1295,6 +1295,100 @@ IOT security is part of a complex and evolving ecosystem of diverse domains. Tec
 
 IP cameras by Trendnet had vulnerability that allowed attackers to view live video stream of any camera. The root directory of the camera’s server had, next to the management directory, another script called mjpg.cgi This script, accessible at \texttt{https://IP\_ADDR/anony/mjpg.cgi}, streamed the captured video in real-time without the need of any authentication. Shodan (\href{https://www.shodan.io/}{shodan.io}) was used by attackers to find IPs with that camera behind.
 
+\section{Supply Chain Security}
+
+We must assume that critical components of our infrastructure are already compromised, from applications and operating systems down the everyday devices, their firmware, hardware and individual chips. We have come to rely on a complex chain of suppliers for hardware and software, a supply chain which can no longer be fully controlled. On top, the revelations by Snowden have demonstrated that hardware and software can be compromised and backdoored with or without the consent or knowledge of the supplier.\\
+
+
+\subsection{Attacker's perspective}
+
+The attacker wants to get the biggest impact with the least effort, to stay persistent and avoid detection. We depend on a complex supply chain of numerous sub-systems and various suppliers over which we have limited control at best.
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.7\linewidth]{figures/supply_chain}
+	\caption{A globalized production system supplies the components}
+	\label{fig:supplychain}
+\end{figure}
+
+\noindent Nowadays, the production of electronic devices goes through many different stages and hands - there's almost no single company that handles their supply chain end-to-end. Many tiers limit visibility and make it impossible to track the origins of all individual components.
+
+\noindent \textbf{Cyber supply chain - points of compromise:}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item \textbf{Manufacturer:} at will, forced by law, compromised by sub supplier, "unknown" vulnerability, bad features/ accounts, kill switch
+	\item \textbf{Third party:} intercept in-transit, change components, hardware implants, modified chips or firmware
+	\item \textbf{Operator:} software updates, insecure operations, compromised environment, firmware update, compromised mngt system, insecure link
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent There is a long history of supply chain attacks by nation states as well as by organized crime.
+
+\subsection{Blind spot}
+
+Supply chain attack - scenarios and exposed sectors:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Critical systems and devices are \textbf{compromised upon delivery}.
+	\item Functionality of critical systems \textbf{changes over time / externally controlled}.
+	\item Operation of critical systems \textbf{depend on external services} (cloud, vendor).
+	\item Lack of update-functionality results in \textbf{loss of control}.
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent Software vulnerabilities have been known for a long time and are known terrain. Hardware is much less protected \textit{and} it's much harder to detect compromised hardware.
+
+\noindent We can differentiate:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Targeted attack (industry specific): Targeting non consumer grade products for specific industries. A single component has critical implications for a targeted sector. For example special network equipment (ISP router), ICS, IIOT devices, ...
+	\item Opportunistic attack (off the shelf commodity): Targeting off the shelve commodity products for consumers and industry. Only a large number of compromised components become critical. For example computers, logic boards, TVs, home control system, ...
+\end{itemize}
+\vspace{-\topsep}
+
+\subsection{Impact of compromised hardware of firmware}
+
+Cyber security remained largely software focused in the last few years. However, the impact of compromised hardware is tremendous: compromised hardware or firmware nullifies all other security measures. Hardware or firmware compromise can possibly allow:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Remotely access \& control the system
+	\item Exfiltrate or leak sensitive information
+	\item Disable/cripple functionality, create incorrect results
+	\item Enforce the use of insecure algorithms
+	\item Physically kill the system
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent Hardware attacks are harder to conduct since far fewer people have the skills and access. \textit{But} they are also much harder to defend since hardware is extremely complex and replacing corrupted hardware can be extremely difficult and expensive.
+
+\noindent \textbf{Example: The Chip Design Ecosystem: More Globalized, More Complex}\\
+In the earliest days, a single company would produce chips from specification to shipment. Few companies like IBM, Intel, Samsung, and Texas Instruments still do this. Most companies however send their designs to an external facility known as a “foundry” for manufacturing. Designs are provided to manufacturers as descriptions of the shapes and locations of all the silicon and metal structures that must be built into the chip.\\
+A skilled attacker could: Compromise a design \& minimizing the chance of detection (chips are so complex that testing is only partial), introduce a flaw with plausible deniability (characterizing the back door as a feature to assist in testing early prototypes of the chips). Statistically, there are enough people with the skills, access, and motivation to intentionally compromise a chip design.\\
+
+The current approach to supply chain security still largely reflects a decade-old view that the most significant vulnerabilities lie in manufacturing. This is no longer the case. As chip complexities have increased, the vulnerabilities have expanded upstream in the supply chain, to include design.
+
+\subsection{Possible approaches to make things better}
+
+We have to do the cyber equivalent of transport safety norm, crash test dummies and periodic/ surprise inspections. Enforce requirements through independent and realistic testing. Build realistic testing capability, including reverse engineering of firmware and hardware.
+
+\subsection{The Great Hack}
+
+Supermicro’s server motherboards in use in many big US tech companies (notably, Apple and Amazon
+among them) allegedly contained an hardware implant, designed by Chinese military, that allowed for remote infiltration. The implant was connected to the BMC, Baseboard Management Controller, which sits at a lower level respect to the OS, and runs a separate firmware (on a separate CPU) in order to allow remote administration operations, like reinstalling the OS or restarting an unresponsive machine. The implant would have all the capabilities the BMC has - which is to say, full access to the entire machine. The implant can be directly connected to the Ethernet controller, therefore it would be completely transparent to the the operating system. It is unclear if this attack really happened and if China was actually behind it. However, such supply chain attacks \textit{have} happened before, e.g. by the Persistence Division of NSA’s Tailored Access Operations unit.\\
+Note that not only server hardware has BMCs for remote code execution - modern laptops have the same technology.
+
 
 
 

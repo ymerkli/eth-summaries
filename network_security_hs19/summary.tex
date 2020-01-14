@@ -1389,6 +1389,195 @@ Supermicro’s server motherboards in use in many big US tech companies (notably
 among them) allegedly contained an hardware implant, designed by Chinese military, that allowed for remote infiltration. The implant was connected to the BMC, Baseboard Management Controller, which sits at a lower level respect to the OS, and runs a separate firmware (on a separate CPU) in order to allow remote administration operations, like reinstalling the OS or restarting an unresponsive machine. The implant would have all the capabilities the BMC has - which is to say, full access to the entire machine. The implant can be directly connected to the Ethernet controller, therefore it would be completely transparent to the the operating system. It is unclear if this attack really happened and if China was actually behind it. However, such supply chain attacks \textit{have} happened before, e.g. by the Persistence Division of NSA’s Tailored Access Operations unit.\\
 Note that not only server hardware has BMCs for remote code execution - modern laptops have the same technology.
 
+\section{Probabilistic Traffic Monitoring}
+
+Network traffic monitoring is crucial in today's internet. Applications of traffic monitoring are broad: anomaly detection (detect DoS attack or port scans, enforce QoS), network management (accounting (often deterministic monitoring), usage-based pricing, traffic engineering). Without network management, we have no idea what's happening inside the network.\\
+Large content providers such as Google, Akamai, Cloudflare constantly monitor their network to detect large traffic loads and (D)DoS attacks.\\
+\noindent Why do we want probabilistic monitoring? It's more efficient.
+\noindent Why do we want deterministic monitoring for accounting? Accounting happens at the edge of the network there we have enough compute power to store all states.\\
+
+\noindent Traffic monitoring can be done at different granularities:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Per-flow basis: \textit{(srcIP, dstIP, srcPort, dstPort, protocol)}, or IPv6 flow label (20 bit)
+	\item Can also monitor on a subset of the flow 5-tuple: DDos detection: \textit{(*, dstIP, *, *, *)}, source bandwidth monitoring for usage-based pricing: \textit{(srcIP, *, *, *, *)}
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent Traffic monitoring is difficult:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Core routers in the Internet forward multiple	terabit of traffic per second
+	\item Empirical evidence: 20 million different flows on	a 1 Tbps router
+	\item On a 1Tbps router we have one packet every \textit{10ns}! (1KB packets)
+	\item Monitoring is especially important when something goes wrong (e.g. attacks). Exactly then it's even more challenging since we have more traffic.
+	\item Attackers can craft traffic to target monitoring system (send from various ports, spoof srcIP), e.g. to exhaust state of monitoring system
+\end{itemize}
+\vspace{-\topsep}
+
+\subsection{Basic Concepts of Probabilistic Traffic	Monitoring}
+
+Intuition: trade accuracy/precision for efficiency. Deterministic monitoring is not possible for core internet. Challenge: Measure with limited memory/processing. Output an “accurate” estimate with high probability.
+
+General concept of probabilistic monitoring: (1) Router summarizes traffic into a compact dataset. (2) Router periodically reports the dataset to a server. (3) Server estimates certain statistics based on multiple datasets.\\
+(2) \& (3) are optional and not done by all systems.
+
+\subsection{General-Purpose Measurements (NetFlow)}
+
+Sample every packet (standard Netflow) or sample every k-th packet (sampled Netflow). Keep flow entry $\{C_{pkt}, C_{byte}\}$ for each flow, counting the number of sampled packets and bytes.\\ Estimate the number of packets and bytes with $\widetilde{n}_{pkt} = k*C_{pkt}$, $\widetilde{n}_{byte} = k*C_{byte}$.
+
+\newpage
+
+\noindent \textbf{Advantages:} simple and efficient.\\
+\textbf{Disadvantages:} Memory overhead (one entry per flow in worst case), imprecise estimate, especially for short-lived flows (we have both FP and FN), attacker could exploit by only sending large traffic in between sampling (solution: sample with probability $\frac{1}{k}$)\\
+
+\noindent General-purpose flow measurement is either imprecise or infeasible. Solution: focus on specific traffic information (large flows, number of flows, flow distribution, ...).
+
+\subsection{Large-Flow (Elephant) Detectors}
+
+Large flows are flows that consume more than a given threshold of link capacity during a given measurement interval, e.g. flows that take more than 1\% of link capacity. There is evidence that less than 1\% of flows account for more than 90\% of traffic volume. It thus makes sense to look at large flows and ignore small ones.\\
+It is possible to efficiently identify large flows without keeping per-flow state on routers because \#large flows $<<$ \#flows in total.
+
+\subsubsection{Sample and Hold (Sampling based)}
+
+This is essentially a variant of Netflow.\\
+\textbf{Sample:} We sample each byte with probability p. Practically, samples a packet of size s with probability $p_s$, $p_s = 1-(1-p)^s \approx p*s$ (when p is small).\\
+\textbf{Hold:} updates a flow entry for all subsequent packets once it is created. Requires flow-table lookup for every incoming packet. Flow-table stores $\{C_{pkt}, C_{byte}\}$.\\
+
+\noindent A problem with sample-and-hold is that for large flows we need to look at all packets. Once we've seen all flows, we might need to keep track of a lot of flows.
+
+\subsubsection{Multistage Filter (Sketch based)}
+
+Use a CountMin sketch to estimate the number of packets of a flow.\\
+\textit{Reminder}: CountMin sketches use $k$ different hash function and an array. We hash the flow-tuple with each hash function and increase all counters at the positions indicated by the hash functions. The count estimate is the minimum value of all counters.\\
+\textbf{Properties}: fixed memory resources, no FNs (we can't undercount), low FPs (overcount due to hash collisions). However, we need to look at all packets, but we can keep fewer counters.
+
+\subsubsection{EARDet Algorithm (Frequent item finding)}
+
+\textbf{Goal}: Find all flows with $k$ highest packet counts among $m$ flows.\\
+\textbf{Algorithm:} We have $k$ counters. For each new packet $p \in f$ (flow $f$), we increase the corresponding counter for $f$ by the packet size. If no counter tracks $f$, we start tracking it. If all counters are used, we decrease \textit{all} counters by the packet size. If one counter reaches zero while decreasing, we add the current flow with the remaining packet size.\\
+\textbf{Virtual traffic:} Use “virtual flows” for each idle period. Each virtual flow is at most equal to a low-bandwidth threshold ($Th_L$).\\
+
+\noindent \textbf{Properties of EARDet:} no FN for large flows, no FP for small flows, FN \& FP possible for medium flows, deterministic (keep performance regardless of input traffic or attack pattern), relatively small storage cost (but many counters are needed)
+\textbf{Disadvantage}: per-packet counter update is an expensive operation
+
+\newpage
+
+\begin{figure}[t!]
+	\centering
+	\includegraphics[width=0.5\linewidth]{figures/eardet_algorithm}
+	\caption{EARDet Algorithm}
+	\label{fig:eardetalgorithm}
+\end{figure}
+
+\noindent EARDet is an adaption of the MG-algorithm, instead of increasing counters by number of packets, we increase counters by packet size.
+
+\subsection{Finding Duplicates: Bloom Filters}
+
+\textbf{Problem}: identify if an element is a duplicate\\
+\textbf{Challenge}: cannot store all previous elements\\
+\textbf{Solution}: Bloom filter provides probabilistic data structure for set membership testing\\
+
+\noindent Bloom filters are a more memory-efficient approach for insertions and membership queries. Bloom filters consist of a fixed size table \texttt{bf} with $M$ 1-bit cells and $K$ hash functions and we write a 1 at each position indicate by each hash function.
+
+\begin{figure}[hb]
+	\begin{minipage}[t]{.5\textwidth} 
+		\vspace{0pt}
+		\centering 
+		\includegraphics[width=0.45\textwidth]{figures/bloom_filter}
+		\caption{Bloom filter \cite{advnet}}
+		\label{fig:bloom_filter}
+	\end{minipage} 
+	\begin{minipage}[t]{.5\textwidth} 
+		\vspace{10pt} 
+		\begin{itemize}
+			\setlength{\itemsep}{0pt}
+			\setlength{\parskip}{0pt}
+			\item Insert \textit{e} into \texttt{bf}: 
+			\begin{enumerate}
+				\item $\forall i \in [1,K]$, calculate $h_i(e)$
+				\item $\texttt{bf}[h_i(e)] = 1, \forall i \in [1,K]$
+			\end{enumerate}
+			\item Membership query \textit{e}:
+			\begin{enumerate}
+				\item if $\texttt{bf}[h_i(e)] == 1, \forall i \in [1,K]$ 
+				\newline $\rightarrow$ $e$ is in \texttt{bf}
+				\item else 
+				\newline $\rightarrow$ $e$ is not in \texttt{bf}
+			\end{enumerate}
+		\end{itemize}
+	\end{minipage} 
+\end{figure}
+
+\subsubsection{Dimension your bloom filter}
+\label{bloom_filter_dimension}
+
+$N$ elements, $M$ cells, $K$ hash functions, $FP$ false positive rate.
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item probability that one hash function returns the index of a particular cell: $\frac{1}{M}$
+	\item probability that one hash function does not return the index of a particular cell: $1 - \frac{1}{M}$
+	\item probability of a cell to be 0: $(1 - \frac{1}{M})^{KN}$
+	\item false positive rate P(FP): $(1 - (1 - \frac{1}{M})^{KN})^K$
+	\item false negative rate: 0
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent For an approximation, use: $p := P(FP) = (1 - (1 - \frac{1}{M})^{KN})^K \approxeq (1 - e^{-KN/M})^K$.\\
+
+\noindent There's a global minimum when $K = \ln(2) * \frac{M}{N}  \approx 0.7*\frac{M}{N}$ found by taking derivative of $P(FP)$.\\
+For that choice of $K$, resulting $p := P(FP) = 2^{-K} \approx 0.6185^{M/N}$.\\
+Given optimal $K$, choice of optimal $M = -\frac{N \ln p}{(\ln2)^2}$ $\rightarrow O(N)$ space.
+
+\newpage
+
+\noindent \textbf{In practice:} if we use the Bloom filter for a long time, it's going to fill up, which leads to more false positives (a full bloom filter we just conclude that every packet is in the filter). We thus need to reset the Bloom filter periodically. Simply resetting the whole Bloom filter leads to false negatives (all cells are back to 0 after reset).\\
+In practice, we use \textit{two} same-sized Bloom filters and alternate them. We only put values into one single BF at a time and switch after a reset. \textit{BUT} for membership queries, we always check both filters! However, for very old packets we can still get FNs. Solution: use timestamps on packets and remove tracking for old packets. This gives us the FN guarantee.
+
+\subsection{Probabilistic Counting: Estimating the Number of Flows}
+
+\textbf{Simple probabilistic counting:} Hash flow ID to generate a value in [0,1). Keep the flow ID associated with the smallest hash value.\\
+Expectation value of smallest value is 1 / (number of flows + 1).\\
+Estimate the number of flows by the smallest value v seen so far: $\tilde{n} \approx 1/v - 1$.\\
+
+\noindent \textbf{Problems:}
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item minimum has large variance $\rightarrow$ not very robust
+	\item An attacker controlling only 1 input can bias the estimation. Solution: use private hash function or salted hashing.
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent \textbf{Proposal by Bar-Yossef et al. (2002):}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Keep track of the $k$ smallest hash values
+	\item Expectation value of $k$-th smallest value is $k/(n+1)$, variance is smaller
+	\item Estimate the number of flows by the k-th smallest value $v_k$ that has been seen
+	so far: $\tilde{n} \approx k / v_k - 1$
+\end{itemize}
+\vspace{-\topsep}
+
+\subsection{Traffic Monitoring vs. Intrusion Detection}
+
+Both can detect malicious activities such as DoS attacks \& port scans at selected network
+vantage points.\\
+\textbf{Intrusion detection:} Typically deployed at network edges, destination-based diagnosis, can analyze detailed payload data as well.\\
+\textbf{Traffic monitoring:} Can be deployed at high-speed backbone routers, diagnoses network-wide anomalies, analyzes packet headers only.
 
 
 

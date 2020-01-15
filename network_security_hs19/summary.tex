@@ -2454,6 +2454,280 @@ Github was attacked by a purely volumetric attack that exploited memcached and g
 Application-layer attack: Malicious JavaScript executed when users outside China visited sites
 with Baidu’s user tracking code. All of the attack traffic was comprised of seemingly legitimate HTTP requests.
 
+\newpage
+
+\section{DDoS RIP}
+
+\subsection{Next-generation attacks}
+
+Both of these attacks haven't been seen in the wild yet but are theoretically possible.
+
+\subsubsection{Coremelt attack}
+
+Adversary controls many bots distributed across the Internet. Bots send traffic \textit{between each other}, thus all traffic they produce is legit traffic desired by the destination (destinations are bots). Traffic is not sent to a victim as in regular DDoS attacks. Thus, all defense methods discussed in section \ref{ddos} do not work here.\\
+Adversary can exhaust bandwidth on victim link. As a result, the attack traffic exhausts bandwidth in per-flow fair sharing systems.
+
+\subsubsection{Crossfire attack}
+
+\textbf{Goal:} attacker wants to disconnect part of the internet from the rest.\\
+\noindent Attacker detects some target links that connect a target region to the rest of the internet. Due to route optimization, few links are actually used to connect a
+target region to rest of Internet. The attacker then overloads these specific target links by using a distributed bot army she controls. The bots communicate with target servers in/ near the target region and simply send TCP SYN packets. This can be enough to congest due to lots of target servers. This is hard to stop since only connection establish packets (TCP SYN) are sent.\\
+\textbf{Result:} disconnect target region from remainder of Internet
+
+\begin{figure}[hb]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.8\linewidth]{figures/coremelt_attack}
+		\label{fig:coremelt_attack}
+		\caption{Coremelt Attack}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.6\linewidth]{figures/crossfire_attack}
+		\label{fig:crossfire_attack}
+		\caption{Crossfire attack}
+	\end{subfigure}
+	\caption{}
+\end{figure}
+
+\subsection{Next-generation defenses}
+
+\subsubsection{SCION: Hidden paths}
+
+AS does not announce a path to a core path server to the world, instead it keeps it secret. In SCION, we announce paths to the global path server (path server of a core AS) from where other entities can fetch the path. If we \textit{don't} announce a path to a global path server, other entities (and thus attackers) do not have a HOP field for it $\rightarrow$ packets would be dropped early if sent anyway over this path.
+\noindent If for example some branch office wants to reach a central office via a hidden path, we need some rendez-vous service.\\
+
+\noindent \textbf{Attack against hidden path:} if an attacker can obtain the hub field by catching a packet with the field, the attacker can then send on the hidden path. A hub field is valid for ca. 8 hours $\rightarrow$ this is rather long.\\
+
+\noindent In conclusion, hidden paths are a rather weak DDoS defense.
+
+\subsubsection{DRKey}
+
+Idea: use a per-AS secret value to derive keys with an efficient Pseudo-Random Function (PRF). Every AS has a local secret from which different keys are derived $\rightarrow$ no need to fetch keys from memory, you can just rederive them in CPU.\\
+
+\noindent \textbf{Example:} AS X creates a key for AS Y (s.t. AS Y can be source-authenticated when communicating with AS X) using secret value $SV_X$
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item $K_{X\rightarrow Y} = PRF_{SV_X}("Y")$
+	\item Intel AES-NI instructions enable PRF computation within 30 cycles, or 70 cycles for CMAC. \textit{Key computation is 3-5 times faster than DRAM key lookup!}
+	\item Any entity in AS X knowing secret value $SV_X$ can derive $K_{X\rightarrow *}$
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent \textbf{Notation:} $K_{X\rightarrow Y}$: X can locally derive the key for Y (fast, based on a single local key $SV_X$) but on side of Y, you need to contact the local key server to fetch the key (slow). Arrow indicates direction of key derivation, not the direction of communication. Data flow is opposite to the key generation flow: AS Y uses $K_{X\rightarrow Y}$ for MACing data, and X checks those MACs. In this way, the burden of fetching the key (a slower operation) is on the
+sender, while the receiver can always efficiently verify the data it receives.\\
+
+\noindent \textbf{Key Server Infrastructure:}
+
+\noindent Key servers that are deployed in each AS build backbone of key hierarchy. Responsible for key exchange, local key establishment and key management. After AS-level keys are established, symmetric keys for end hosts can be provided using key derivation. Keys can be used to provide source authenticity of packet without costly key exchange between communicating parties. Each host is required to contact their local key server.\\
+
+\noindent \textbf{Key Hierarchy:} Key establishment using a multi-level key hierarchy using a one-way pseudo-random function. Whoever has the 0th level key can quickly derive all other keys (for its AS).
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item \textbf{0th level:} per-AS local secret key (e.g. $SV_X$ for AS X). Represents basis of hierarchy and renewed frequently (e.g., daily)
+	\item \textbf{1st-level:} key shared between ASes. AS uses 0th level key to derive symmetric key for other ASes (e.g. AS X derives $K_{X\rightarrow Y}$ for AS Y).
+	\item \textbf{2nd-level:} key shared between internal host and external AS (e.g. AS X creates $K_{X\rightarrow Y:H_y}$ to source-authenticate host $H_y$ sending from within AS Y to AS X. Similarly, AS Y creates $K_{Y\rightarrow X:H_x}$ to source-authenticate host $H_x$ sending from within AS X to AS Y)
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent AS A creates key hierarchy from secret value A ($SV_A$) using a pseudo-random function (PRF): $K_{A\rightarrow B} = PRF_{SV_A}("B")$. Similarly, AS B creates key hierarchy based on $SV_B$.\\
+
+\noindent \textbf{First-level DRKey:} Each AS has a key server with the 0th level key SV. An AS Y needs to fetch key $K_{X\rightarrow Y}$ from AS X in order to communicate with AS X. Key server in AS Y fetches $K_{X\rightarrow Y}$ from AS X through a secure channel set up based on AS certificates. Key server distributes local secret value SV to trusted infrastructure nodes inside same AS.\\
+Insight: SV enables high-speed local key derivation of any other AS’ key.
+
+\newpage
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.7\linewidth]{figures/drkey_firstlevel_key_exchange}
+	\caption{First-level Key Exchange. Secret value $SV_i$ for AS i, private key $K_i^{-1}$ for AS i. Public key $K_i$ for AS i. ASes send each other daily encrypted messages (asymmetric crypto).}
+	\label{fig:drkeyfirstlevelkeyexchange}
+\end{figure}
+
+\noindent \textbf{Second-level DRKey:} apply PRF once more on AS-to-AS key to derive AS-to-Host symmetric key. AS X creates a key for host $H_y$ in AS Y:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item $K_{X\rightarrow Y} = PRF_{SV_X}("Y")$
+	\item $K_{X\rightarrow Y:H_y} = PRF_{K_{X\rightarrow Y}}("H_y")$
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent Knowing secret value SV X any entity in AS X can derive $K_{X\rightarrow *:*}$. Knowing $K_{X\rightarrow Y}$, key server in AS Y can derive $K_{X\rightarrow Y:*}$. Host-to-Host keys $K_{X:*\rightarrow Y:*}$ can be similarly derived.\\
+
+\noindent \textbf{DRKey use case: SCMP authentication}\\
+
+\noindent SCMP instead of ICMP. Send an error when border router encounters error with a packet\\ $\rightarrow$ source-authenticate error message with DRKey. Assume Host H in AS A sends an SCMP message, and AS C, which receives this message, wants to authenticate it:
+
+\vspace{-\topsep}
+\begin{enumerate}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item First-level Key Exchange: AS C has its local secret $SV_C$ . It uses $SV_C$ to generate the first
+	level key $K_{C\rightarrow A} = PRF_{SV_C}("A")$. AS C securely sends $K_{C\rightarrow A}$ to AS A.
+	
+	\item Second-level Key Exchange: AS A generates a second-level key for H that can be used SCMP for source authentication by AS C, i.e., $K_{C\rightarrow A:H}^{SCMP} = PRF_{K_{C\rightarrow A}}("H|SCMP")$ and gives it to host H.
+	
+	\item Host H authenticates its ICMP message using $K_{C\rightarrow A:H}^{SCMP}$
+	
+	\item AS C dynamically recreates $K_{C\rightarrow A:H}^{SCMP}$ by retrieving the first-level key that it generated in Step 1 and computing the second-level key that AS A computed.
+	
+	\item Finally it verifies the authenticity of the message.
+\end{enumerate}
+\vspace{-\topsep}
+
+\newpage
+
+\subsubsection{EPIC (Every Packet Is Checked)}
+
+\noindent \textbf{Goal:} Every router can source authenticate every packet in the internet with almost no overhead. Achieve per-packet source authentication, duplicate suppression, per-packet variable hop fields. Assumption: global time synchronization ($\pm$ 100 ms). EPIC can prevent attacks such as: (1) Malicious router replays packets or increases packet size. (2) Hop field MAC is brute forced and destination attacked until expiration time.\\
+
+\noindent \textbf{EPIC level 1:} 
+
+Current SCION hop field MAC: $MAC_{K_i}(TS||IgIF||EgIF||ExpT||\sigma_{i-1})$\\
+
+\noindent TS: time beacon creation, ExpT: Expiration time, IgIF/EgIF: Ingress/Egress Interface,\\
+T: time packet creation, $\sigma_{i-1}$: previous hop field MAC.\\
+
+\noindent With EPIC, we have one additional level of indirection:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item $K_H = MAC_{K_i}(TS||IgIF||EgIF||ExpT||S_{i-1})$
+	\item $S_i = H(K_H)$
+	\item hop field MAC: $MAC_{K_H}(T||H(P))$
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent Hop key $K_H$ is distributed via beacon (PCB), $S_i$ is included in packet header. Result: every packet has unique hop field MAC, foiling brute force attacks on hop field MAC.\\
+
+\noindent \textbf{EPIC level 2:}
+
+\noindent Goal: achieve source authentication for every packet by including DRKey $K_{X\rightarrow Y:H}$ in hop field MAC. For host e in AS E, traversing AS X:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item $K_H = MAC_{K_i}(TS||IgIG||EgIF||ExpT||S_{i-1})$
+	\item $S_i = H(K_H)$
+	\item hop field MAC: $MAC_{K_H}(T||H(P)||K_{X \rightarrow E:e})$
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent Router in AS X can efficiently derive $K_{X \rightarrow E:e}$ (2 AES operations). Host e needs to fetch one key per AS traversed from local certificate server. Result: efficient per-packet per-hop source authentication! (5 AES op).
+
+
+\subsubsection{PISKES}
+
+PISKES uses DRKey to authenticate packets coming to a server. For every host sending a packet, derive the key locally and authenticate packet.\\
+Client c in AS C fetches DRKey $K_{S \rightarrow C:c}$ from local certificate server. Server s in AS S can locally derive
+DRKey and verify packet. Throughput is only slightly worse (0.2\% less for 128B packet, 15\% worse for 64B packet).
+
+\subsubsection{History-based filtering}\
+
+\noindent \textbf{Basic idea (omitting details)}: create a list of ASes that you communicate with and through monitoring, set a number of packets you allow these ASes to have in a given time period. Under a DDoS attack, you then filter based on ASes $\rightarrow$ only hosts from the AS with the attacker in it are affected.
+
+\newpage
+
+\subsubsection{COLIBRI}
+
+Key ideas:
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Admission control: possible with DRKey
+	\item Resource allocation: who should obtain some amount of resource $\rightarrow$ difficult to decide. COLIBRI wants two-tier reservation (tier-1: between ASes, tier-2: between end-hosts) and fairness (per-neighbor AS fairness).
+	\item Traffic policing: who sends too much? Designed for scalability. Two layer model: at edge and at core.
+	\item Traffic monitoring: per neighbor based traffic shaping. Designed for scalability. Two layer model: at edge and at core.
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent \textbf{Link BW Decomposition:}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Bandwidth is reserved for \textit{segment reservations} (\textcolor{red}{shown in red}) (longterm)
+	\item \textit{End-to-end} path reservation is created from multiple segment reservations \\
+	(\textcolor{green}{shown in green})
+	\item Remaining bandwidth (non-reserved or non-utilized) can be used for \textit{best-effort traffic} (\textcolor{blue}{shown in blue})
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent \textbf{Segment Reservation:}
+
+\noindent Reservation on SCION path segment is initiated by the source AS of each path segment. Bandwidth class indicates the guaranteed and maximum bandwidth. Maximum validity period 5 minutes.\\
+Example: ID A-42 allocate(min:10, max:20), AS A: max:20, alloc 20, AS B: max 15, alloc 15, AS C: max 18, alloc 15
+
+\begin{figure}[hb]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.4\linewidth]{figures/colibri_linkbw_decomp}
+		\label{fig:colibri_linkbw_decomp}
+		\caption{Link BW Decomposition}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.6\linewidth]{figures/colibri_segment_reservation}
+		\label{fig:colibri_segment_reservation}
+		\caption{Segment Reservation}
+	\end{subfigure}
+	\caption{}
+\end{figure}
+
+\noindent \textbf{Admission Algorithm: Properties}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Algorithm guarantees that no set of AS can reserve an "un-proportional" amount of bandwidth trough one link. In traditional internet, attacker can create malicious tree of ASes and claim each AS requests traffic. This does not work here.
+	\item Algorithm guarantees that no AS can congest a link by reserving through multiple paths. In SCION paths are visible. An AS can realize when someone enters over multiple paths.
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent \textbf{Need for Monitoring:}
+
+\noindent Misbehaving end host might exceed their reserved bandwidth and disrupt the network. Each Edge AS is accountable for its hosts and is required to perform per-flow (stateful) policing. At the edge, we can do per-flow monitoring. In the core, we need probabilistic monitoring.
+
+\newpage
+
+\noindent \textbf{Attacks:} Legacy traffic could be dangerous since an attacker could simply congest a link using legacy IPv4/IPv6 traffic and prevent SCION communication.\\
+\noindent \textbf{Solution}: use of IP prioritization/ queuing: Reserve QoS classes for SCION traffic and configure prioritization on each switch/ router to reserve bandwidth for SCION.
+
+\subsection{Conclusion}
+
+Colibri allows hosts to reserve end to end paths between each other with guaranteed bandwidth. This solves the DDoS problem as the legitimate path is guaranteed at least some bandwidth. In order to reserve a path, first each segment needs to be reserved by the source AS, and then these reserved segments are used to exchange packets to set up the whole e2e path reservation. Every requesting host can request a certain bandwidth, but the guaranteed BW is assigned with a fairness algorithm, so each flow gets at least a slow path, but never interruption of the link.
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Server-based attack: solved by per-packet authentication, duplicate suppression, and history-based filtering
+	\item Volumetric network congestion: solved by combination of systems:
+	\begin{itemize}
+		\item Reservation of bandwidth with availability of non-negligible BW amount (COLIBRI)
+		\item Even on-path routers cannot cheat (EPIC)
+	\end{itemize}
+
+\end{itemize}
+\vspace{-\topsep}
 
 \label{lastpage} % this must stay here
 \clearpage

@@ -1345,7 +1345,27 @@ ICMP packets consist of an ethernet header, IP header and ICMP header. Inside th
 \noindent The parser remained unchanged since we only sent out ICMP packets. In the Deparser, we had to add two additional emits, essentially emitting all headers in the right order: ethernet, ipv4\_icmp, icmp, ipv4, tcp.\\
 For the ingress, we needed one additional table which matches on the ingress port and then sets the srcIP of the ipv4\_icmp to the IP of the interface. In the ingress logic, we have to differentiate between $ttl > 1$, in which case we apply normal forwarding/ECMP, and $ttl == 1$. For the later, we first set the ipv4\_icmp and icmp headers to valid. We then adapt the packet headers such that the packet can be sent back out on the port it came in (i.e. switch MACs, set egress port to ingress port, set dstIP to srcIP). We then apply the aforementioned table to set the srcIP of the ipv4\_icmp header to the IP of the interface.
 
+\newpage
 
+\noindent \textbf{Desing question}
+
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.8\linewidth]{figures/design_question}
+	\label{fig:designquestion}
+\end{figure}
+
+There are three parts to this system design that need to be specified: the heavy hitter detection, the routing change and how to only activate the solution in case of congestion.
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Heavy hitter detection: all flows enter the network through a single switch $A$. Thus no distributed detection technique is necessary. We can thus use a CountMin sketch to estimate the number of packets in a flow. The \texttt{count()} action is called for every valid packet in the ingress.
+	\item Routing change: We can use two different ipv4\_lpm MATs: a 'normal' MAT ipv4\_lpm that routes traffic through the standard network and a buffer MAT ipv4\_lpm\_buffer that send incoming traffic at $A$ over the large buffer path. Both MATs match on the dstIP (lpm) and the action sets the next hop by rewriting the egress port and the dstMAC. The next hops of the ipv4\_lpm MAT are inside the network whereas the next hop of the ipv4\_lpm\_buffer MAT is the next large buffer switch after A. In the apply section of the ingress, we first increase the CountMin sketch and then compare the counts (stored in a metadata field) against a pre-specified threshold. If all counts exceed the threshold, we have a heavy hitter and apply the ipv4\_lpm\_buffer MAT which will set the next hop to a large bufffer router. Else we apply the ipv4\_lpm MAT. This approach does the routing change fully in the data plane, thus there is no induced latency by control plane communication. However, we do need to maintain two MATs which wastes memory.
+	\item Activation: In order to only activate the solution in case of congestion, we need to observe some congestion signals to actually detect congestion. 
+\end{itemize}
+\vspace{-\topsep}
 
 \label{lastpage} % this must stay here
 \clearpage

@@ -912,7 +912,312 @@ How do you make sure that a programmable network works as it should? P4 is a low
 \end{itemize}
 \vspace{-\topsep}
 
+\newpage
 
+\section{Exercise design summaries}
+
+\subsection{03-ECMP}
+\label{03_ecmp}
+
+Goal: implement ECMP, a very basic (but widely used) technique to load balance traffic across
+multiple equal cost paths.
+
+\subsubsection{Data plane}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Headers:
+	\begin{itemize}
+		\setlength{\itemsep}{0pt}
+		\setlength{\parskip}{0pt}
+		\item Standard ethernet, IP, TCP headers
+		\item metadata struct stores ecmp hash and ecmp group id
+	\end{itemize}
+	\item Parser: Parse ethernet, IPv4, TCP
+	\item Ingress:
+	\begin{itemize}
+		\setlength{\itemsep}{0pt}
+		\setlength{\parskip}{0pt}
+		\item ipv4\_lpm MAT: matches on the dstIP (lpm). If the dstIP is either directly connected to the switch or there is only one path towards the dstIP, \texttt{set\_nhop()} action is called to just rewrite egress port and MACs. If the dstIP is reachable over \textit{multiple} paths, we call the \texttt{ecmp\_group()} action with the ecmp group id and the number of next hops.
+		\item ecmp\_group\_to\_nhop MAT: matches on the ECMP group id and ECMP group hash (exact). Calls \texttt{set\_nhop()}. The rules specify which next hop to choose for which ecmp group id and ecmp hash.
+		\item \texttt{set\_nhop()} action: rewrites MACs and egress port, decreases ipv4 TTL
+		\item \texttt{ecmp\_group()} action: hashes the flow 5-tuple into meta.ecmp\_hash and stores the ecmp group id in meta.ecmp\_group\_id.
+		\item apply: apply forwarding table. In case ecmp\_group was called, apply ecmp\_group\_to\_nhop
+	\end{itemize}
+	\item Egress: -
+	\item Checksum: Since we adapt the packet in set\_nhop (decreasing the ttl), we need to recompute the ipv4 checksum.
+	\item Deparser: emit all headers in order
+\end{itemize}
+\vspace{-\topsep}
+
+\subsection{03-Flowlet-switching}
+
+Goal: ECMP works well for flows with similar size. However, in real traffic flows vary vastly in size. ECMP suffers from performance problems if multiple large flows go through the same path due to hash collisions. We want to fix this by using information from standard\_metadata to fix the collision problem of ECMP by implementing flowlet switching on top of ECMP.
+
+\subsubsection{Data plane}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Headers:
+	\begin{itemize}
+		\setlength{\itemsep}{0pt}
+		\setlength{\parskip}{0pt}
+		\item Standard ethernet, IP, TCP headers
+		\item metadata struct stores ecmp hash and ecmp group id, flowlet last timestamp, flowlet time difference, flowlet register index and flowlet id.
+	\end{itemize}
+	\item Parser: Parse ethernet, IPv4, TCP
+	\item Ingress:
+	\begin{itemize}
+		\setlength{\itemsep}{0pt}
+		\setlength{\parskip}{0pt}
+		\item Two registers: \texttt{flowlet\_to\_id} gives the flowlet id for the flowlet register index (hash of the flow 5-tuple). \texttt{flowlet\_time\_stamp} gives the last timestamp for the flowlet register index (hash of the flow 5-tuple).
+		\item \texttt{read\_flowlet\_registers} action: hashes the flow 5-tuple, reads the flowlet id and flowlet last timestamp into metadata, updates the timestamp with the current timestamp from standard\_metadata. 
+		\item \texttt{update\_flowlet\_id} action: generate a random number and use it as the new flowlet id for the current flowlet (flowlet register index available in metadata)
+		\item ipv4\_lpm and ecmp\_group\_to\_nhop MATs as in ECMP
+		\item \texttt{set\_nhop()} and \texttt{ecmp\_group()} actions as in ECMP, however the hash in \texttt{ecmp\_group()} now also includes the flowlet id (which periodically changes!)
+		\item apply: If IPv4 header is valid, read flowlet registers and update flowlet id incase the flowlet time diff exceeds timeout. Then apply ipv4\_lpm and ecmp.
+	\end{itemize}
+	\item Egress: -
+	\item Checksum: Since we adapt the packet in set\_nhop (decreasing the ttl), we need to recompute the ipv4 checksum.
+	\item Deparser: emit all headers in order
+\end{itemize}
+\vspace{-\topsep}
+
+\subsection{04-CountMin-sketch}
+
+Goal: Implement a CountMin sketch to estimate occurrences of distinct elements.
+
+\subsubsection{Data plane}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Headers:
+	\begin{itemize}
+		\setlength{\itemsep}{0pt}
+		\setlength{\parskip}{0pt}
+		\item Standard ethernet, IP, TCP headers
+		\item metadata struct stores all flow 5-tuple hashes and all counter values read from registers
+	\end{itemize}
+	\item Parser: Parse ethernet, IPv4, TCP
+	\item Ingress:
+	\begin{itemize}
+		\setlength{\itemsep}{0pt}
+		\setlength{\parskip}{0pt}
+		\item forwarding MAT: match on ingress port (exact) and rewrite egress port, using \texttt{set\_egress\_port()} action.
+		\item Define $N$ registers for CountMin sketch
+		\item Define \texttt{sketch\_count()} action that calls a macro for each register. The macro hashes the flow 5-tuple, reads the counter in the registers at the index, increases the counter by 1 and writes back to register.
+		\item apply: call \texttt{sketch\_count()} if IPv4 and TCP headers are valid, then apply the forwarding MAT
+	\end{itemize}
+	\item Egress: -
+	\item Checksum: -
+	\item Deparser: emit all headers in order
+\end{itemize}
+\vspace{-\topsep}
+
+\subsubsection{Control plane}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Write rules into forwarding MAT
+	\item Read registers from control plane (\texttt{self.controller.register\_read()})
+	\item Read CountMin sketch by hashing the flow and reading all registers at the specified indices. Return the minimum counter value.
+\end{itemize}
+\vspace{-\topsep}
+
+\newpage
+
+\subsection{04-Heavy-hitter-detector}
+
+Goal: Use counting bloom filter to estimate heavy hitters.
+
+\subsubsection{Data plane}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Headers:
+	\begin{itemize}
+		\setlength{\itemsep}{0pt}
+		\setlength{\parskip}{0pt}
+		\item Standard ethernet, IP, TCP headers
+		\item metadata struct stores two flow 5-tuple hashes and two counter values read from register
+	\end{itemize}
+	\item Parser: Parse ethernet, IPv4, TCP
+	\item Ingress:
+	\begin{itemize}
+		\setlength{\itemsep}{0pt}
+		\setlength{\parskip}{0pt}
+		\item ipv4\_lpm MAT: match on dstIP (lpm) and rewrite MACs and egress port, using \texttt{ipv4\_forward()} action.
+		\item \texttt{ipv4\_forward()} action: takes dstMAC and egress port
+		\item Define $1$ register for the counting bloom filter
+		\item Define \texttt{update\_bloom\_filter()} action that hashes the flow 5-tuple with two different hash functions, writes the hash values in metadata, reads the register at the hash indexes, store theses values in metadata, increase counters and write back to register.
+		\item apply: if IPv4 and TCP headers are valid, call \texttt{update\_bloom\_filter()} and drop traffic and return in case both counters exceed a threshold. Apply ipv4\_lpm at the end. 
+	\end{itemize}
+	\item Egress: -
+	\item Checksum: Since we adapt the packet in set\_nhop (decreasing the ttl), we need to recompute the ipv4 checksum.
+	\item Deparser: emit all headers in order
+\end{itemize}
+\vspace{-\topsep}
+
+\subsection{05-Simple-routing}
+\label{05-simple-routing}
+
+Goal: implement and provide a control plane to the ECMP routing exercise (see \ref{03_ecmp}). Instead of specifying the entries for the forwarding tables manually, we will now implement a controller that generates and installs forwarding rules automatically, based on the network topology.
+
+\subsubsection{Data plane}
+
+Equivalent to \ref{03_ecmp}.
+
+\subsubsection{Control plane}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Iterate over all switches in the topology and connect to them:
+	\vspace{-\topsep}
+	\begin{lstlisting}
+for p4switch in self.topo.get_p4switches():
+  thrift_port = self.topo.get_thrift_port(p4switch)
+  self.controllers[p4switch] = SimpleSwitchAPI(thrift_port)
+	\end{lstlisting}
+	\item For each switch (source), iterate over all switch destinations. If the destination is equal to the source, install a ipv4\_lpm table rule for all directly connected hosts. For all other destinations, check the shortest path from source to dst and iterate over all hosts connected to dst. If there is only one single shortest path, install a rule for it in ipv4\_lpm. Otherwise, install a ECMP rule. ECMP groups are defined per switch with the set of next ports. A new ECMP group needs to be created in case the current selection of dst ports does not have an ECMP group yet.
+\end{itemize}
+\vspace{-\topsep}
+
+\subsection{05-Traceroutable}
+
+Goal: Extend a P4 router with the functionality to respond to traceroute packets, i.e. packets where the IPv4 TTL (time to live) value is equal to 1. If a router receives such a packet, it generates an ICMP Time Exceeded message and sends it back to the original sender of the expired packet.\\
+Note: An ICMP header encapsulates the IP and TCP header of the original request.
+
+\subsubsection{Data plane}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Headers:
+	\begin{itemize}
+		\setlength{\itemsep}{0pt}
+		\setlength{\parskip}{0pt}
+		\item Standard ethernet, IP, TCP headers
+		\item new icmp header (8 bytes) with type, code, checksum, unused
+		\item headers struct contains icmp and two ipv4 headers (the original one and the one added by ICMP, ipv4\_icmp). The ipv4\_icmp header is going to be the ipv4 header of the ICMP packet with the actual src and dst. The original ipv4 header (ipv4 header of the packet that triggered the ICMP response) is going to be encapsulated in the ICMP header (unchanged). 
+		\item metadata struct stores ecmp hash and ecmp group id
+	\end{itemize}
+	\item Parser: Parse ethernet, IPv4, TCP
+	\item Ingress:
+	\begin{itemize}
+		\setlength{\itemsep}{0pt}
+		\setlength{\parskip}{0pt}
+		\item ipv4\_lpm, ecmp\_group\_to\_nhop MATs as in ECMP
+		\item set\_nhop, ecmp\_group actions as in ECMP
+		\item icmp\_ingress\_port MAT: matches on the ingress port and calls action set\_src\_icmp\_ip. The reason for this table is when sending back an ICMP reply, we need to set the srcIP of the ICMP packet. We set it to the IP of the interface on which we send out the packet. This table will be populated by the controller.
+		\item set\_src\_icmp\_ip: takes an IP address as parameter and sets the hdr.ipv4\_icmp.srcAddr to it.
+		\item apply: If the ipv4 header is valid and $ttl > 1$, we simply apply the ipv4\_lpm table and do ECMP if the ecmp\_group action was run (see \ref{03_ecmp}). If ipv4 and tcp headers are valid \textit{and} ttl == 1, we need to respond with an ICMP packet. We thus set the icmp and ipv4\_icmp headers to valid, and prepare the packet to be sent back as ICMP packet: set egress port to ingress port, swap MACs, copy the original ipv4 header into the ipv4\_icmp header, set its dstAddr to the srcAddr and apply the icmp\_ingress\_port MAT (i.e. setting the srcIP to the interface IP). Finally, set the protocol field of ipv4\_icmp to ICMP, adapt the ttl and adapt the totalLen. Set the ICMP type and code and truncate the packet.
+	\end{itemize}
+	\item Egress: -
+	\item Checksum: since we have three different headers (ipv4\_icmp, icmp, ipv4) that all include checksums and all headers can be changed, we have to recalculate the checksum for each header.
+	\item Deparser: emit ethernet, ipv4\_icmp, icmp, ipv4, tcp
+\end{itemize}
+\vspace{-\topsep}
+
+\newpage
+
+\subsubsection{Control plane}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Write rules into ipv4\_lpm MAT
+	\item Write ECMP rules as explained in section \ref{05-simple-routing}
+	\item For each switch, for each interface on it, write an entry into icmp\_ingress\_port MAT.
+	\vspace{-\topsep}
+	\begin{lstlisting}
+for sw_name, controller in self.controllers.items():
+  for intf, node in self.topo.get_interfaces_to_node(sw_name).items():
+    ip = self.topo.node_to_node_interface_ip(sw_name, node).split("/")[0]
+    port_number = self.topo.interface_to_port(sw_name, intf)
+
+    self.controllers[sw_name].table_add("icmp_ingress_port", 
+    "set_src_icmp_ip", [str(port_number)], [str(ip)])
+	\end{lstlisting}
+\end{itemize}
+\vspace{-\topsep}
+
+\subsection{06-Packet-Loss-Detection}
+
+Goal: Implement LossRadar. Packet losses are very common in nowadays networks. Those losses can be caused by many reasons: congestion, blackholes, faulty links or corrupted forwarding tables. LossRadar uses two IBLTs for each unidirectional link: one upstream meter for the sending switch, one downstream meter for the receiving switch. To make sure that the meters that are exchanged where exposed to the exact same set of packets batches are used. Lost packets can be detected by taking the difference between the UM and the DM, i.e. substract the counts and xor the values. This will be done by the controller. The controller will be informed by a copy-to-cpu packet which includes a loss header with the last batch id.
+
+\subsubsection{Data plane}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Headers:
+	\begin{itemize}
+		\setlength{\itemsep}{0pt}
+		\setlength{\parskip}{0pt}
+		\item Standard ethernet, IP, TCP, UDP headers
+		\item loss header (batch\_id, padding, nextProtocol), will be between IP and TCP/UDP header, thus we need a nextProtocol field
+		\item headers struct contains ethernet, ipv4, loss, tcp, udp
+		\item metadata struct stores tmp\_src\_port, tmp\_dst\_port (since we have TCP and UDP, we need uniform reference to the port), 3 hash value fields for the UM, 3 hash value fields for the DM, temp srcIP, dstIP, ports\_proto\_id, counter for updating the IBLT, fields with last local, previous and current batch id and an indicator whether to exectute DM, UM.
+	\end{itemize}
+	\item Parser: Parse ethernet, IPv4, loss, TCP/UDP
+	\item Ingress:
+	\begin{itemize}
+		\setlength{\itemsep}{0pt}
+		\setlength{\parskip}{0pt}
+		\item forwarding MAT that calls set\_egress\_port action (set correct egress port)
+		\item remove\_loss\_header MAT that calls remove\_header action (if the link goes toward a host we need to remove the loss header)
+		\item 8 registers: one each srcIP, dstIP, (ports, proto, id), counter; for both UM and DM
+		\item compute\_hash\_indexes() action: calculates hash indexes for all three hash functions on flow 5-tuple into metadata with correct bounds for both UM and DM.
+		\item \texttt{apply\_um\_meter()} action: increases counter and xors value in UM registers at all indexes indicated by hashes
+		\item \texttt{apply\_dm\_meter()} action: increases counter and xors value in DM registers at all indexes indicated by hashes
+		\newpage
+		\item apply: get L4 ports in metadata, add loss header if not present (assumes that we have no host-switch-host connections) - else store batch id as previous batch id, read last local batch id and update batch id. If new batch id is different from last local batch id, inform controller. Update batch id in loss header. Compute hashes and remove loss header if necessary. Apply UM (if flag to not execute is not set), apply DM (if flag to not execute is not set). Finally, drop packet if ttl=1, otherwise decrease ttl by 1.
+	\end{itemize}
+	\item Egress: if the packet is a clone packet, set loss header valid, ipv4 invalid, set batch id as last local batch id and set etherType.
+	\item Checksum: Update checksum of ipv4
+	\item Deparser: emit ethernet, ipv4, loss, tcp, udp
+\end{itemize}
+\vspace{-\topsep}
+
+\subsubsection{Control plane}
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Write rules into forwarding MAT
+	\item set crc custom hashes
+	\item Upon receiving a clone packet:
+	\begin{itemize}
+		\item Get the loss header fields (batch id) and the switch name (src)
+		\item Iterate over all neighboring switches (dst) of the switch (src)
+		\item For each neighboring switch, check the link to it: get the ports of the link at each respective switch, the extract the registers for both switches (UM for src, DM for dst).
+		\item Decode the two IBLTs: first, take the difference between UM and DM (UM-DM) (subtract counters and xor values) and store in diff array. Then, while there is a counter==1 in the counter diff array, get the array index associated with that counter and read out srcIP, dstIP, (ports, proto, id) in the respective diff arrays. From this, you get the flow 5-tuple. This allows you to calculate all 3 hashes for the flow. Then, at the 3 positions in the diff arrays indicated by the hashes, decrease the counter by 1 and xor the values with the values of the found flow 5-tuple. The found flow is a dropped packet.
+	\end{itemize}
+\end{itemize}
+\vspace{-\topsep}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.7\linewidth]{figures/ex06-register-structure}
+	\caption{Register port and batch structure}
+	\label{fig:ex06-register-structure}
+\end{figure}
 
 
 

@@ -1220,7 +1220,130 @@ Goal: Implement LossRadar. Packet losses are very common in nowadays networks. T
 \end{figure}
 
 
+\newpage
 
+\section{Oral exam questions}
+
+\noindent \textbf{What is P4? What does it enable?}
+
+P4 is a programming language that allows us to program reprogrammable switches. It tries to achieve reconfigurability, protocol independence and target independence. Rather than have the switch tell us the limited set of things it can do, P4 gives us a way to tell the switch what it should do, and how it should process packets.
+P4 enables us to define custom protocols by defining parsers and let's us control switches "top-down" by first specifying their forwarding behavior, then populating the tables we've defined. Instead of the switch chip vendor defining our API for us, and locking us into using their next chip as well, P4 let's us define the API we need to populate the switch. We say that P4 is "top-down" because it puts the network architect, programmer, and developer in charge, rather than the chip vendor.
+As such, we can define our own protocols and don't have to rely on hardware vendors to include protocols, as it was the case with OpenFlow. In OpenFlow, each supported protocol needs to be specified since OpenFlow assumes fixed-function switch chips.\\
+
+\noindent \textbf{What are the main differences between OpenFlow and P4?}
+
+\textit{OpenFlow is an API to the data plane, P4 allows to program the data plane.}
+
+\noindent  P4 is \textit{not} a replacement for OpenFlow - they try to achieve different things. Both are focused on opening up the forwarding plane. OpenFlow tries to centrally and remotely control lots of different switches, essentially providing an API to directly access the data plane. P4 on the other hand addresses a different need in the network, the need to \textit{program} the data plane.\\
+OpenFlow assumes the switch to have a fixed, well-known behavior, typically described in the datasheet of the switch ASIC. These switches supported a fixed set of protocols and you couldn't change their behavior or add new protocols. As interest in OpenFlow grew, more and more header-types were added. However, adding your own protocol is essentially only possible if you are a company with big influence and smaller companies are bound to use existing protocols. Adding more and more protcols led to OpenFlow becoming an "overblown beast". This strange behavior is all caused by the fact that switches were not programmable.\\
+That's where P4 comes in. With programmable switches, we can simply tell the switch how to process packets and what tables to keep. Programmers could define whatever API made sense to populate the tables they created in the switches. And that exactly is what P4 does. P4 is a common language to specify how a switch should process packets. P4 lets us define what headers a switch will recognize (or "parse"), how to match on each header, and what actions we would like the switch to perform on each header.\\
+
+\newpage
+
+\noindent \textbf{What roles do tables, actions and control flow play in P4?}
+
+Tables, actions and control flow are all components of P4 that play together for packet processing. P4 is based on the reconfigurable match tables (RMT) model. Once a packet has been parsed, it is matched against a set of tables. 
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Tables: A table matches on a set of header fields and applies an action with specified parameters. A match-action table entry thus consists of a set of header fields to match and a set of action parameters. Matching can be done in different ways (exact, lpm, ternary, range).
+	\item Action: An action is essentially a \textit{function} as known from classical programming languages. Actions can modify the packets and can be either invoked from within the control block or as a result of a match in a match-action table.
+	\item Control flow: Control flow allows us to specify how a packet is processed, specifying in what order tables and actions are applied. We can run actions, apply a table, check if a table has matched, which action was run, etc.
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent \textbf{What different memory structures exist in P4 switches? How do they differ?}
+
+We know that P4 switches make packet processing more efficient by making use of pipelined architectures that organize processing through a sequence of processing units and local memory. Match-action tables and parsers both need efficient memory lookups for matching. However, different matching types require different kinds of memory. As such, P4 switches have two different types of memory: TCAM and SRAM.
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item \textbf{SRAM(input: address, output: data)}: SRAM allows for fast random access, however it is expensive. As such, SRAM is used for exact matching in match action tables and to store the next state, fields to extract and other data (if any) for parsing.
+	
+	\begin{itemize}
+		\item Exact match MAT: In an exact match, we want to lookup the action for exact match-key data. We can use Cuckoo hashing to get $O(1)$ worst-case lookup, deletion and average-case insertion. For exact matching we hash the match-key and then do an SRAM lookup.
+		\item Parsing: The SRAM stores next state information, fields to extract, and any other data needed during parsing.
+	\end{itemize}	
+	
+	\item \textbf{TCAM(input: match field value, output: address of action)}: TCAM (ternary content-addressable memory) is a specialized type of high-speed memory that searches its entire contents in a single clock cycle. Generally speaking, CAM is often described as the opposite of random access memory (RAM). To retrieve data on RAM, the operating system (OS) must provide the memory address where the data is stored. Data stored on CAM can be accessed by performing a query for the content itself, and the memory retrieves the addresses where that data can be found. Due to its parallel nature, CAM (and by extension TCAM) is much faster than RAM. CAM is essentially a massively parallel lookup engine that searches all entries in parallel and selects the best match in constant time. The term “ternary” refers to the memory's ability to store and query data using three different inputs: 0, 1 and X. The “X” input, which is often referred to as a “don’t care” or “wildcard” state, enables TCAM to perform broader searches based on pattern matching (a binary CAM matches	every bit precisely).
+	
+	\begin{itemize}
+	\item LPM/ternary match MAT: In an LPM match, we want to lookup the action with the most specific match for a match-key. As such, SRAM is not ideal since we have multiple possible memory locations (a key can match several patterns). This is where TCAM comes into play: TCAM matches the key against all entries and returns the action address of the best match.
+	\item Parsing: The TCAM stores bit sequences that identify headers. The current state and a subset of bytes from the buffer are sent to the TCAM, which returns the first matching entry. The output of the TCAM points to an SRAM entry which specifies
+	the next state for the header identification module and the headers that were matched. The RAM entry may also specify data such as the number of bytes to advance and the subset of bytes to extract next (see figure \ref{fig:hardware_parser}).
+	\end{itemize}	
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent \textbf{What types of constructs do we need to maintain state across packets?}
+
+In P4, variables have local scope and their value is not maintained across subsequent invocations for different packets. However, there is a need for stateful programming (e.g. think of a stateful firewall).\\
+P4 offers 4 different types of stateful objects: registers, counters and meters.
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Registers: Registers are arrays of bit vectors. Both the width of the bit vector and the length of the array can be specified. Registers are stateful - they maintain their value across packets. We can read from and write to a specified register index. Registers can also be read from the control plane.
+	
+	\item Counters: Counters are used for counting. Counters are assigned in arrays and an index needs to be specified when executing a \texttt{count()} operation. Counters can be increased from the data plane but can only be read from the control plane. Counters can be one of three different types: packets, bytes, packet\_and\_bytes. There also exist direct counters which can be directly attached to a MAT.
+	
+	\item Meters: Meters are used for rate-limiting. Meters are also assigned in arrays. Like counters, we also have direct meters that can be attached to MATs.
+	\item MATs: Match-action tables can also be used to maintain state.\\
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent \textbf{What is a bloom filter? How do you dimension one?}
+
+A bloom filter is a probabilistic data structure that is used for membership queries. A Bloom filter enables a deterministic number of required operations at the cost of false positives. A Bloom filter consists of a fixed-size array (size M) of 1-bit cells and $K$ hash functions for insertion of $N$ elements. Inserting an element consists of hashing the element with all hash functions and setting the 1-bit cell to 1 at each position indicated by the $K$ hash functions. To check if an element is in the Bloom filter, we hash the element with each Hash function and check the 1-bit cells indexed by the hashes. If all cells are 1, we declare the element to be in the filter, else it's not in the filter. Due to hash collisions, we can get false positives, i.e. in the case where element $e_1$ has a hash collision with element $e_2$ on all $K$ hash functions: 
+
+$$h_i(e_1) = h_i(e_2) \qquad \forall i \in [1,K]$$
+
+\noindent Given $N, M$, we can design a Bloom Filter with minimal false positive rate by choosing 
+
+$$K = ln(2) * \frac{M}{N}$$
+
+\noindent (see section \ref{bloom_filter_dimension})\\
+
+\noindent \textbf{Explain what is a counter and the different ways it can be used.}
+
+Counters are one out of three stateful objects in P4. Counters are used for counting (obviously) and are always assigned in arrays. Counters can be one of three different counting types: packets, bytes, packets\_and\_bytes. Further, there are two different counter types: indirect and direct counters. We can call \texttt{count()} from the data plane but counters can only be read from the control plane.
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Indirect counter: Indirect counters are arrays of n\_counters independent counter values. Calling \texttt{count(in S index)} will increase the counter at the specified index.
+	\item Direct counter: Direct counters are counters that are directly attached to tables.\\
+\end{itemize}
+\vspace{-\topsep}
+
+\newpage
+
+\noindent \textbf{Describe the role of the 'register' extern in the v1model and how it can be used (at a high level).}
+
+Registers are one out of three stateful objects in P4. Registers are useful for storing (small amounts of) arbitrary data. Registers are assigned in arrays for which we can specify the length and width. We can read and write from/to registers from the data plane as well as from the control plane. This sets them apart from counters which can only be read from the control plane. As such, registers are widely used to store data that must be available over subsequent packets.\\
+Further, registers play an important role when creating more complex data structures such as Bloom filters or CountMin sketches.\\
+
+
+\noindent \textbf{In the exercise we made a 'traceroutable' P4 network. To do that we needed to generate ICMP packets when the TTL expired. Explain which additions were needed? (header definitions, how did the main headers struct look like, parser, main ingress/ egress logic, checksum updates, etc).}
+
+ICMP packets consist of an ethernet header, IP header and ICMP header. Inside the ICMP header, we have the original IP and TCP headers of the packet that created the ICMP message.
+
+\vspace{-\topsep}
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\item Headers: ICMP header (8 bytes total: type, code, checksum, unused), ipv4\_icmp headers which is a normal ipv4 header.
+	\item Main headers struct: the main headers struct thus included the following structs: ethernet (ethernet header), ipv4\_icmp (ipv4 header), icmp (icmp header), ipv4 (ipv4 header), tcp (tcp header)
+\end{itemize}
+\vspace{-\topsep}
+
+\noindent The parser remained unchanged since we only sent out ICMP packets. In the Deparser, we had to add two additional emits, essentially emitting all headers in the right order: ethernet, ipv4\_icmp, icmp, ipv4, tcp.\\
+For the ingress, we needed one additional table which matches on the ingress port and then sets the srcIP of the ipv4\_icmp to the IP of the interface. In the ingress logic, we have to differentiate between $ttl > 1$, in which case we apply normal forwarding/ECMP, and $ttl == 1$. For the later, we first set the ipv4\_icmp and icmp headers to valid. We then adapt the packet headers such that the packet can be sent back out on the port it came in (i.e. switch MACs, set egress port to ingress port, set dstIP to srcIP). We then apply the aforementioned table to set the srcIP of the ipv4\_icmp header to the IP of the interface.
 
 
 

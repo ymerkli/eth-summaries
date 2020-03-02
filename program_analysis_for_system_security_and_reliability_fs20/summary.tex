@@ -273,7 +273,16 @@ If the same output is spent in two different transactions, we have a double-spen
 	By increasing the transaction fees, you can control how fast your transaction is processed (a higher transaction fee gives a bigger incentive for miners to include the transaction in the block).\\
 \end{compactitem}
 
-Each transaction output is in one of two possible states: spent or unspent. The sum of all unspent transaction outputs (UTXOs) builds part of the shared state of the blockchain.
+\subsubsection{Transactions}
+
+Each transaction output is in one of two possible states: spent or unspent. The sum of all unspent transaction outputs (UTXOs) builds part of the shared state of the blockchain. A transaction is valid iff $\sum inputs \geq \sum outputs$.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.4\linewidth]{figures/bitcoin_transaction_structure}
+	\caption{Bitcoin transaction structure}
+	\label{fig:bitcointransactionstructure}
+\end{figure}
 
 \subsubsection{Bitcoin scripting}
 
@@ -297,13 +306,14 @@ contracts. A possible application is a timed commitment:
 Bitcoin scripts are limited though: no loops, no signature verification on arbitrary messages, no multiplication and shifting, no arithmetic on long numbers, no concatenation on bitstrings. Bitcoin scripting is not Turing complete.
 
 
-\subsection{Smart contracts}
+\section{Smart contracts and Ethereum}
 
 \begin{center}
 	A smart contract formalizes the terms of a contract in code.
 \end{center}
 
 A smart contract is a \textbf{computerized transaction protocol} that executes the \textbf{terms of a contract}. The general objectives are to satisfy common contractual conditions (such as payment terms, liens, confidentiality, and even enforcement), minimize exceptions both malicious and accidental, and \textbf{minimize the need for trusted intermediaries}. Related economic goals include lowering fraud loss, arbitrations and enforcement costs, and other transaction costs.\\
+Traditional vs smart contracts:
 
 \begin{center}
 	\begin{tabular}{|c|c|c|}
@@ -325,7 +335,11 @@ A smart contract is a \textbf{computerized transaction protocol} that executes t
 	\end{tabular}
 \end{center}
 
-\subsubsection{Ethereum}
+Judges are not needed in smart contracts for dispute resolution since smart contracts are precise and dont allow for interpretation (as language does). Further, nullification is not possible since once a smart contract is released, it lives on its own and isn't owned by anyone.
+
+\newpage
+
+\subsection{Ethereum}
 
 A decentralized platform designed to run smart contracts:
 
@@ -336,6 +350,219 @@ A decentralized platform designed to run smart contracts:
 	\item Transaction change the state of one more more contracts
 	\item Ethereum smart contracts are Turing-complete
 \end{compactitem}
+
+Once a contract is released it lives on its own and might be processed at some point by miners.
+
+\textbf{Bitcoin vs Ethereum}
+
+\begin{compactitem}
+	\item Bitcoin: Bob owns a private key to a set of unspent transactions (UTXOs). The sum of all UTXOs which can be unlocked with Bob's private key is Bob's Bitcoin balance. This makes it easy to make transactions and to prevent double-spending attacks.
+	\item Ethereum: Bob owns private keys to an account. An account has an address, a balance and some executable code. To update the balance, we update the balance of the account instead of storing unspent
+	transactions.
+\end{compactitem}
+
+\textbf{Ethereum accounts}
+
+\begin{compactitem}
+	\item User account: These are owned by some external entity (person, corporation,...). User accounts can send transactions to transfer Ether or trigger contract code. Contains: address, Ether balance.
+	\item Contract account: These are 'owned' by a contract (autonomous). But there is no real ownership for released contracts. Code execution is triggered by transactions that call functions. Contains: address, Ether balance, Associated contract code, Persistent storage (state).\\
+\end{compactitem}
+
+Smart contracts are written in some high-level language (\href{http://solidity.readthedocs.io}{Solidity}, \href{https://github.com/ethereum/vyper}{Vyper}). The high-level language is then compiled to a single low-level language. Currently, the low-level language is EVM (Ethereum virtual machine) bytecode. But this is to be replaced by Ethereum WebAssembly (eWASM) in Ethereum 2.0.\\
+Once a smart contract is deployed to Ethereum, it is immutable and exists forever. If you write a bug, you don’t get to take down the broken version; you can only fix-forward \footnote{there’s a selfdestruct() function that a contract can use to remove itself from the network}.\\
+
+\textbf{Example smart contract:}
+
+\begin{lstlisting}
+pragma solidity 0.5.8; //specify Solidity version
+contract SimpleBank { //contract name
+  mapping(address => uint) balances;
+  function deposit(uint amount) payable public {
+    balances[msg.sender] += amount;
+  }
+  function withdraw() public {
+    msg.sender.transfer(balances[msg.sender]);
+    balances[msg.sender] = 0;
+  }
+}
+\end{lstlisting}
+
+with:
+
+\begin{compactitem}
+	\item mapping(address $=>$ uint) balances: Local state maintains a mapping from user addresses to unsigned integers
+	\item deposit(uint amount): Function that allows users to deposit ether at the SimpleBank contract
+	\item payable: Function can receive Ether
+	\item public: Any user can invoke the function
+	\item msg.sender returns the address of the transaction sender
+	\item withdraw(): Trigger a transfer of ETH with value equal to balances[msg.sender] to the transaction sender and then set the balance of the transaction sender to zero.
+\end{compactitem}
+
+\newpage
+
+\subsubsection{Ethereum transactions}
+
+\begin{tabular}{|c|c|c|}
+	\hline 
+	From & $<$address$>$ & Address of the transaction sender \\ 
+	\hline 
+	To & $<$address$>$ & Address of the target contract \\ 
+	\hline 
+	Data & $<$method$>$, $<$arg$>$,...,$<$arg$>$ & ID of the method to invoke, along with arguments \\ 
+	\hline 
+	Value & $<$amount$>$ & Amount of Ether sent to the target contract \\ 
+	\hline 
+	Gas/ gas price &  &  \\ 
+	\hline 
+\end{tabular}\\
+
+\textbf{Gas}
+
+A transaction could contain an infinite loop (Ethereum is Turing complete) and thus a miner would need to process it forever. The solution to this is \textit{gas}:
+
+\begin{compactitem}
+	\item A transaction requires “gas” to fuel contract execution
+	\item Each EVM opcode requires gas to execute
+	\item Some EVM opcodes consume variable amount of gas (e.g. SSTORE)
+	\item Every transaction specifies the maximum ether the sender is willing to spent on the transaction (max gas + gas price)
+	\item If the contract successfully executes, the unspent ether is refunded to the sender
+	\item If execution runs out of gas, the execution reverts without refunding ether to the transaction sender
+\end{compactitem}
+
+Thus, in case of an infinite loop, the transaction will eventually run out of gas and the execution will be reverted.
+
+Different EVM opcodes require different amounts of gas. Some operations even cost a negative amount of gas: If you use storage in the blockchain (using \texttt{SSTORE}) and then free it up, you get a reward $\rightarrow$ negative gas price.\\
+
+An attacker can exploit the gas mechanism by crafting a transaction that triggers an out-of-gas exception at an arbitrary point in the execution. This may create undesirable behaviors if the out-of-gas exception
+does not revert the entire transaction.\\
+
+\textbf{Ether transfers}
+
+An ether transfer to a contract implicitly calls the receiver contract. Contract B takes control over the execution:
+
+\vspace{-\topsep}
+\begin{figure}[hb]
+	\centering
+	\includegraphics[width=0.5\linewidth]{figures/ether_transfer}
+	\caption{Ether transfers}
+	\label{fig:ethertransfer}
+\end{figure}
+\vspace{-\topsep}
+
+In order to avoid target contracts exploiting this, a Gas limit which is provide to the receiver was put into place. Types of ether transfers:
+
+\vspace{-\topsep}
+\begin{center}
+	\begin{tabular}{|c|c|c|}
+		\hline 
+		& Gas provided to the receiver & Error propagation \\
+		\hline
+		transfer(amount) & 2300 & yes \\ 
+		\hline 
+		send(amount) & 2300 & no \\ 
+		\hline 
+		call.value(amount)() & All remaining gas & no \\ 
+		\hline 
+	\end{tabular} 
+\end{center}
+\vspace{-\topsep}
+
+The gas provided to the receiver can also be manually specified, e.g. \texttt{.value(amount).gas(1000)}
+
+\newpage
+
+\subsubsection{Contract calls}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.5\linewidth]{figures/contract_call_crowdsale}
+	\label{fig:contractcallcrowdsale}
+\end{figure}
+
+\textbf{How can an attacker exploit calls to external contracts?}
+The attacker may own the external contract and can thus execute arbitrary code. In particular, the attacker may “call back” the contract before returning control to the caller (we will see an example of this vulnerability later).
+
+\subsubsection{Authorization in smart contracts}
+
+Any user can call arbitrary functions in contracts. The contract must explicitly restrict access to sensitive functions.
+
+\vspace{-\topsep}
+\begin{figure}[hb]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.7\linewidth]{figures/smart_contract_auth}
+		\label{fig:smart_contract_auth}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/smart_contract_auth2}
+		\label{fig:smart_contract_auth2}
+	\end{subfigure}
+\end{figure}
+\vspace{-\topsep}
+
+\subsubsection{Storage model}
+
+The storage model of Ethereum is essentially one huge array. There is no isolation in the storage model, everything goes everywhere! The storage array has $2^{256}$ entries (thus an offset of 256 bits) and a 256 bit wide value per entry. Storage is public since miners need to know it.
+
+\begin{compactitem}
+	\item \textbf{Variables} are stored at the offset specified by their index.\\
+	Example: owner = 0xFeedBeef, Stored at offset = owner ID
+	\item \textbf{Mappings} have a base offset which comes from their index. The offset of the values in the mappings are calculated through: $hash(mapping\_base || maping\_key)$.\\
+	Example: balances[key] = 10, Offset = $SHA3(balances ID || key)$
+	\item \textbf{Arrays} have a base offset which comes from a hash of their index. Arrays then linearly extend.\\
+	Example: investors[10] = 0xFeed, Offset = $SHA3(arr ID) + 10$
+\end{compactitem}
+
+\vspace{-\topsep}
+\begin{figure}[hb]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=1\linewidth]{figures/storage_model_var}
+		\caption{Storage model for variables}
+		\label{fig:storage_model_var}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=1\linewidth]{figures/storage_model_mapping}
+		\caption{Storage model for mappings}
+		\label{fig:storage_model_mapping}
+	\end{subfigure}
+\end{figure}
+\vspace{-\topsep}
+
+\newpage
+
+\subsection{Vulnerabilities of smart contracts}
+
+\subsubsection{The DAO bug}
+
+\vspace{-\topsep}
+\begin{figure}[hb!]
+	\centering
+	\includegraphics[width=0.5\linewidth]{figures/dao_bug}
+	\label{fig:daobug}
+\end{figure}
+\vspace{-\topsep}
+
+In the wallet contract code in the withdraw function, the balance is set to zero \textit{after} the amount is sent to the msg.sender. The malicious sender would then call withdraw again before the balance is set to zero and could thus withdraw the same amount multiple times.
+
+\subsubsection{BatchTransfer ERC20 Bug}
+
+\begin{figure}[hb!]
+	\centering
+	\includegraphics[width=0.5\linewidth]{figures/batchoverflow_exploit}
+	\label{fig:batchoverflowexploit}
+\end{figure}
+\vspace{-\topsep}
+
+An attacker can send a very large \texttt{\_value} $\rightarrow$ all senders will get this very large value. However, the very large value will cause an overflow in \texttt{amount}, which results in \texttt{amount} becoming small. The sender will only be substracted \texttt{amount} (small)!
+
+\subsection{Semantics and security properties}
+
+
 
 \titlespacing{\subsection}{0pt}{2ex}{2ex}
 

@@ -17,6 +17,7 @@
 \usepackage{textcomp}
 \usepackage{fancyhdr}
 \usepackage{multirow}
+\usepackage{multicol}
 \usepackage{tikz}
 \usepackage{lipsum}
 \usepackage{xcolor}
@@ -26,6 +27,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[compact]{titlesec}
 \usepackage{paralist}
+\usepackage{makecell}
 \newcommand{\hint}[1]{{\color{blue} \em #1}}
 
 \makeatletter %% <- make @ usable in command names
@@ -174,6 +176,8 @@ capacity, throughput and latency.
 An underlying principle that has been valid for a long time is the principle of \textbf{data independence} (developed by Edgar Codd): Data Independence is defined as a property of DBMS that helps you to change the Database schema at one level of a database system without requiring to change the schema at the next higher level. Data independence helps you to keep data separated from all programs that make use of it.\\
 This means we could e.g. change the physical storage (e.g. iPad instead of HDD) \textit{without} changing the logical data model.\\
 
+\textbf{Data shapes:} Text, trees, tables, graphs, cubes.
+
 \textbf{Overall architecture}\\
 The overall architecture of a DBMS consists of:
 
@@ -182,9 +186,9 @@ The overall architecture of a DBMS consists of:
 	\setlength{\itemsep}{0pt}
 	\setlength{\parskip}{0pt}
 	\item Language (e.g. SQL)
-	\item Model (e.g. Tables (old); graphs, trees, cubes (new)
-	\item Compute (e.g. single CPU (old); hadoop cluster (new))
-	\item Storage (e.g. HDD (old); distributed storage (new)
+	\item Model (e.g. Tables (old), graphs, trees, cubes (new)
+	\item Compute (e.g. single CPU (old), hadoop cluster (new))
+	\item Storage (e.g. HDD (old), distributed storage (new))
 \end{itemize}
 \vspace{-\topsep}
 
@@ -218,8 +222,8 @@ A relation R is made of:
 \end{itemize}
 \vspace{-\topsep}
 
-\textbf{Tabular integrity:} Holds if all rows have the same attributes and have a valid value for the attributes.\\
-\textbf{Atomic integrity:} No tables in tables.\\
+\textbf{Tabular integrity:} Holds if all rows have the same attributes and have a value for the attributes.\\
+\textbf{Atomic integrity (1st normal form):} No tables in tables.\\
 \textbf{Domain integrity:} All attribute values are of the specified type (e.g. an attribute \textit{Name} of type string can't be an integer).\\
 
 In SQL, tabular integrity, atomic integrity and domain integrity all hold. In NoSQL however, none of these three properties hold.
@@ -238,6 +242,8 @@ In SQL, tabular integrity, atomic integrity and domain integrity all hold. In No
 	\item Relational Algebra: This algebra underlies most query languages for the relational model. Its principal operators are union, intersection, difference, selection, projection, Cartesian product, natural join, theta-join, and renaming.
 	\item Selection and Projection: The selection operator produces a result consisting of all tuples of the argument relation that satisfy the selection condition. Projection removes undesired columns from the argument relation to produce the result.
 	\item Joins: We join two relations by comparing tuples, one from each relation.	In a natural join, we splice together those pairs of tuples that agree on all attributes common to the two relations. In a theta-join, pairs of tuples are concatenated if they meet a selection condition associated with the theta-join.
+	\item Grouping: Aggregate multiple rows by some attribute.
+	\item Sorting: Sort rows by some attribute.
 	\item Constraints in Relational Algebra: Many common kinds of constraints can be expressed as the containment of one relational algebra expression in another, or as the equality of a relational algebra expression to the empty set.
 \end{compactitem}
 
@@ -324,7 +330,7 @@ Schema: Data Definition Language (DDL) (Create or table/schema, drop it)
 
 \subsection{Transactions}
 
-The good old times of databases: ACID (Atomicity, Consistency, Isolation, Durability).
+The good old times of databases: ACID (Atomicity, Consistency, Isolation, Durability). This is a feature of traditional database since it is only achievable on small DBMS. ACID ensures that transactions are correct (e.g. bank transaction: either I receive money and bank updates balance or nothing at all). 
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -333,9 +339,11 @@ The good old times of databases: ACID (Atomicity, Consistency, Isolation, Durabi
 	\item Atomicity: Either the entire transaction is applied, or none of it (rollback).
 	\item Consistency: After a transaction, the database is in a consistent state again.
 	\item Isolation: A transaction feels like nobody else is writing to the database.
-	\item Durability: Updates made do not disappear again.
+	\item Durability: Updates made do not disappear again (changes are persistent).
 \end{itemize}
 \vspace{-\topsep}
+
+With big data, we drop the ACID principle.
 
 \subsection{Performance}
 
@@ -353,6 +361,10 @@ There is no such thing as "one size fits all" - data shape matters.
 \subsection{Data scale-up}
 
 Data can have lots of rows, lots of columns and lots of nesting. For the rest of this lecture, we are concerned with exactly this: scaling up!
+
+\subsection{SQL}
+
+SQL stems from Sequel (Structured Englisch QUEry Language) and is a declarative language.
 
 \newpage
 
@@ -595,7 +607,7 @@ One single machine is not good enough - how do we scale?
 
 Amazon's S3 model is very simple, it's essentially: \textit{objects in buckets}. S3 has no tables, cubes,... and no nesting (no buckets in buckets). We have many buckets and each bucket has a \textit{bucket ID}. Each object inside a bucket has an \textit{object ID}. Having buckets makes things cleaner and makes it easy to assign them to machines. An object can be anything (picture, video, etc.) and every object can be accessed by the tuple $(bucket\_id, object\_id)$. The \textit{maximum object size is 5TB} and we can have up to 100 buckets per account (more upon request).
 
-\textbf{Service level agreement (SLA):} SLA assures the quality of the service, e.g. 99.999999999\% durability (loss of 1 in $10^11$ objects in a year) and 99.9\% availability (1h/year downtime). Very high SLAs are \textit{very} hard to achieve (e.g. 99.99999\% SLA) corresponds to 4seconds/year outage - almost impossible. Amazon has a different approach to SLAs: response time < 10ms in 99.9\% of the cases.
+\textbf{Service level agreement (SLA):} SLA assures the quality of the service, e.g. 99.999999999\% durability (loss of 1 in $10^{11}$ objects in a year) and 99.9\% availability (1h/year downtime). Very high SLAs are \textit{very} hard to achieve (e.g. 99.99999\% SLA) corresponds to 4seconds/year outage - almost impossible. Amazon has a different approach to SLAs: response time $<$ 10ms in 99.9\% of the cases.
 
 \subsection{APIs}
 
@@ -709,7 +721,7 @@ Azure thus has one more layer of indirection: account, container, blob. Further,
 \textbf{Storage replication:}
 
 \begin{compactitem}
-	\item Intra-stamp replication (synchronous): Replication within the streaming later (i.e. within the same location (data center)).
+	\item Intra-stamp replication (synchronous): Replication within the streaming layer (i.e. within the same location (data center)).
 	\item Inter-stamp replication (asynchronous): Replication between different partition layers (i.e. between different locations (data centers))\\
 \end{compactitem}
 
@@ -737,13 +749,18 @@ Azure thus has one more layer of indirection: account, container, blob. Further,
 	\end{subfigure}
 \end{figure}
 
+\textbf{Stream Layer:} Stores the bits on disk and is in charge of distributing and replicating the data across many servers to keep data durable within a storage stamp. Can be thought of as a distributed file system layer within a stamp.\\
+\textbf{Partition Layer:} Built for (a) managing and understanding higher level data abstractions (Blob, Table, Queue), (b) providing a scalable object namespace, (c) providing transaction ordering and strong consistency for objects, (d) storing object data on top of the stream layer, and (e) caching object data to reduce disk I/O.\\
+\textbf{Front-End Layer:} Set of stateless servers that take incoming requests.\\
+
+
 \subsection{Mindsets}
 
 Amazon and Azure have different mindsets in their cloud services:
 
 \begin{compactitem}
 	\item Amazon mindset: Amazon thinks a lot in terms of modules. They have ~200 different services they offer (S3, domain management, AWS,...) $\rightarrow$ a lot of small services that each do one particular thing.
-	\item Azure mindset: Azure has bigger services that do more $\rightarrow$ fewer services that do several things.
+	\item Azure mindset: Azure has bigger services that do more $\rightarrow$ fewer services that do several things.\\
 \end{compactitem}
 
 \section{Distributed file systems}
@@ -820,10 +837,11 @@ Again, rememeber data independence: separate the logical model from the physical
 
 \textbf{File system (logical model):} In distributed file systems, we have a \textbf{file hierarchy} (unlike the key-value model in object storage which is flat).
 
-\textbf{Block storage (physical storage):} In distributed file systems, we have block storage (unlike object storage where we have a blackbox model). Terminology: HDFS: Block, GFS: Chunk.
+\textbf{Block storage (physical storage):} In distributed file systems, we have block storage (unlike object storage (S3) where we have a blackbox model).\\
+\textbf{Terminology}: HDFS: Block, GFS: Chunk.
 We thus have a hierarchy of files where each file is associated with a chain of blocks.\\
 
-Why blocks? 1) The files are bigger than a disk (PBs) , there is no way the files fit on a single machine $\rightarrow$ need blocks. 2) Simple level of abstraction.
+\textbf{Why blocks?} 1) The files are bigger than a disk (PBs) , there is no way the files fit on a single machine $\rightarrow$ need blocks. 2) Simple level of abstraction and blocks are easy to distribute over multiple nodes.
 
 \textbf{Block size:} Every file is a multiple of blocks. In a simple file system, we have a block size of 4kB $\rightarrow$ good size for local machines, good compromise. However, in distributed file systems, things are different: blocks travel over the network and we have very large (PB) files. Due to the throughput-latency discrepancy, we want larger blocks (for small blocks, the latency would outweigh the transfer time). Further, large blocks lead to less blocks being read per file. The block size in distributed file systems is \textbf{64MB - 128MB}. This is a good compromise - not too many blocks for big files, but also small enough to have several blocks on one machine.\\
 
@@ -864,7 +882,7 @@ delete file) and the namenode responds with the datanode location and the block 
 	\item registration
 	\item heartbeat: datanode tells namenode every 3s that it's still alive
 	\item blockreport: every 6h, datanode sends full list of blocks (not the contents of the blocks) to the namenode
-	\item blockreceived\\
+	\item blockReceived\\
 \end{compactitem}
 
 \textbf{Data transfer protocol:} The data transfer protocol handles \textit{client-datanode} communication and is used by clients to read actual block content. The client knows which datanode to contact for a given block - it got that information from the namenode.\\
@@ -880,7 +898,7 @@ Client writes a file:
 
 \begin{compactenum}
 	\item Client sends create to namenode
-	\item Namenode sends datanodes for first block
+	\item Namenode sends datanodes (all replicas) for first block
 	\item Client organizes pipeline by contacting one datanode and tells the datanode which other datanodes to forward the data to
 	\item Client then sends the data over to the datanode
 	\item Datanode sends Ack
@@ -889,14 +907,15 @@ Client writes a file:
 	\item Client sends close/release lock
 	\item Datanodes check with namenode for minimal replication (datanode protocol)
 	\item Namenode sends Ack to client
-	\item Namenode replicates further asynchronously
+	\item Namenode can tell datanodes to replicate further asynchronously
 \end{compactenum}
 
 This block-by-block writing is all done simultaneously under DFSOutputStream (streaming through), checksums are used to provide data integrity.
 
-\begin{figure}[hb!]
+\begin{figure}[t!]
 	\centering
 	\includegraphics[width=0.4\linewidth]{figures/hdfs_client_write}
+	\caption{Client writes a file to HDFS}
 	\label{fig:hdfsclientwrite}
 \end{figure}
 
@@ -923,9 +942,12 @@ What if we placed replicas 1\&2 on the same rack? If you always put the first tw
 
 We could also put all first 3 replicas on 3 different racks, but this would need more data being sent between racks (takes longer).
 
+\textbf{Distance:} HDFS estimates the network bandwidth between two nodes by their distance. The distance from a node to its parent node is assumed to be one. A distance between two nodes can be calculated by summing up their distances to their closest common ancestor. A shorter distance between two nodes means that the greater bandwidth they can utilize to transfer data. The distance between two nodes a, b in racks A, B is:\\
+$d(A,B) = \text{\#hops to TOR switch A + \#hops to cluster switch + \#hops to TOR switch B + \#hops to node b}$\\
+
 \subsection{Performance and availability}
 
-The NameNode is responsible for file namespace, file-block mapping, block locations and is a single point of failure. We want the file namespace and file-block mapping to persist. HDFS thus puts the namespace file and an edit log onto persistent storage (edit log allows to not rebackup the whole hierarchy and mapping, only the things that change). We further also backup the persistent storage with the namespace file and the edit log to shared drives/ backup drives/ etc.\\
+The NameNode is responsible for file namespace, file-block mapping, block locations and is a single point of failure. We want the file namespace and file-block mapping to persist; the block locations don't need to persist since datanodes will tell us the blocks they have. HDFS thus puts the namespace file and an edit log onto persistent storage (edit log allows to not rebackup the whole hierarchy and mapping, only the things that change). We further also backup the persistent storage with the namespace file and the edit log to shared drives/ backup drives/ etc.
 
 What if the namenode fails? We need to start it up again:
 
@@ -939,13 +961,2302 @@ This startup takes ~30min. Can we do better?
 \begin{compactitem}
 	\item Checkpoints: periodically play the edit log and reconstruct a more recent namespace file. This way, we don't have to replay the \textit{whole} edit log upon failure.
 	\item High Availability (HA): Standby NameNodes. Have standby machines that keep the exact same state and immediately take over in case the active namenode crashes.
-	\item Federated DFS
+	\item Federated DFS: dedicated namenodes for different top directories.
 \end{compactitem}
 
 \subsection{Using HDFS}
 
+We can interact with HDFS as with a normal POSIX file system:
+
+\vspace{-\topsep}
+\begin{verbatim}
+$ hadoop fs -ls
+$ hadoop fs -cat /dir/file
+$ hadoop fs -rm /dir/file
+$ hadoop ds -mkdir /dir2
+\end{verbatim}
+
+HDFS Shell: upload and download
+
+\vspace{-\topsep}
+\begin{verbatim}
+$ hadoop fs -copyFromLocal localfile1 localfile2 /user/hadoop/hadoopdir
+$ hadoop fs -copyToLocal /user/hadoop/file localfile
+\end{verbatim}\\
+\vspace{-\topsep}
+
+\textbf{Populating HDFS:}
+\begin{compactitem}
+	\item Apache Flume: Collects, aggregates, moves log data (into HDFS)
+	\item Apache Sqoop: Imports from a relational database\\
+\end{compactitem}
+
+\subsection{Reading: The Hadoop Distributed File System \cite{shvachko2010hadoop}}
+
+\begin{compactitem}
+	\item All servers are fully connected and communicate with each other using TCP-based protocols.
+	\item DataNodes in HDFS do not use data protection mechanisms such as RAID - they use replication.
+	\item Files and directories are represented on the NameNode by inodes, which record attributes like permissions, modification and access times, namespace and disk space quotas. The file content is split into large blocks (typically 128 megabytes, but user selectable file-by-file) and each block of the file is independently replicated at multiple DataNodes (typically three, but user selectable file-by-file).
+	\item Each block replica on a DataNode is represented by two files in the local host’s native file system. The first file contains the data itself and the second file is block’s metadata including checksums for the block data and the block’s generation stamp.
+	\item Unlike conventional file systems, HDFS provides an API that exposes the locations of a file blocks. This allows applications like the MapReduce framework to schedule a task to where the data are located, thus improving the read performance.
+	\item An application adds data to HDFS by creating a new file and writing the data to it. After the file is closed, the bytes written cannot be altered or removed except that new data can be added to the file by reopening the file for append. HDFS implements a single-writer, multiple-reader model.
+\end{compactitem}
 
 
+\section{Syntax}
+
+Now, we can store data - both structured and unstructured. But: how do the files of data actually look like?
+
+\subsection{Introduction}
+
+Remember: we have data shapes text, trees, tables, cubes and graphs. In this section, we are concerned with the layers \textit{Encoding, Syntax} of the data stack as given in figure \ref{fig:datastack}. The Syntax stack is:
+
+\begin{compactitem}
+	\item Text: just text (i.e. the characters)
+	\item Table: CSV
+	\item Tree: XML, JSON
+	\item Graph: RDF/XML, Turtle
+	\item Cube: XBRL
+\end{compactitem}
+
+\textbf{Semi-Structured Documents}
+
+\begin{compactitem}
+	\item Structured: tables
+	\item Semi-structured: trees (JSON, XML)
+	\item Unstructured: text
+\end{compactitem}
+
+Why do we need syntax? Well-formedness: One syntax = one language, decide whether $D \in L$\\
+
+
+\textbf{The denormalizing road from SQL to NoSQL:}
+
+\begin{compactitem}
+	\item Relational database: Homogeneous collection of flat items. Homogeneous meaning that on every row has the same columns and every row has some value for every column (even if null)
+	\item Document store: Heterogeneous collection of arborescent items. Heterogeneous meaning that we have missing fields for some data points, you can even have type mismatch for same header in different data points.	
+\end{compactitem}
+
+\subsection{CSV (tables)}
+
+In CSV (Comma separated values), we essentially have rows of text, where the top row is a headers row and all following rows are data rows where values are separated by commas. This is very easy - but it works, can have billions of rows. Note: there is an RFC for CSV, but in practice there are multiple 'flavors' of CSV (e.g. how do you escape commas).
+
+\begin{figure}[hb!]
+	\centering
+	\includegraphics[width=0.4\linewidth]{figures/csv}
+	\label{fig:csv}
+\end{figure}
+
+\textbf{Remember:} In big data, we break several paradigms from relational databases:
+
+\begin{compactitem}
+	\item $1^{st}$ normal form (atomic integrity): no tables in tables
+	\item Boyce-Codd Normal Form: have plenty of small tables that do one thing instead of one big table
+\end{compactitem}
+
+Relational databases are highly normalized whereas in big data have data denormalization (NoSQL). A highly normalized DB should be write-intensive and should avoid update anomalies. A highly denormalized DB should be read-intensive and should avoid joins.\\
+Nesting (i.e. tables in tables) is \textit{not} possible with CSV.
+
+\subsection{JSON}
+
+JSON is a syntax like CSV but it's based on tuples and we repeat the headers in each new object. Syntax:
+
+\vspace{-\topsep}
+\begin{verbatim}
+{
+"product" : "Phone",
+"price" : 800,
+"quantity" : 1
+}
+\end{verbatim}
+\vspace{-\topsep}
+
+JSON can represent a normal table (collection of tuples) \textit{but} also nestedness (collection of tuples in tuples). CSV can't do this, in CSV we can only separate single values by comma.\\
+\textbf{JSON data types:}
+
+\begin{compactitem}
+	\item Strings: \verb|"foo"| (\textit{has} to be double quotes), escaping is possible: \verb|"foo\nbar\u005f"|
+	\item Number: \verb|3.1414, -1.2345E+5|
+	\item Boolean: \verb|true, false|
+	\item Null: \verb|null|
+	\item Array: list of anything you want
+	\begin{verbatim}
+	  [ 3.1414, true, "This is a string", {"foo": false}, null ]
+	\end{verbatim}
+	\item Object: key-value store (key must be a string, value can be any data type)
+	\begin{verbatim}
+	  {
+	    "foo": 3.14159265368979,
+	    "bar": true,
+	    "str": "This is a string",
+	    "obj": { "school" : "ETH"},
+	    "Q": null
+	  }
+	\end{verbatim}	
+\end{compactitem}
+
+\textbf{JSON well-formedness:}
+
+\begin{compactitem}
+	\item Keys need to be strings (i.e. require double-quotes "")
+	\item Keys (should syntactically but really:) need to be distinct\\
+\end{compactitem}
+
+\subsection{XML}
+
+XML, the Extensible Markup Language, is a W3C-endorsed standard for document markup. XML is really similar to JSON but much more complex. Syntax:
+
+\begin{compactitem}
+	\item XML Element: \verb|<foo>[more XML]</foo>|, \verb|<bar/> = <bar></bar>|\\
+	\verb|<foo>| is the opening tag, \verb|</foo>| is the closing tag, \verb|[more XML]| is the element's content.\\
+	 \verb|<bar/>| is an empty tag. Tag names are \textit{case-sensitive}.
+	\item XML Attribute: \verb|<a attr="value"/>|\\
+	Key-value pair. Keys can't be repeated in an element. Key: not quoted, value: \textit{must} be quoted (single or double quotes).
+	\item XML Text: \verb|<a>This is text</a>|
+	\item Text declaration: \verb|<?xml version="1.0" encoding="UTF-8"?>|
+	\item Comments: \verb|<!-- I need to verify and update these links when I get a chance. -->|\\
+	The double hyphen \verb|--| must not appear anywhere inside the comment until the closing \verb|-->|. In particular, a three-hyphen close like \verb|--->| is specifically forbidden.
+	\item Processing Instructions: XML provides processing instructions as an alternative means of passing information to applications that may read the document. A processing instruction begins with \verb|<?| and ends with \verb|?>|. Immediately following the \verb|<?| is an XML name called the target (the name of the application for which this processing instruction is intended or possibly just an identifier for the processing instruction).\\
+	example: \verb|<?php [PHP code] ?>|
+	\item XML Declaration: XML documents should (but do not have to) begin with an XML declaration.\\
+	\verb|<?xml version="1.0" encoding="ASCII" standalone="yes"?>|
+\end{compactitem}
+
+\textbf{XML well-formedness:}
+
+\begin{compactitem}
+	\item There can only be \textit{one} top element (root element), i.e. can't have:
+	\begin{verbatim}
+	  <?xml version="1.0" encoding="UTF-8"?>
+	  <foo/>
+	  <bar/>
+	\end{verbatim}
+	\item Can't have text outside of top element
+	\item Can't have an element inside an element tag. Only between tags is possible.
+	\item Can't have same key twice in the same element
+	\item Need to respect nesting order of opening and closing tags (like parenthesis order)
+	\item No \verb|<| in text (need to escape) - confuses the parser
+\end{compactitem}
+
+\begin{figure}[hb!]
+	\centering
+	\includegraphics[width=0.4\linewidth]{figures/xml_syntax}
+	\caption{What Appears Where?}
+	\label{fig:xmlsyntax}
+\end{figure}
+
+\textbf{Escape characters (XML: Entity References)}
+
+\begin{compactitem}
+	\item \verb|<|: \verb|&lt;|
+	\item \verb|>|: \verb|&gt;|
+	\item \verb|'|: \verb|&apos;| (Note: single quote inside double-quotes string is ok)
+	\item \verb|"|: \verb|&quot;|
+	\item \verb|&|: \verb|&amp;|
+\end{compactitem}
+
+All these characters need to be escaped. Special characters can also be inserted (see XML character references).\\
+
+\textbf{XML names:} XML names may contain any alphanumeric character. This includes A-Z, a-z, 0-9, non-English letters, numbers, and ideograms, such as ö, ç, $\Omega$, the  three punctuation characters '\_', '-', '.'. XML names may not contain other punctuation characters such as quotation marks, apostrophes, dollar signs, carets, percent symbols, and semicolons. The colon is allowed, but its use is reserved for namespaces.\\
+XML names can't start with numbers and we can't have \verb|<| in a name. All names beginning with the string “XML” (in any combination of case) are reserved for standardization in W3C XML-related specifications.\\
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.5\linewidth]{figures/xml_names}
+	\caption{ASCII characters allowed in XML names}
+	\label{fig:xmlnames}
+\end{figure}
+
+How do you tell well-formedness? An editor (oXygen, ...) will tell you. Note: Indentation does \textit{not} matter in XML - it's only useful to make it more readable.\\
+
+\textbf{CDATA sections:} If you don't want to escape every single $<$ and \& (e.g source code) you can enclose sample of literal code in a CDATA section. A CDATA section is set off by \verb|<![CDATA[ and ]]>|. Everything between the \verb|<![CDATA[ and the ]]>| is treated as raw character data. Less-than signs don’t begin tags. Ampersands don’t start entity references. Everything is simply character data, not markup.
+
+\newpage
+
+\subsubsection{XML as a data format}
+
+Why Use XML for Data? Before XML, individual programmers had to invent a new data format every time they needed to save a file or send a message. Programmers thus often just used the most convenient format to store data - this made understanding the data format and loading it into any other program extremely difficult. The unique strengths of using XML as a software data format include: simple syntax, support for nesting, easy to debug, language- and platform-independent.
+
+XML can be used in various case:
+
+\begin{compactitem}
+	\item Communication protocols: REST APIs, RPC (XML-RPC), SOAP
+	\item Object serialization: store the state of persistent objects
+	\item File formats: XML as a format to store application data (e.g. game store, spreadsheet, transaction,...)
+	\item Databases: XML can play a role in the communications between databases and other software, providing information in an easily reusable form. 
+\end{compactitem}
+
+\subsection{YAML - the "Python of JSON"}
+
+\begin{verbatim}
+%YAML 1.2
+---
+Country:
+code: 'CH'
+name: 'Switzerland'
+population: 8014000
+currency:
+name: 'Swiss Franc'
+code: 'CHF'
+confederation: true
+president : Ueli Maurer'
+capital: null
+cities:
+- 'Zurich'
+- 'Geneva'
+- 'Bern'
+description: 'We produce very good chocolate.'
+\end{verbatim}
+
+\newpage
+
+\section{Wide column stores}
+
+In the relational model we have a schema that specifies attributes \& types and once this is specified, the table can be filled. Issues with relational databases (RDBMS) are smale scale and the fact that they run on a single machine - PBs of data don't fit!\\
+\textbf{Column-Oriented Databases:} Column-oriented databases save their data grouped by columns. The reason to store values on a per-column basis instead is based on the assumption that, for specific queries, not all of the values are needed. HBase is \textbf{not} a column-oriented database in the typical RDBMS sense, but utilizes an on-disk column storage format.
+
+
+\textbf{Can we fix RDBMs?}
+The performance of RDBMSes is well suited for transactional processing, it is less so for very large-scale analytical processing
+
+\begin{compactitem}
+	\item Scaling up (more storage etc.) helps a little but doesn't solve the underlying problem $\rightarrow$ we still can't handle PBs of data.
+	\item Scaling out (cluster, replicate): People tried this 20 years ago $\rightarrow$ very tedious and it didn't really work. It was further very hard to setup and had high maintenance cost.
+\end{compactitem}
+
+Database (De-)Normalization: Design schemas differently - Denormalization, Duplication, and Intelligent Keys (DDI). It is about rethinking how data is stored in Bigtable-like storage systems, and how to make use of it in an appropriate way.
+
+Solution: \textbf{HBase}:
+
+\begin{compactitem}
+	\item an open-source tech that allows you to store a relational table on a cluster
+	\item By design running on a scalable cluster of commodity hardware
+	\item By design running on a scalable cluster of commodity hardware
+	\item HBase uses HDFS to store data (use a distributed FS to run a DB in a distributed way)
+\end{compactitem}
+
+\subsection{Wide column stores: data model}
+
+We first look at the underlying logical model of wide column stores. The founding paper was Google's BigTable. The problem with the tabular model is \textit{expensive joins}. In the tabular model we have lots of tables (BCD normal form) which requires lots of joins $\rightarrow$ very expensive, especially in the distributed setting.\\
+As such, the design paradigm of BigTable is: \textit{store together	what is	accessed together} and avoid the whole join complexity (e.g. if customer \& order info is accessed together, put it together). This breaks Boyce-Codd normal form $\rightarrow$ this is bad practice in relational databases. In big data, this is good practice. Keep together what belongs together. This is a shift of paradigm: \textit{denormalize}.
+
+\subsubsection{Logical model of Wide column stores ("key-value model with columns on top")}
+
+The logical model of HBase is \textit{big tables with lots of rows (billions)}. 
+
+\begin{compactitem}
+	\item Rows: Each row has a unique identifier (similar to key-value model). The user has full control over the row IDs $\rightarrow$ can specify e.g. country-code at beginning of row ID to group countries together, or use the AHV number. All rows are always sorted lexicographically by their row key.
+	\item Columns: HBase has columns (key-value doesn't) and columns are grouped into families. Lots of columns can be in a family (wide-column store... we can have millions of columns per family). Column families must be known in advance and thus can't be pushed too much.
+	\item Column families must be known in advance but columns can be added on the fly.
+\end{compactitem}
+
+Access to row data is atomic and includes any number of columns being read or written to. There is no further guarantee or transactional feature that spans multiple rows or across tables. The atomic access is also a contributing factor to this architecture being strictly consistent, as each concurrent reader and writer can make safe assumptions about the state of a row.
+
+\subsubsection{Primary queries}
+
+Unlike in the RDBMS landscape, there is no domain-specific language, such as SQL, to query data. Access is not done declaratively, but purely imperatively through the client-side API.
+
+\begin{compactitem}
+	\item GET: get row by ID (similar to key-value model)
+	\item PUT: put new row with id \& columns into table
+	\item SCAN: ask HBase to completely scan the table (typically do something on every row, e.g. comparison) (doesn't exist in KV-model)
+	\item DELETE: delete row. When a user deletes a value in an HBase table, this does \textit{not} remove a KeyValue in the MemStore and/or in the HFile where it was stored. HDFS does not support random access. Deleting a value on the logical level creates, on the physical level, a new version of the value flagged as deleted. That way, the next time a query potentially includes this value, it will be omitted from the output by HBase.
+\end{compactitem}
+
+\textbf{Some terminology:}
+
+\begin{compactitem}
+	\item Key-value model: entries are accessed by a key and have some value
+	\item Column-oriented storage: instead of storing table row by row, you store the columns (e.g. store all city names in one location)
+	\item Wide column stores: millions of columns \& billions of rows $\rightarrow$ quadrillions of cells. This doesn't fit in a single DC?! $\rightarrow$ Wide column stores are typically sparse, thus they fit in a DC.
+\end{compactitem}
+
+Examples of wide column stores: Google's BigTable, Apache HBase (open-source), Cassandra.\\
+
+\subsection{HBase: physical level}
+
+Physical layer: How should we split \& distribute over machines? Split table horizontally across machines and split regions vertically across files.
+\begin{compactitem}
+	\item regions (= continuous set of rows in a range): partition by rows. Rows are sorted by row Id. This allows to specify regions by a range [min-incl.,max-excl.) (open max.). Regions are dynamically split by the system when they become too large.
+	\item column families (= column family of one region) are stored together (i.e one file on HDFS)\\
+\end{compactitem}
+
+HBase uses the same model as HDFS: master-slave model. Each region is served by exactly one region server, and each of these servers can serve many regions at any time. Splitting and serving regions can be thought of as autosharding, as offered by other systems.
+
+\begin{figure}[hb!]
+	\centering
+	\includegraphics[width=0.4\linewidth]{figures/hbase_master_slave}
+	\caption{HBase master-slave model}
+	\label{fig:hbasemasterslave}
+\end{figure}
+
+\subsubsection{HMaster \& RegionServers}
+
+There are three major components to HBase: the client library, one master server, and many region servers. The region servers can be added or removed while the system is up and running to accommodate changing workloads. The master is responsible for assigning regions to region servers and uses Apache ZooKeeper, a reliable, highly available, persistent and distributed coordination service, to facilitate that task.
+
+\begin{compactitem}
+	\item DDL (data definition language) operations: create table, delete table, etc.
+	\item \textbf{HMaster} splits table into regions and assigns regions to RegionServers. Someone could keep inserting more \& more rows into a region. Regions must thus be split when they grow too large. HMaster will split large regions into two new regions. The master is not part of the actual data storage or retrieval path.
+	\item \textbf{Region servers} are responsible for all read and write requests for all regions they serve, and also split regions that have exceeded the configured region size thresholds. Clients communicate directly with them to handle all data-related operations.
+	\item If one RegionServer starts having too many regions, HMaster will rebalance them, i.e. assign region to new RegionServer.
+	\item HMaster handles Regionserver failovers. If HMaster sees that a RegionServer failed, he tells another RegionServer that he'll now has to takeover the regions of the failed RegionServer.
+	\item Upon a RegionServer failure, we won't loose data! The RegionServers don't actually store data, they are responsible for the regions. The actual data is stored in HDFS. HDFS has replication and is thus failure-resistent. The RegionServer from HDFS perspective is just a client. A single machine runs both a DataNode process and a RegionServer process. The HMaster and NameNode may also run on the same machine.\\
+\end{compactitem}
+
+Why do we need HBase when we have HDFS? HBase is there s.t. users don't need to worry about low-level details of HDFS $\rightarrow$ data-independence. Shield users from details of storage.
+
+\subsubsection{Physical storage}
+
+A region is handled by one RegionServer. 
+
+\textbf{Store:} Each region is split into column families. A column family in one region is called a \textbf{Store = (Region, Column family)}. A store is essentially the cartesian product between regions and column families. A store is made of cells. A store is mapped to \textbf{HFiles} on drives. At the beginning (small store) we only have 1 HFile. When the store grows, we'll have multiple HFiles.\\
+\textbf{HFile:} We have a mapping of table to files. From the perspective of HDFS, this is just any file. If the HFile gets too large ($>$ 128MB) HDFS splits the HFile into multiple blocks. This doesn't concern HBase. From HBase's view. it's just another file in HDFS $\rightarrow$ modularity.\\
+Inside, the HFile works as follows: we essentially break the store into cells and store cells one after another by their key in the HFile. That's actually a sorted list of key-value pairs - keys: row-column(-version) Ids, value: cell-content (e.g cell in row B column 2: key B2).\\
+\textbf{Versioning:} We can store multiple old versions of a cell. In GET, we'd just get the latest version. This is used for historical purposes (e.g. price history).\\
+\textbf{KeyValue in HBase:} A KeyValue in HBase is the smallest unit of physical storage, indexed by row, column and version, and sharded by regions and column families.
+
+\begin{figure}[hb!]
+	\centering
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/hbase_physical_storage}
+		\caption{Physical storage}
+		\label{fig:hbasephysicalstorage}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/hbase_store}
+		\caption{Store = column family}
+		\label{fig:hbasestore}
+	\end{subfigure}
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/hbase_hfile}
+		\caption{HFile}
+		\label{fig:hbasehfile}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[hb!]
+	\centering
+	\includegraphics[width=0.35\linewidth]{figures/hfile_key_value}
+	\caption{HFile: KeyValue}
+	\label{fig:hfilekeyvalue}
+\end{figure}
+
+\textbf{HBlocks:} Key-values can be very small (bytes). We don't want to read byte-by-byte in HDFS. But we also don't want to read the whole 128MB block at a time $\rightarrow$ lower grouping of key-values. \textit{HBlocks} are a "Quantity" of KeyValues that get read at a time (default size \textbf{64kb}). Inside the HFile, the key of the first row of the HBlock is used as key to the HBlock. Since keys are sorted, this way we easily find the HBlock in which the wanted key-value pair is located in.
+
+\begin{figure}[hb!]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/hbase_hblock_key_lookup}
+		\caption{HFile: key lookup in HBlocks}
+		\label{fig:hbasehblockkeylookup}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=1\linewidth]{figures/hbase_levels_of_phys_storage}
+		\caption{Levels of physical storage}
+		\label{fig:hbaselevelsofphysstorage}
+	\end{subfigure}
+\end{figure}
+
+\textbf{Problem:} What about inserting new keys? We can only write key-values in sorted order. We need to maintain the order of keys. \textit{But} in HDFS we can only append, we can't insert in between past lines! Solution: sort the new set of keys, completely flush the old file and create a new file.
+
+\textbf{Writing new cells}\\
+We have multiple HFiles, each with multiple HBlocks (filled with key-values) on disk. When a user writes (inserts) a new key-value pair to a HFile, the pair is first stored in memory - not yet in the HFile. At some point the memory is full (when I insert a whole row, a lot of key-value pairs are created - each key-value pair is a cell in the table). Once the memory is full, all the key-values pairs in memory are flushed to HDFS. I.e. all keys from HDFS and memory are sorted and then put into new HFiles.\\
+So essentially, instead of writing to HDFS every time we insert a new key-value pair, we aggregate new key-value pairs in memory and then flush simultaneously.
+
+\begin{figure}[hb!]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.7\linewidth]{figures/hbase_write_cells}
+		\caption{Writing new cells}
+		\label{fig:hbasewritecells}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.7\linewidth]{figures/hbase_flush_cells}
+		\caption{Flush cells in memory and sort}
+		\label{fig:hbaseflushcells}
+	\end{subfigure}
+\end{figure}
+
+\textbf{Reading from a Store:}\\
+If someone wants to read, we have to look in HFiles \textit{and} in MemStore (since recently added key-value pairs could not have been flushed yet).
+
+\begin{figure}[hb!]
+	\centering
+	\includegraphics[width=0.3\linewidth]{figures/hbase_read_store}
+	\caption{Reading from a Store}
+	\label{fig:hbasereadstore}
+\end{figure}
+
+\textbf{Compaction:}\\
+If we do a lot of flushing, we might end up with lots of HFiles. This is practically bad since in a query we need to look in every single HFile. We can compact them into a single HFile. Compaction uses MergeSort to compact the various HFiles into one HFile. MergeSort is used since it doesn't need to load all data into memory.\\
+Seeks vs. transfer: What data structure should we use:
+
+\begin{compactitem}
+	\item B+-trees: solve latency issues (store indices on disk). Used by classical RDBMS. Latency-bound.
+	\item LSM-Trees: solve throughput issues. Used by wide column stores. Throughput-bound.
+\end{compactitem}
+
+\textbf{Log-structured Merge-Trees procedure:} We have lots of cells in memory which causes the memory to be full $\rightarrow$ flush the memory. This creates a new HFile. If we flush over and over, we get many HFiles. Compaction then merges two HFiles into one larger HFile. This is done over and over.
+
+\textbf{HBase Bootstrap: How to start up}\\
+If someone wants to start querying, how does he (or the HMaster) know which RegionServer to contact $\rightarrow$ meta table. Meta table stores where regions are stored/ on which RegionServer.\\
+Resolution:
+
+\begin{compactenum}
+	\item Client contacts HMaster to Create/delete/update table
+	\item Client contacts RegionServer that stores the meta table and asks it for a region.
+	\item The RegionServer responds with the RegionServer location(s)
+	\item Client queries the RegionServer
+\end{compactenum}
+
+\subsection{HBase: Underlying APIs}
+
+HBase is implemented in Java and offers a Java and REST API.
+
+\subsection{HBase: caching}
+
+HBase uses HDFS and HDFS can be slow. Thus, HBase will be slow. In order to improve this, HBase uses caching to speed up. The cache contains copies of some cells (according to some caching policy).
+
+When NOT to use the cache:
+
+\begin{compactitem}
+	\item Batch processing: If you keep scanning the entire table the cache is useless. Cache is only useful if you access a few hot items.
+	\item Random access: If you access random places, the cache will just keep replacing.\\
+\end{compactitem}
+
+As a general notion, HBase is fast (even though it runs on top of HDFS, which is slow) because:
+
+\begin{compactitem}
+	\item HBase has KeyValues in the MemStore as well as in caches
+	\item HBase shortcircuits DataNodes: A RegionServer process is on the same machine as a DataNode process. Thus, the files of a RegionServer are essentially stored 'locally' on disk in HDFS blocks. If the RegionServer knows that the blocks of the HFile it wants to read are directly on the same machine, the RegionServer will \textit{NOT} go through the whole HDFS process of contacting the NameNode, contacting the DataNodes, etc. and instead short circuit that process and directly read the blocks from its local hard drive. This is much faster because you don't have the network overhead.
+\end{compactitem}
+
+\subsection{Data Locality}
+
+HBase vs HDFS: How do HDFS and HBase interact with eachother?\\
+When you create an HFile, HDFS will create and store it. It will split the HFile into HDFS blocks (128MB). If a RegionServer creates a new HFile, it will communicate with the HDFS NameNode $\rightarrow$ NameNode answers where blocks should be stored in DataNodes. The first replica is placed on the machine where the client is on - the machine that runs the RegionServer (HDFS client) process also runs a DataNode process! Thus at least one replica of each HDFS block that corresponds to an HFile of a RegionServer is stored on the same physical machine as the RegionServer.\\
+
+HDFS may redistribute blocks which could cause some blocks to be on different DataNodes... RegionServer could tell NameNode to put its blocks back on the DataNode that runs on the machine it is running on - but this isn't necessary! \textit{HFile compaction brings back locality} - the new compactified HFile will be located on the DataNode that is on the same machine as the RegionServer.
+
+\subsection{Best practices}
+
+\begin{compactitem}
+	\item Number of rows:
+	\begin{compactitem}
+		\item Millions: RDBMS
+		\item Billions: HBase
+	\end{compactitem}
+	\item Number of nodes: HBase needs many nodes to be useful (\textbf{$> 5$}). With just 1 node: use a RDBMS.
+	\item Row IDs and column names: Keep them short. Why? Keys are made of row IDs and column names. The keys are stored in every key-value pair $\rightarrow$ long keys use just too much memory.
+\end{compactitem}
+
+\subsection{Summary}
+
+HBase is a distributed, persistent, strictly consistent storage system with near-optimal write—in terms of I/O channel saturation—and excellent read performance, and it makes efficient use of disk space by supporting pluggable compression algorithms that can be selected based on the nature of the data in specific column families.\\
+There is no declarative query language as part of the core implementation, and it has limited support for transactions. Row atomicity and read-modify-write operations make up for this in practice, as they cover most use cases and remove the wait or deadlock-related pauses experienced with other systems.\\
+HBase handles shifting load and failures gracefully and transparently to the clients. Scalability is built in, and clusters can be grown or shrunk while the system is in production. Changing the cluster does not involve any complicated rebalancing or resharding procedure, but is completely automated.
+
+\newpage
+
+\section{Data models}
+
+Syntax vs. data model:
+
+\begin{compactitem}
+	\item Data model (Logical view): table, tree, etc.
+	\item Syntax (Physical view): CSV, JSON, etc.
+\end{compactitem}
+
+A syntax (e.g. CSV) is associated with a data model (e.g. table). In RDBMS, we first defined the data model (table) and \textit{then} the syntax (CSV). With XML and JSON, we did the opposite. We first defined the syntax (XML, JSON) and after the tree data model.
+
+\subsection{JSON Data Model}
+
+Two types of values:
+
+\begin{compactitem}
+	\item Atomic values: strings, numbers, booleans, null
+	\item Structured values: objects (String-to-Value map), arrays (List of values)\\
+	$\rightarrow$ both of these offer recursion (i.e. array in array or object in object)
+\end{compactitem}
+
+As we know, JSON is a \textbf{tree-based} model:
+
+\begin{figure}[hb!]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/json_syntax_datamodel}
+		\caption{JSON: Syntax vs. Data Models}
+		\label{fig:json_syntax_datamodel}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/xml_syntax_datamodel}
+		\caption{XML: Syntax vs. Data Models}
+		\label{fig:xml_syntax_datamodel}
+	\end{subfigure}
+\end{figure}
+
+The same holds for XML.\\
+
+The difference between JSON and XML regarding the visual model is that for JSON, the labels are on the edges and for XML, the labels are on the nodes.
+
+\subsection{XML Information Set}
+
+The 11 XML Information Items:
+
+\vspace{-\topsep}
+\begin{multicols}{2}
+	\begin{compactitem}
+		\item \textbf{Document}
+		\item \textbf{Element}
+		\item \textbf{Attribute}
+		\item (Processing Instruction)
+		\item \textbf{Character}
+		\item (Comment)
+		\item (Namespace)
+		\item (Unexpanded Entity Reference)
+		\item (DTD)
+		\item (Unparsed Entity)
+		\item (Notation)
+	\end{compactitem}
+\end{multicols}
+
+\textbf{Example:}
+\vspace{-\topsep}
+\begin{verbatim}
+1: <?xml version="1.0" encoding="UTF-8"?>
+2: <!DOCTYPE metadata>
+3: <metadata>
+4:     <title
+5:         language="en"
+6:         year="2019"
+7:     >Systems Group</title>
+8:     <publisher>ETH Zurich</publisher>
+9: </metadata>
+\end{verbatim}
+\vspace{-\topsep}
+
+\textbf{Document Information Items:}
+
+\begin{compactitem}
+	\item Document Information Item: doc
+	\item \verb|[children]| Element Information Item: metadata
+	\item \verb|[version]|: 1.0
+\end{compactitem}
+
+\newpage
+
+\textbf{Element Information Items:}
+\vspace{-\topsep}
+\begin{multicols}{2}
+	\begin{compactitem}
+		\item Element Information Item: metadata
+		\item \verb|[local name]| metadata
+		\item \verb|[children]| Element Information Items: title, publisher
+		\item \verb|[attributes]| \verb|<empty>|
+		\item \verb|[parent]| Document Information Item: doc\\\\
+	\end{compactitem}
+	
+	\begin{compactitem}
+		\item Element Information Item: title
+		\item \verb|[local name]| title
+		\item \verb|[children]| Element Information Items: Systems Group
+		\item \verb|[attributes]| Attribute Information Items: language=en, year=2019
+		\item \verb|[parent]| Element Information Item: metadata\\
+	\end{compactitem}
+\end{multicols}
+
+	\begin{compactitem}
+	\item Element Information Item: publisher
+	\item \verb|[local name]| publisher
+	\item \verb|[children]| Element Information Items: ETH Zurich
+	\item \verb|[attributes]| Attribute Information Items \verb|<empty>|
+	\item \verb|[parent]| Element Information Item: dc:metadata
+\end{compactitem}
+
+\textbf{Attribute Information Items:}
+\vspace{-\topsep}
+\begin{multicols}{2}
+	\begin{compactitem}
+		\item Attribute Information Item: year=2019
+		\item \verb|[local name]| year
+		\item \verb|[normalized value]| 2019
+		\item \verb|[owner element]| Element Information Item: title
+		
+		\item Attribute Information Item: language=en
+		\item \verb|[local name]| language
+		\item \verb|[normalized value]| en
+		\item \verb|[owner element]| Element Information Item: title
+	\end{compactitem}
+\end{multicols}
+\vspace{-\topsep}
+
+\textbf{Text Information Items:}
+\vspace{-\topsep}
+\begin{multicols}{2}
+	\begin{compactitem}
+		\item Text Information Item: Systems Group
+		\item \verb|[characters]| S y s t e m s \verb|<space>| G r o u p
+		\item \verb|[owner element]| Element Information Item: title
+		
+		\item Text Information Item: ETH Zurich
+		\item \verb|[characters]| E T H \verb|<space>| Z u r i c h
+		\item \verb|[owner element]| Element Information Item: publisher
+	\end{compactitem}
+\end{multicols}
+\vspace{-\topsep}
+
+\begin{figure}[hb!]
+	\centering
+	\includegraphics[width=0.39\linewidth]{figures/xml_infoset_tree}
+	\caption{XML Infoset - the tree}
+	\label{fig:xmlinfosettree}
+\end{figure}
+
+\subsection{Types}
+
+\textbf{Type systems:} Almost all type systems (Java, SQL, PSVI, JDM, Protocol buffers, Avro, Parquet, and so on) share the following properties:
+
+\begin{compactitem}
+	\item Distinction between \textbf{atomic} types and \textbf{structured} types
+	\item \textbf{Same categories} of atomic types
+	\item \textbf{Lists} and \textbf{maps} as structured types
+	\item Sequence type \textbf{cardinalities}
+\end{compactitem}
+
+Types (general): \textit{Atomic types vs. structured types}
+
+\subsubsection{Atomic types}
+
+\textbf{Strings:} Character sequences with monoid structure
+
+\textbf{Numbers:}
+\begin{compactitem}
+	\item Interval-based integer types: exist as signed and unsigned, different lengths (16-bit, 32-bit, etc.)
+	\item Arbitrary precision decimals (and integers): this needs some library (e.g. in Java big int, big float). These offer any precision and any scale (can have 1000s of digits after comma)\\
+	$\rightarrow$ in XML \& JSON, this works! There is no size limit on numbers, just put all digits
+	\item Float and Double	(IEEE 754 standard)
+	\begin{compactitem}
+		\item single precision: 32bit, ca. 7 digits, $10^{-37}$ to $10^{37}$
+		\item double precision: 64bit, ca. 15 digits, $10^{-307}$ to $10^{308}$
+	\end{compactitem}	
+\end{compactitem}
+
+\textbf{Booleans:} true, false (different names exist: t/f, y/n, on/off, etc.)\\
+\textbf{Dates and Times:} (quite important but overlooked):
+\begin{compactitem}
+	\item date (a certain day, Gregorian calendar): Year + Month + Day, e.g. 2020-March-30
+	\item time: Hours + Minutes + Seconds, e.g. 10:31:15.109378
+	\item timestamp (date+time): Year + Month + Day + Hours + Minutes + Seconds,\\
+	e.g. 2020-March-30 10:31:15.109378
+\end{compactitem}
+$\rightarrow$ date and time are \textit{still} not completely standardized\\
+
+\textbf{Time Intervals:} Two duration kinds
+\begin{compactitem}
+	\item years + months, e.g. 2 years and 4 months
+	\item hours + minutes + ..., e.g. 3 hours and 14 minutes
+\end{compactitem}
+$\rightarrow$ \textit{never} mix months and days in duration, because a month can be 28,29,30,31 days!\\
+\textbf{Binaries:} just a bunch of 0s and 1s\\
+\textbf{Null:} exists in many schemas, languages, etc.\\
+
+\textbf{Lexical space vs. value space:}
+
+\begin{compactitem}
+	\item Value space: the mathematical value (concept of value), e.g. the number 10
+	\item Lexical space: the representation in syntax of the value, e.g. $10_{dec}, 1010_{bin}, A_{hex},+10E00_{sci}...$\\
+\end{compactitem}
+
+\textbf{Subtypes:}
+
+This is a similar concept to classes and subclasses in OO languages. Example of subtypes: integer is a subtype of decimal. Abstract perspective: value spaces. A type's value space is all values a type can have. A subtype means that the value space of the subtype is a subset of the supertype's value space.
+
+\subsubsection{Structured Types}
+
+Structured types are almost always the same: \textit{Maps (Key-value model!) \& Lists}
+
+\begin{tabular}{|c|c|}
+	\hline 
+	\textbf{Data Structure} & \textbf{Examples} \\ 
+	\hline 
+	Maps (Key-value model!)& JSON Object, Set of XML Attributes, Protobuf Message \\ 
+	\hline 
+	Lists & JSON Array,	XML Element, Protobuf repeated field \\ 
+	\hline 
+\end{tabular} 
+
+\hfill
+
+\textbf{Cardinality:} not available in all languages
+
+\begin{tabular}{|c|c|c|}
+	\hline 
+	\textbf{How many?} & \textbf{Common sign} & \textbf{Common adjective} \\ 
+	\hline 
+	One &  & required \\ 
+	\hline 
+	Zero or more & * & repeated \\ 
+	\hline 
+	Zero or one & ? & optional \\ 
+	\hline 
+	One or more & + &  \\ 
+	\hline 
+\end{tabular}
+
+\hfill
+
+\subsection{Protocol Buffers}
+
+In the 70s, the 'typical' way to define something was to first define a class that defines an object. Then, you instantiate the class as an object. This is the way it's done in RDBMS and in most programming languages - and this is also how it's done in Protobuf.
+
+Protobuf is language neutral and will convert messages to different languages. This allows to share data between different languages. A Protobuf message defines a \textbf{schema}:
+\vspace{-\topsep}
+\begin{verbatim}
+message Person {
+  required string last_name = 1;
+  repeated string first_name = 2;
+  optional Title title = 3;
+  optional Person boss = 4;
+}
+\end{verbatim}
+\vspace{-\topsep}
+
+\textbf{Scalar types:}
+\vspace{-\topsep}
+\begin{multicols}{2}
+	\begin{compactitem}
+		\item double, float
+		\item int32, int64 and variants
+		\item bool
+		\item string
+		\item bytes
+	\end{compactitem}
+\end{multicols}
+
+\newpage
+
+\textbf{Enums:} enumeration
+\vspace{-\topsep}
+\begin{verbatim}
+enum Title {
+  MR = 1;
+  MS = 2;
+  MRS = 3;
+}
+\end{verbatim}
+\vspace{-\topsep}
+
+\hfill
+
+e.g. in C++: \verb|person.boss().first_name()|
+
+This is essentially a 'query' for the firstname of the boss person. Protobuf builds methods, functions etc. in a specified language (e.g. C++) $\rightarrow$ one can then access this.
+
+\textbf{JSON/XML vs. Protobufs:}
+
+\begin{compactitem}
+	\item With schema (homogeneous, e.g. Protobuf): always the same schema - RDBMS has this - always the same fields and types must match.
+	\item No schema	(heterogeneous, e.g. JSON, XML): This is the new thing - get rid of schema! We just have a syntax (JSON, XML) but don't specify a schema. The objects in the syntax can vary \textit{widely}. \textbf{But}: schemas are still useful. We just worry about the schema later. First, create the data, then compare it to a schema.
+\end{compactitem}
+
+Not having a schema can be very powerful, e.g. when we just want to dump data. But without a schema, things can get messy. One can also enforce schemas on a heterogeneous syntax! You can introduce a schema to make objects look a certain way. A syntax should then be well-formed \textit{AND} should fulfill some additional properties (schema). E.g. in JSON doc, all values for key "b" are boolean.\\
+
+
+\subsection{Validation}
+
+Many applications need a more powerful and expressive validation method.
+
+\begin{figure}[hb!]
+	\centering
+	\includegraphics[width=0.4\linewidth]{figures/validation_pipeline}
+	\label{fig:validationpipeline}
+\end{figure}
+
+\begin{compactitem}
+	\item Document: just text
+	\item Well-formedness: is text well-formed, i.e. valid syntax (well-formed JSON, XML,...)
+	\item Validation: is text valid against a particular \textit{schema} $\rightarrow$ \textit{validation always needs a schema}. There is no absolute notion of validity.
+\end{compactitem}
+
+\begin{center}
+	valid XML $\neq$ well-formed XML
+\end{center}
+\vspace{-\topsep}
+
+Validation can only be checked on a well-formed document! We thus have to first check well-formedness and then validity. A well-formed document can be valid against schema A and invalid against schema B.
+
+\textbf{Validation vs. Annotation:}
+
+\begin{compactitem}
+	\item Validation: check text against schema. Validity can only be checked on a well-formed document.
+	\item Annotation: in XML, we only have text, no int, bool, etc. We can 'stamp' text in XML as int, bool, etc.	
+\end{compactitem}
+
+
+\subsection{XML Schema}
+
+An XML Schema is an XML document containing a formal description of what comprises a valid XML document. An XML document described by a schema is called an instance document.
+
+\begin{multicols}{2}
+	\begin{verbatim}
+	<?xml version="1.0" encoding="UTF-8"?>
+	<xs:schema
+	  xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	  <xs:element name="foo" type="xs:string"/>
+	</xs:schema>
+	\end{verbatim}
+	
+	\begin{verbatim}
+	<?xml version="1.0" encoding="UTF-8"?>
+	<foo>
+	  This is text.
+	</foo>
+	\end{verbatim}
+\end{multicols}
+
+This is well-formed XML. We can define a schema on this XML document such that element \verb|foo| has type string.
+
+\begin{multicols}{2}
+	\begin{verbatim}
+	<?xml version="1.0" encoding="UTF-8"?>
+	<xs:schema
+	  xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	  <xs:element name="foo" type="xs:integer"/>
+	</xs:schema>
+	\end{verbatim}
+	
+	\begin{verbatim}
+	<?xml version="1.0" encoding="UTF-8"?>
+	<foo>
+	  142857
+	</foo>
+	\end{verbatim}
+\end{multicols}
+
+Simple Types: Built-in
+
+\begin{tabular}{|l|p{150mm}|}
+	\hline 
+	Strings & string, anyURI, QName \\ 
+	\hline 
+	Numbers & decimal, integer, float, double, long int, short byte, positiveInteger, \newline nonNegativeInteger..., unsignedLong unsignedInt... \\ 
+	\hline 
+	Booleans & boolean \\ 
+	\hline 
+	Dates and Times & dateTime, time, date, gYearMonth, gMonthDay, gYear, gMonth, gDay, dateTimeStamp \\ 
+	\hline 
+	Time Intervals & duration, yearMonthDuration, dayTimeDuration \\ 
+	\hline 
+	Binaries & hexBinary base64Binary \\ 
+	\hline 
+	Null & - \\ 
+	\hline 
+\end{tabular} 
+
+\subsubsection{User-defined types}
+
+\begin{compactitem}
+	\item Restriction, e.g. string of char length 3
+	\item Union (not atomic), e.g. integers or booleans
+	\item List (not atomic), e.g. list of strings
+\end{compactitem}
+
+\subsubsection{Complex types}
+
+\begin{compactitem}
+	\item Empty, e.g. \verb|<foo/>|
+	\item Simple content, e.g. \verb|<foo>text</foo>|
+	\item Complex Content, e.g.
+	\begin{verbatim}
+		<foo>
+		  <a/>
+		  <b/>
+		</foo>
+	\end{verbatim}
+	\item Mixed Content: character data can appear along elements in body of associated element, e.g.
+	\begin{verbatim}
+		<foo>
+		  Text<a/>Text<b/>
+		</foo>
+	\end{verbatim}
+\end{compactitem}
+
+\newpage
+
+\section{Distributed Computations I: MapReduce}
+
+\textbf{Basic idea of MapReduce at an example:} count pokemons. Map phase: Distribute sets of Pokemons to many people. Each person counts how many of each Pokemon type he has (i.e. map some part of the input to some intermediate representation). Phase 2: Each person is responsible for counting a set of specific Pokemon types. Each person asks all other for their counts of the Pokemons they are responsible for and then adds all these counts up (i.e. reduce the intermediate representation).\\
+
+MapReduce is the processing stage - needs data. Our data can be in HDFS, HBase, S3, etc. and can have various shapes (text, tables (CSV), trees (XML, JSON), binary files, etc.). The common scenario is HDFS with data split over many HDFS files. The data is only useful for MapReduce if we can query it in parallel - data is spread over many machines and many CPUs $\rightarrow$ since storage is already distributed, we also want queries to be in parallel.
+
+\subsection{MapReduce}
+
+In data processing, the input data is typically sharded (comes in chunks), therefore the output is typically sharded as well. In the ideal case each output shard depends on one single input shard, this allows every machine to just work on its own data; however, this rarely happens in real life. The worst case is when every output chunk depends on every input chunk; this needs lots of communication, which is slow. The typical case is a mix of the two.
+
+\begin{figure}[hb!]
+	\centering
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/mr_ideal}
+		\caption{Ideal case}
+		\label{fig:mrideal}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/mr_worst}
+		\caption{Worst case}
+		\label{fig:mrworst}
+	\end{subfigure}
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/mr_typical}
+		\caption{Typical case}
+		\label{fig:mrtypical}
+	\end{subfigure}
+	\caption{Data processing cases}
+\end{figure}
+
+\begin{figure}[hb!]
+	\centering
+	\includegraphics[width=0.5\linewidth]{figures/mr_datamodel}
+	\caption{Data Processing: Data Model}
+	\label{fig:mrdatamodel}
+\end{figure}
+
+
+The idea of MapReduce is to do the ideal and worst case (mapping and shuffling) in an ordered way.\\
+
+\subsubsection{Logical walkthrough}
+
+\begin{compactenum}
+	\item \textbf{Splitting:} The key-value input (converted from some data input) is split into logical chunks.
+	\item \textbf{Mapping:} Associate one key-value to one or more key-values through some mapping function. Every key is mapped in parallel. We have splits $\rightarrow$ within each split, I call mapping on each key-value in the split and this is done in parallel for all splits.
+	\item \textbf{Put it together:} Put all intermediate key-values together and sort them by key. Then repartition the keys \textit{but} make sure that all key-values with the same key are in the same partition! We can have several key-values in one partition but not one key-value in several partitions.
+	\item \textbf{Reduce:} Take intermediate partitions and produce the output by applying the reduce function to the IR key-values in parallel. The output of one key-value set can be one or more key-values (typically just one).
+\end{compactenum}
+
+\begin{figure}[t!]
+	\centering
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/mr_splitting}
+		\caption{Splitting}
+		\label{fig:mrsplitting}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/mr_mapping}
+		\caption{Mapping}
+		\label{fig:mrmapping}
+	\end{subfigure}
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/mr_reduce}
+		\caption{Reduce}
+		\label{fig:mrreduce}
+	\end{subfigure}
+	\caption{MapReduce stages}
+\end{figure}
+
+\begin{figure}[t!]
+	\centering
+	\includegraphics[width=0.4\linewidth]{figures/mr_overall}
+	\caption{MapReduce overall}
+	\label{fig:mroverall}
+\end{figure}
+
+\subsection{Architecture}
+
+MapReduce can run on different storage layers: Local file system, HDFS (most common), S3, Azure Blob storage,... Numbers: we have several TBs of data and 1000s of nodes. What kind of architecture do we have?\\
+
+\textbf{Mater-slave architecture} (again): Just like in HDFS and HBase, we also have a Master-slave architecture for MapReduce. If we use HDFS, HDFS runs on the same machines as MapReduce!
+\begin{compactitem}
+\item JobTracker (Master): The JobTracker assigns map and reduce tasks, tells respective keys to reducers, etc. The JobTracker typically runs on the same machine as the NameNode in HDFS.
+
+\item TaskTracker (Slave): A TaskTracker runs on each one of the nodes that run DataNodes, and spawns 0,1, or more mappers as well as 0,1, or more reducers according to pre-allocated map and reduce slots. Mappers mostly read their input locally. When all mappers have completed their tasks, the reducers start requesting the intermediate output relevant to them (shuffle). When the reducers have completed, they mostly write their output locally. The TaskTracker typically runs on the same machine as a DataNode.
+\end{compactitem}
+
+Running the TaskTracker on the same machine as the DataNode allows the TaskTracker to work with \textit{local data} $\rightarrow$ \textbf{short-circuiting, bring the query to the data}. We don't need to bring the blocks anywhere, bring the query to the data and ececute on the machine where the blocks are.\\
+
+\textbf{Mapping phase:} In MapReduce, the input data is \textit{split} (= shard/chunk of the input data). Generally, we have on split per block (128MB) and we only look at one replica per block. The JobTracker's task is to tell the machines which mappings to do where $\rightarrow$ split the input (HDFS file), arrange s.t. split ~ HDFS block and every mapper is working locally on a block. Occasionally it can happen that a mapper will have to fetch a block remotely over the network. Typically, you may have more mapping tasks than mapping slots (slot = just some reserved resource) $\rightarrow$ do it sequentially paralll (e.g. 100 tasks, 10 slots $\rightarrow$ each slot 10 task sequence). During the mapping phase, reducer slots are idle; they need to wait for the mapping to finish. The mapping phase outputs key-value pairs to memory (intermediate represenation) $\rightarrow$ may overfill the memory. Key-value pairs are thus spilled to disk if necessary (local disk not HDFS), spilling is done with sorted KV-pairs. Why spill to local disk? Map output is intermediate output: it’s processed by reduce tasks to produce the final output, and once the job is complete, the map output can be thrown away. So, storing it in HDFS with replication would be overkill. If the node running the map task fails before the map output has been consumed by the reduce task, then Hadoop will automatically rerun the map task on another node to re-create the map output.
+
+\textbf{Shuffling Phase:} After the mapping is done, we have all the intermediate key-value pairs, on the same machines as the mappers that produced them. The reducers have to wait until \textit{all} mappers have finished (very strict 2-phase algorithm). Once all mappers have finished, the reducers connect to every TaskTracker and ask for their respective keys. Each TaskTracker runs an HTTP server. The reducers can thus just connect to each TaskTracker HTTP server and request the key they are responsible for (assigned by JobTracker). The reducers then receive all IR key-value pairs for the keys they requested. When there are multiple reducers, the map tasks partition their output, each creating one partition for each reduce task. There can be many keys (and their associated values) in each partition, but the records for any given key are all in a single partition.
+
+\textbf{Reduce phase:} Reduce tasks don’t have the advantage of data locality; the input to a single reduce task is normally the output from all mappers. Reduce is not reading locally but from network (shuffling) since intermediate key-values were produce all over the network $\rightarrow$ received over the network. Once the reducer has all key-value pairs from the TaskTrackers (shuffling), they apply the reduce function and output the final key-values to disk - an HDFS file is created for \textit{every} reducer task. The output of the reduce is normally stored in HDFS for reliability. Possible bottleneck: if one key has lots of values, the responsible reducer will have lots of keys while another has only a few. Note: it’s possible to have zero reduce tasks. This can be appropriate when you don’t need the shuffle because the processing can be carried out entirely in parallel.
+
+\begin{figure}[t!]
+	\centering
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=1\linewidth]{figures/mr_mapping_phase}
+		\caption{Mapping Phase}
+		\label{fig:mrmappingphase}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=1\linewidth]{figures/mr_shuffling_phase}
+		\caption{Shuffling Phase}
+		\label{fig:mrshufflingphase}
+	\end{subfigure}
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=1\linewidth]{figures/mr_reduce_phase}
+		\caption{Reduce Phase}
+		\label{fig:mrreducephase}
+	\end{subfigure}
+	\caption{MapReduce phases}
+\end{figure}
+
+\subsection{Input/output format}
+
+How do we create key-value pairs? We can have different inputs: tables (HBase, RDBMS, ...), files (JSON, XML, ...), etc. There is an intrinsic way to convert each data shape into key-value format.
+
+\begin{compactitem}
+\item Tabular: Use primary key (RDBMS), row ID (HBase) as key and the rest of the row (all attribute values) as value $\rightarrow$ key-value pair.
+\item Text: different possibilities, e.g. use line number as key and text line as value.
+\item Key-value: already key-value.
+\item SequenceFile: binary version of a key-value file, stores generic key-values in Hadoop binary format. This is easy since it's already a key-value file, just encoded in binary.
+\end{compactitem}
+
+Example: count words in text. Map every line number to text. Even easier: map each single word in text (key) to count 1 (value). Mappers will collect all keys (words) in their splits and sum up the 1-counts. Reducers will then collect all IR counts and sum them up.
+
+Example: filter lines with less than 2 words out. Input: line number as key, line as value. Mapping function: filter all lines with less than 2 words out. Reduce function: identity function.
+
+
+\subsection{Optimization}
+
+We can optimize the shuffling phase by "pre-reducing" (=combine) the intermediate key-values values from the input mapping. This reduces the amount of data that needs to be shuffled around, which makes MapReduce more efficient. For example, in the word count use case, we could already count words that appear multiple times in one line and create one KV with the count. This combining can be done when spilling intermediate KVs to disk.
+
+Often (90\%) the combine function and the reduce function are equivalent. We thus need two assumptions to hold:
+
+\begin{compactitem}
+\item Key/Value types must be identical for reduce input and output.
+\item Reduce function must be commutative (a+b=b+a) and associative (a+(b+c)=(a+b)+c).
+\end{compactitem}
+
+
+\subsection{MapReduce: the APIs}
+
+Hadoop MapReduce supports a native Java API and a streaming API that allows you to write your map and reduce functions in languages other than Java. Hadoop Streaming uses Unix standard streams as the interface between Hadoop and your program, so you can use any language that can read standard input and write to standard output to write your MapReduce program.
+
+
+\subsection{Tricky point: blocks and splits}
+
+Split vs map tasks: a split is essentially an HDFS block. But in HDFS, a block is just 128MB long and then cut $\rightarrow$ you may separate a value into two blocks. HDFS only sees binary data and does not differentiate key/value borders.
+
+MapReduce solves this by doing the splits on a more logical level, i.e. a split always includes the whole last key-value. The problem now is that the last key-value of one split could be in two different blocks. This is generally not an issue (just read the other block) except when the other block that contains the rest of the last key-value pair is remote (on another machine). This then requires a remote read, which leads to a slight decrease in performance, but MapReduce will take care of this.
+
+\subsection{Reading Assignment}
+
+\subsubsection{Hadoop: The definitive guide}
+
+\textbf{Example}: find the maximum global temperature record for each year from weather data. This can be done using MapReduce. The input mapping is just a (line-offset, weather measurement) key-value pair. The mapping function extracts a (year, temperature) key-value pair for each weather record. The reduce function finally returns the maximum temperature in a key-value pair (year, [temperatures]), where [temperature] is an array temperatures for all measurements of that year.
+
+\begin{figure}[hb!]
+	\centering
+	\includegraphics[width=0.7\linewidth]{figures/mr_reading_weather_example}
+	\caption{MapReduce example: finding the hottest temperature for each year}
+	\label{fig:mrreadingweatherexample}
+\end{figure}
+
+\textbf{Data Flow:} A MapReduce job is a unit of work that the client wants to be performed: it consists of the input data, the MapReduce program, and configuration information. Hadoop runs the job by dividing it into tasks, of which there are two types: map tasks and reduce tasks. The tasks are scheduled using YARN and run on nodes in the cluster. If a task fails, it will be automatically rescheduled to run on a different node. Hadoop divides the input to a MapReduce job into fixed-size pieces called input splits, or just splits. Hadoop creates one map task for each split, which runs the user-defined map function for each record in the split. Smaller splits are preferred since they allow for better load balancing and thus more efficient use of resources. On the other hand, if splits are too small, the overhead of managing the splits and map task creation begins to dominate the total job execution time. For most jobs, a good split size tends to be the size of an HDFS block, which is 128 MB by default, although this can be changed for the cluster (for all newly created files) or specified when each file is created.
+
+\subsubsection{MapReduce: Simplified Data Processing on Large Clusters}
+
+\textbf{Fault tolerance:}
+
+\begin{compactitem}
+\item Worker failure: The master (JobTracker) pings workers (TaskTracker) periodically. If no response is received from a worker in some amount of time, the worker is marked failed and the map task is reset back to idle.
+\item Master failure: It is easy to make the master write periodic checkpoints of the master data structures described above. If the master task dies, a new copy can be started from the last checkpointed state.
+\end{compactitem}
+
+\newpage
+
+\section{Resource Management}
+
+There are some issues with MapReduce 1:
+
+\begin{compactitem}
+\item Scalability: MapReduce 1 only works with $<$4000 nodes and $<$ 40'000 tasks.
+\item Bottleneck on the JobTracker: the JobTracker has too many responsibilities. The JobTracker needs to do resource management, scheduling, monitoring, job life-cycle, fault tolerance - a lot of things and there is only one JobTracker.
+\item Jack of all trades, master of none: JobTracker is not specialized and thus not efficient since it needs to do so many different things.
+\item Static allocation, fixed size: Map \& Reduce slots are assigned statically at configuration time (i.e. before the job starts), which leads to them often being idle, which does not fully use cluster resources.
+\item Not fungible: Reduce slots are idle during map phase and map slots are idle during reduce phase.\\
+\end{compactitem}
+
+\subsection{YARN (Yet Another Resource Manager)}
+
+YARN is a resource management tool that separates the JobTrackers responsibilities. The responsibilities are split into:
+
+\begin{compactitem}
+\item Resource Manager: Scheduling, Application management
+\item Application masters (many): Monitoring
+\end{compactitem}
+
+YARN can be used for many applications: MapReduce, DAG distributed processing, message passing interface, graph processing. Further, YARN scales better (10'000 nodes, 100'000 tasks).
+
+
+\subsubsection{YARN architecture}
+
+Again, we use a master-slave architecture. We have the ResourceManager (RM) as master and NodeManagers (NM) as slaves. The ResourceManager acts as the central authority arbitrating resources among
+various competing applications in the cluster (decides who gets which container). The NodeManager is the “worker” daemon in YARN. It authenticates container leases, manages containers’ dependencies, monitors their execution, and provides a set of services to containers. The NM will also kill containers as directed by the RM or the AM. We further have the notion of slots again, here called \textit{containers}. Containers do the virtualization of resources, mapping and reducing will be done in containers. This allows for more fine grained resource requests (memory and CPU only for now). Application Masters (AM) are the "head" of a job, managing all lifecycle aspects including dynamically increasing and decreasing resources consumption, managing the flow of execution (e.g., running reducers against the output of maps), handling faults and computation skew, and performing other local optimizations. The AM is the process that coordinates the application’s execution in the cluster, but it itself is run in the cluster just like any other container. \\
+
+\textbf{YARN process:} When a client submits a job, it is first sent to the RM. The RM then distributes the containers. The RM then allocates an AM (can be different for every machine) - the Application Master takes care of monitoring. The AM requests resources (containers) from the RM. Typically, an AM will need to harness the resources (CPUs, RAM, disks etc.) available on multiple nodes to complete a job. To obtain resources (containers), AM issues resource requests to the RM.  The NM only assigns containers locally, the Application Master needs the authorization from the Resource Manager. When a resource is allocated on behalf of an AM, the RM generates a lease for the resource, which is pulled by a subsequent AM
+heartbeat.  At the beginning, the AM only requests mapping resources. Once mapping is done, only then does it request reducing resources.
+
+\begin{figure}[hb!]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.8\linewidth]{figures/yarn_1}
+		\label{fig:yarn1}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.8\linewidth]{figures/yarn_2}
+		\label{fig:yarn2}
+	\end{subfigure}
+	\caption{YARN}
+\end{figure}
+
+The resulting process is then essentially MapReduce with YARN around it.
+
+The ResourceManager is a pure scheduler, it does not monitor tasks and it does not restart upon failure. Different scheduling strategies exist:
+
+\begin{compactitem}
+\item FIFO scheduler: First applications has priority. Problem: long running applications can block small ones.
+\item Capacity scheduler: Have several queues, every queue gets separate part of the cluster.
+\item Hierarchical queues (Steady Fair Share)
+\item Fair scheduler: idle clusters are temporarily reassigned while idle. Preempted when original job needs resources. 
+\end{compactitem}
+
+Note: people say MapReduce and Spark are slow. But: these technologies are not built to minimize latency but to maximize cluster optimization.
+
+
+\section{Distributed Computations II: Spark}
+
+\subsection{Introduction to Spark}
+
+Both MapReduce 1 and MapReduce 2 (YARN) use a rather restricted data flow model: data is first mapped to an intermediate representation and the reduce to an output. This is a very specific topology (\textit{not} DAG-based). YARN is capable of much more because it supports any DAG data flow. Let's build something much more general.
+
+\begin{figure}[hb!]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.1\linewidth]{figures/spark_mr_intuition}
+		\label{fig:sparkmrintuition}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.4\linewidth]{figures/spark_dag_dataflow}
+		\label{fig:sparkdag}
+	\end{subfigure}
+	\caption{MapReduce dataflow vs. DAG dataflow}
+\end{figure}
+
+Spark uses RDDs (Resilient Distributed Dataset) as data format. An RDD is a big collection of values (not limited to key-values!) that can be recomputed and is spread over machines. RDDs are partitioned (like MapReduce uses splits).
+
+\textbf{RDD lifecycle:} RDDs can be created on the fly from data in HDFS - RDD is just the data read from RDD and partitioned along HDFS blocks. RDDs can be transformed into other RDDs (many-to-many transform) (like mapping/reducing in MapReduce). An RDD is only returned (output) once an action is taken on the RDD. RDDs and their transforms can be represented by a directed acyclic graph (DAG) where nodes are RDDs and egdes are transformations. This lineage graph use lazy evaluations - nothing happens (no transformations are executed) until an action is requested at some RDD. Only then will the data flow through the graph and be transformed and output.
+
+Spark can be executed in application or shell.
+
+\begin{figure}[hb!]
+	\centering
+	\includegraphics[width=0.35\linewidth]{figures/spark_hello_world}
+	\caption{Example program in Spark}
+	\label{fig:sparkhelloworld}
+\end{figure}
+
+
+\subsection{Spark: overview of transformations}
+
+As we've seen, RDDs can be transformed. Many different (~100) transformations exist.
+
+\textbf{Transformation on one RDDs:}
+\begin{compactitem}
+\item filter: eliminate RDDs that don't fulfill some test (= SELECTION in rel. algebra). Narrow dependency.
+\item map: map each value in input to some value in output (\#input values = \#output values). Narrow dependency.
+\item flatMap: Map map to multiple outputs, but outputs are flattened. Narrow dependency.
+\item distinct: eliminate duplicates/ Wide dependency.
+\item sample: pick inputs randomly.
+\end{compactitem}
+
+\begin{figure}[t!]
+	\centering
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.7\linewidth]{figures/spark_filter}
+		\caption{filter}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.7\linewidth]{figures/spark_map}\
+		\caption{map}
+	\end{subfigure}
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.7\linewidth]{figures/spark_flatmap}
+		\caption{flatmap}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[t!]
+	\centering
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.7\linewidth]{figures/spark_distinct}
+		\caption{filter}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.7\linewidth]{figures/spark_sample}\
+		\caption{map}
+	\end{subfigure}
+\end{figure}
+
+\textbf{Transformation on two RDDs:}
+\begin{compactitem}
+\item union
+\item intersection
+\item substract
+\item cartesian product
+\end{compactitem}
+
+\begin{figure}[hb!]
+	\centering
+	\begin{subfigure}[t]{.21\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/spark_union}
+		\caption{union}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.21\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/spark_intersection}\
+		\caption{intersection}
+	\end{subfigure}
+	\begin{subfigure}[t]{.21\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/spark_substract}
+		\caption{substract}
+	\end{subfigure}
+	\begin{subfigure}[t]{.21\textwidth}
+	\centering
+	\includegraphics[width=0.9\linewidth]{figures/spark_cart_product}
+	\caption{cartesian product}
+	\end{subfigure}
+\end{figure}
+
+
+\subsection{Spark: overview of actions}
+
+\begin{compactitem}
+\item collect: put RDDs into local memory/ disk. This only works when RDDs are small enough to even fit in memory/ disk (risky).
+\item count
+\item count by value
+\item take: collect a specified number of values
+\item top: return top values
+\item takeSample: random values taken
+\item reduce
+\end{compactitem}
+
+\subsection{Spark: pair RDDs}
+
+We can have RDDs of values that are pairs (like MapReduce with key-values).
+
+\textbf{Transformation:}
+
+\begin{compactitem}
+\item keys: get all keys. Narrow dependency.
+\item values: get all values. Narrow dependency.
+\item reduce by key: group by key and output some aggregate value per key. Like reduce in MR. Wide dependency.
+\item group by key: keep all values per key and group them together. Wide dependency.
+\item sort by key (like GROUP BY). Wide dependency.
+\item map values: map each value to another value. Narrow dependency.
+\item join: combine values with same keys from two RDDs.
+\item substract by key
+\item count by key
+\item lookup
+\end{compactitem}
+
+
+\subsection{Physical layer}
+
+We again want parallel execution. The input data is split (mostly according to HDFS blocks, short circuiting) and we have one task per block. Executors will then execute the tasks. We don't want to assign one single tasks per executor: some tasks may take longer, so that most executors will be idle waiting for the last one(s) to complete. We thus want smaller tasks that can be spread over executors such that each executor has multiple small tasks. If one executor finishes, it can just continue with the next task. Tasks are thus spread over executors and spread over CPUs within an executor. 
+
+\begin{figure}[t!]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.7\linewidth]{figures/spark_parallelize_not_ideal}
+		\caption{Suboptimal parallel execution }
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.7\linewidth]{figures/spark_parallelize_ideal}\
+		\caption{Improved parallel execution}
+	\end{subfigure}
+\end{figure}
+
+\textbf{Sequence of (parallelizable) transformations:} We can further improve parallelization by grouping together series of transformations on the same level (not ancestor/child of each other) with narrow dependencies. We can group these transformations together as if they were a single transformation. This can reduce the amnount of data that needs to be shuffled around. We should try to execute transformations that have dependencies on a machine on that machine, as long as the transformations allow this - compute locally as much as possible.
+
+\begin{figure}[hb!]
+	\centering
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.5\linewidth]{figures/spark_transformation_sequence}
+		\caption{Sequence of transformations}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.8\linewidth]{figures/spark_transformation_sequence_ineff}\
+		\caption{Inefficient allocation to executors}
+	\end{subfigure}
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.8\linewidth]{figures/spark_transformation_sequence_eff}
+		\caption{Efficient allocation to executors}
+	\end{subfigure}
+\end{figure}
+
+\textbf{Stage:} We call a set of transformations that all have narrow dependencies (i.e. the transformations are parallelizable, don't require shuffling) and that can all be executed on the same executor a stage. Stages can be spread over executors/ cores.
+
+Once we encounter a \textit{wide dependency}, the stage is finished, we need to shuffle around. A wide dependency requires all input values, which requires shuffling (send over the network). A new stage needs to be set up.\\
+
+\textbf{Idea of Spark:} do as many narrow dependency transformations in one stage as possible, then wait until all tasks in a stage have finished and then shuffle once the stage is done. A spark job as a whole is a \textit{sequence/DAG of stages}.
+
+\begin{figure}[hb!]
+	\centering
+	\includegraphics[width=0.3\linewidth]{figures/spark_job}
+	\caption{Spark job}
+	\label{fig:sparkjob}
+\end{figure}
+
+\textbf{Terminology}
+
+\begin{compactitem}
+\item Vertical grouping: group transformations into stage
+\item Horizontal splitting: split stage into tasks
+\item Sequence: arrange stages into Spark job.\\
+\end{compactitem}
+
+
+\subsection{Performance tuning}
+
+Consider any DAG with multiple output RDDs. Remember that evaluation is lazy - transformation are only executed once an action is applied on an RDD. If we apply an actions to multiple RDDs that all have common ancestor RDDs, the ancestor RDDs are calculated multiple times equivalently. This is very inefficient since we keep recomputing the same RDDs over and over.\\
+
+\textbf{Persisting RDDs:} We can instruct Spark to persist some RDDs (cache them). Considering Figure \ref{fig:sparkpersrdds}, an action on output RDDs then only requires one single transformation.
+
+\begin{figure}[t!]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.25\linewidth]{figures/spark_dag_ineff}
+		\caption{Inefficient recomputation of RDDs}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.25\linewidth]{figures/spark_persisting_rdds}
+		\caption{Spark persisiting RDDs}
+		\label{fig:sparkpersrdds}
+	\end{subfigure}
+	\caption{}
+\end{figure}
+
+\textbf{Avoiding wide dependencies:} As we've seen, wide dependencies require shuffling, which takes time. Spark splits RDDs into partitions. What if we pre-partition the input s.t. shuffling is no longer necessary. We can tell Spark to proactively partition the data. The amount of work is the same, we just partition differently and as a result have less shuffling. Spark partitions key-values s.t. all KV pairs with the same key are already on the same machine and no shuffling is necessary.
+
+\subsection{Data Frames}
+
+RDDs are a low-level concept, it's just a collection of values. Doing processing on RDDs using Spark and Python is not simple. That's why we introduce DataFrames - we basically already know what they are: tables. Most important concept: data independence. Since with DataFrames we now have tables, we don't have to use transformations and actions. We can use SQL like queries which can be translated by Spark to transformations and actions. You can still use transformations on DataFrames, but SQL is generally easier to use.
+
+If each value in an RDD is a dataset row and all values have the same set of attributes (columns), we can just interpret the RDD as a table, i.e. a DataFrame.\\
+
+\textbf{Columnar storage:} Spark can store columns together. In a column, all values typically have the same datatype. This allows for much more efficient storing in memory. For example, a int32 column can be stored as just a multiple of 32bits $\rightarrow$ highly structured and efficient. DataFrames thus have a much lower memory footprint.
+
+\textbf{Schema inference:} Spark automatically infers types (works for csv, json, ...).\\
+
+It is possible to convert back and forth between DataFrames and RDDs, however in practice it is best to just stick with one and don't mix.
+
+\textbf{Limits of DataFrames: Heterogeneity}\\
+In practice, we don't have uniform data, e.g. column \textit{foo} might be int somewhere but an array somewhere else. Then forcing the values into a column will produce all strings (e.g. "1" and "[1,2]").
+
+\subsubsection{Dealing with nestedness}
+
+As we've seen, JSON and XML don't always fit into tables since they allow nested data. Thus, transformations are still useful since if our data is not in tables, we can't use SQL. Then we need transformations.
+
+Spark also offers additional optimizations to deal with nested data:
+
+\begin{compactitem}
+\item Arrays: Spark offers an \textit{explode()} function that automatically expands an array into normal form. We essentially get one single row for each value in the array.
+\item Objects: Spark allows accessing fields of objects using SQL, using a '.' notation (like class attribute). This allows us to explore tables with objects in them. 
+\end{compactitem}
+
+\begin{figure}[hb!]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/spark_nestedness_arrays}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/spark_nestedness_objects}
+	\end{subfigure}
+\end{figure}
+
+
+\section{Document stores}
+
+Documents are just trees. Document stores are often referred to as NoSQL (= not only SQL).\\
+
+\textbf{Remember: relational model}\\
+Typical relational stack: bits $\rightarrow$ text $\rightarrow$ well-formed CSV $\rightarrow$ relational schema $\rightarrow$ queryable tables.
+
+Relational tables fulfill relational integrity (all rows have the same columns), atomic integrity (no nested tables), domain integrity (strict type per column). Relational algebra provides an way to query data with SQL being an easy query language.
+
+Remember: We want to rebuild that stack for clusters. Up until now, we have rebuilt the stack for tables on clusters. Now: we want to do the same for the tree data model.
+
+\begin{figure}[hb!]
+	\centering
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.6\linewidth]{figures/docstores_structured_stack}
+		\caption{The structured stack}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.6\linewidth]{figures/docstores_semistructured_stack}
+		\caption{The semi-structured stack}
+	\end{subfigure}
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.6\linewidth]{figures/docstores_mongodb_stack}
+		\caption{The MongoDB stack}
+	\end{subfigure}
+\end{figure}
+
+\subsection{Making trees fit into tables}
+
+Why not reuse things? We could try to fit trees into tables.
+
+For flat trees, this is definitely possible (e.g. a tree with just leafs is just a row). We can natively fit several flat trees as several rows into a table, for both JSON and XML. However, all flat trees need the same fields (columns) and the same data type for each field. How do we ensure this domain integrity? We can use schemas! We can validate JSON or XML by using schemas and thus make sure that the trees are flat trees with all the same fields and domain integrity.\\
+
+We thus can fit trees into tables, but we need to assume a lot: relational integrity (all same fields), atomic integrity (flat trees), maybe domain integrity (all same type in one column). For trees, this is generally not the case.
+
+In general, we have \textbf{nestedness} and \textbf{heterogeneity}. Could we solve this...?
+
+Nested arrays: there are ways to fix it, use multiple tables, explode row.
+
+Heterogeneity: put NULL in missing fields.
+
+However, this is not a good solution. \textbf{Impedance mismatch:} data to store does not have the same shape as the storage. This is why we have document stores.
+
+\subsection{Document stores (MongoDB)}
+
+\textbf{Characteristics:}
+
+\begin{compactitem}
+\item Document stores don't scale as well as MapReduce, Spark, HDFS, etc. MongoDB works on a few machines (not 1000s). 
+\item A document store is a collection of trees (large number of small trees). You can have bigger documents (e.g. picture, MB size), but not documents in the GB or TB region.
+\item Document stores store millions or billions of such small documents. AND: the documents don't need to look alike (but often they do).
+\item Tree vs. flat: document stores natively support nestedness where as rel. DBs are flat.
+\item Homogeneous vs. Heterogeneous: document stores natively support heterogeneity (every column/field can look different) where as rel. DBs are homogeneous (everything needs to be equivalent).
+\item Document stores support SQL principles such as Projection, Selection, Aggregation. BUT: joins are not ideal, very expensive (you can still implement your own join). This is not really an issue though because the data is denormalized $\rightarrow$ we already "precomputed" the joins by nesting the data.
+\item NoSQL: validation \textit{after} the data was populated $\rightarrow$ validation on read (compared to RDBMS where schema needs to specified first $\rightarrow$ schema on write).
+\end{compactitem}
+
+\textit{Many} document stores implementations exist (MongoDB, CouchDB, elasticsearch, etc.) We focus on MongoDB. MongoDB uses JSON (document stores using XML exist as well). But MongoDB supports more types than JSON (dates, binary, etc.). MongoDB stores JSON documents as binary, which is more efficient: BSON (binary JSON). MongoDB thus does not have text, it stores directly into BSON. 
+
+\subsection{Querying a document store}
+
+Ideally, we'd want to query document stores with a language like SQL. On a lower level, we need a CRUD (create, read, update, delete) based access to the document store. SQL (query language) can then build on top of this and provide easy querying for users.\\
+
+\begin{table}[hb!]
+\centering
+\begin{tabular}{|p{20mm}|p{75mm}|p{75mm}|}
+	\hline 
+	Desc & Low level query & SQL equivalent\\ 
+	\hline 
+	Read & db.scientists.find(
+	\{"Theory" : "Relativity"\}
+	) & SELECT *
+	FROM scientists
+	WHERE Theory = "Relativity" \\ 
+	\hline 
+	Read: projection & db.scientists.find(
+	\{ "Theory" : "Relativity" \},
+	\{ "Name" : 1, "Last": 1 \}
+	) & SELECT Name, Last
+	FROM scientists
+	WHERE Theory = "Relativity" \\ 
+	\hline 
+	Read: AND & db.scientists.find(\{"Theory": "Relativity", "Last": "Einstein"\}) & SELECT Name, Last
+	FROM scientists
+	WHERE Theory = "Particle Physics"
+	AND Last = "Einstein" \\ 
+	\hline 
+	Read: OR & db.scientists.find(
+	\{\$or : [\{ "Last" : "Newton" \},	\{"Last": "Einstein" \}]\}) & SELECT Name, Last
+	FROM scientists
+	WHERE Last = "Newton"
+	OR Last = "Einstein" \\ 
+	\hline 
+	Read: Comparison & db.scientists.find(\{ "Publications": \{\$gte: 100\}\}) & SELECT Name, Last
+	FROM scientists
+	WHERE Publications >= 100 \\ 
+	\hline 
+\end{tabular}
+\end{table}
+
+
+These low level queries further support heterogeneity, i.e. they still work if we have missing fields or different types. Further, these queries support nestedness, which SQL does not.
+
+\begin{table}[hb!]
+\centering
+\begin{tabular}{|p{40mm}|p{135mm}|}
+	\hline 
+	Desc & Low level query \\ 
+	\hline 
+	Read: nestedness (objects) & db.scientists.find(\{"Name.First": "Albert"\}) \\ 
+	\hline 
+	Read: nestedness (arrays) & db.scientists.find(\{"Theories": "Special relativity"\}) \\ 
+	\hline 
+	Read: other operators & db.scientists.find(\{"University": \{\$in: ["ETH Zurich", "EPFL"]\}\}) \\ 
+	\hline 
+	Count & db.scientists.find(\{"University": \{\$in: ["ETH Zurich", "EPFL"]\}\}).count() \\ 
+	\hline 
+	Sort (-1: descending) & db.scientists.find(\{"University": \{\$in: ["ETH Zurich", "EPFL"]\}\}).sort(\{"Founded": -1\}) \\ 
+	\hline 
+	Limit and offset & db.scientists.find(\{"University": \{\$in: ["ETH Zurich", "EPFL"]\}\}).sort(\{"Founded": -1\}).skip(30).limit(10) \\ 
+	\hline 
+	Duplicates & db.scientists.distinct("name") \\ 
+	\hline 
+\end{tabular} 
+\end{table}
+
+Possible confusion: \texttt{db.scientists.find(\{"Name.First": "Albert"\})} finds all documents where the "First" field of the "Name" object is "Albert". \texttt{db.scientists.find(\{"Name": \{"First": "Albert"\}\})} however searches for the \textit{exact} object "Name" of from \texttt{\{"First": "Albert"\}}.
+
+Note on \textit{Read: nestedness (arrays)}: If we have an array, just searching for \texttt{\{"Theories": "Special relativity"\}} works, this will check if "Special relativity" is in the array "Theories".
+
+Many other operators exist: \$nin, \$eq, \$ne, \$gt, \$lt, \$lte,...
+
+There also exist aggregation and pipelines (like in Spark). But there is an easier way to do this (see section 13).
+
+\begin{figure}[b!]
+	\centering
+	\includegraphics[width=0.4\linewidth]{figures/docstores_aggregation_pipeline}
+	\caption{Aggregation and pipelines}
+	\label{fig:docstoresaggregationpipeline}
+\end{figure}
+
+\textbf{Data defintion:} Observe that we can find existing docs and update them. This is not possible in Spark and HDFS.
+
+\begin{table}
+\centering
+\begin{tabular}{|c|c|}
+	\hline 
+	Desc & Low level query \\ 
+	\hline 
+	Insert & db.flights.insertOne(\{"Name": "Einstein", "Theory": "Relativity"\}) \\ 
+	\hline 
+	Update & db.scientists.updateMany(\{"Name": "Einstein"\},
+	{ \$set: {"Century": "20"}}) \\ 
+	\hline 
+	Remove & db.scientists.deleteMany(\{"century": "15"\}) \\ 
+	\hline 
+\end{tabular} 
+\end{table}
+
+
+Document stores are document write atomic (like HBase: row atomic). Two users can't write to the same document simultaneously.
+
+\subsection{Architecture}
+
+Principles of big data:  Shard the data, Replicate the data,  Buy lots of cheap hardware. MongoDB does this as well. However, typically we don't have lots of shards and only few machines.
+
+\begin{figure}[hb!]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.6\linewidth]{figures/docstores_clustering}
+		\caption{Clustering model}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.8\linewidth]{figures/docstores_clustering_phys}
+		\caption{Clustering on the physical level}
+	\end{subfigure}
+\end{figure}
+
+We, again, have a master-slave architecture. One master replica and several slave replicas. An important feature of document stores is the ability to modify data (not possible in Spark, MapReduce, ...). When writing, the write goes to the master, which will execute it and forward the write to all slave replicas. The slaves send ACKs. However, in order to speed writing up, the master only waits for a subset of slaves to send their ACK (the number of ACKs to wait for can be specified in MongoDB).
+
+\subsection{Indices}
+
+Imagine a collection of billions of objects and we start a query. Query can be of two different types:
+
+\begin{compactitem}
+\item Point query (= highly-filtering queries): returns only very few objects from the collection.
+\item Not highly-filtering queries: returns lots of objects from the collection.
+\item Range queries: return objects that fit into some range.
+\end{compactitem}
+
+Indices are mainly interesting for point and range queries since returning many objects is slow anyways. Thanks to indices, point queries can run in milliseconds. On Spark, which does not have indices, this would take a while (seconds to minutes).\\ 
+
+\textbf{Indices - the principle:} Indices are like an index in a book. They directly point to an entry (object) and thus make lookups faster. Two kinds of indices exist in MongoDB: hash indices and B+ trees.
+
+
+\subsubsection{Hash indices}
+
+Hash indices are the fastest and can be created on some field by \texttt{db.scientists.createIndex(\{"Century": "hash"\})}. The procedure works as follows: the value of the specified field is hashed for every object. In a hash table, we then map the hashed value to an array of records that point to all objects that have the specified field equal to the value of that hash table entry. This allows to quickly find all objects that have a specified value in the field (e.g. all objects with "Century" 19 $\rightarrow$ lookup h(19)).
+
+\begin{figure}[b!]
+	\centering
+	\includegraphics[width=0.45\linewidth]{figures/docstores_hash_indices}
+	\caption{Hash indices (the fastest)}
+	\label{fig:docstoreshashindices}
+\end{figure}
+
+\textbf{Limitations of hash indices:}
+
+\begin{compactitem}
+\item No support for range queries
+\item Hash function not perfect in real life
+\item Space requirements for collision avoidance
+\end{compactitem}
+
+
+\subsubsection{B+ trees indices}
+
+B+ trees are another way to index and they solve some issues of hash indices, but they are slower. Consider the B+ tree example in Figure \ref{fig:docstoresbplusex} where we group words together such that we have single disk read $\rightarrow$ less latency. B+ trees have several keys per node. These values define intervals (e.g. 2 keys: 3 intervals = 3 children, 4 keys: 5 intervals = 5 children). For each interval, there is a child. In B+ trees, all leaves have the same depth and all non-leaf nodes have between d+1 and 2d+1 children (the root can have less).
+
+\begin{figure}[hb!]
+	\centering
+	\includegraphics[width=0.5\linewidth]{figures/docstores_bplus_ex}
+	\caption{B+ tree example}
+	\label{fig:docstoresbplusex}
+\end{figure}
+
+\textbf{Procedure:} We keep inserting into an empty tree. First, all values just go in the root. Once we have more than 4 values, we split the root and create two leafs and the last value before splitting is added as new key. This is done recursively - every time a leaf has too many values, it is split. If the parent has not yet too many keys, a new key is added to the parent and the leaf is split into two. If the parent already has full keys, the parent is split and a new root is added (see slides for example construction).
+
+B+ trees can then be used to build an index, where the values for a field are entered in the tree and each value point to a set of objects. When executing a query, we just have to walk the tree. Further, B+ trees naturally encode intervals, which speeds up range queries.\\\\
+
+
+MongoDB has a special field \texttt{\_id}, which always exists for any object. MongoDB always builds an index on this field, which allows for very fast lookups on the \_id field. We thus have two types of indices in MongoDB:
+
+\begin{compactitem}
+\item Primary: \_id
+\item Secondary: other fields. MongoDB will only build an index for other fields if instructed to do so.
+\end{compactitem}
+
+Querying without an index requires scanning through the entire collection in memory, which is very slow. With an index, we can directly \textit{prefilter} the collection without even looking at the collection. Building the index takes a while in the beginning, however once it is done, queries are very fast.\\
+
+\subsection{Examples}
+
+\textbf{Index (hash):} db.scientists.createIndex(\{"Name.Last": "hash"\})\\
+\textbf{Query:} db.scientists.find(\{"Name.Last": "Einstein"\}) - very fast.\\
+
+\textbf{Index (hash):} db.scientists.createIndex(\{"Name.Profession": "hash"\})\\
+\textbf{Query:} db.scientists.find(\{"Profession": "Physicist", "Theories": "Relativity"\}) - very fast, collection can be prefiltered on "Profession" (using indices) and then postfiltered in memory on "Theories".\\
+
+\textbf{Index (compound (only B+-tree!)):} db.scientists.createIndex(\{"Birth": 1, "Death" : 1\})\\
+\textbf{Query:} db.scientists.find(\{"Birth": 1887, "Death": 1946\}) - very fast.\\
+
+\textbf{Index (compound (only B+-tree!)):} db.scientists.createIndex(\{"Birth": 1, "Death" : -1\})\\
+\textbf{Query:} db.scientists.find(\{"Birth": 1887\}) - faster as well, even though it only looks at "Birth" not "Death".\\
+
+\textbf{Index (compound (only B+-tree!)):} db.scientists.createIndex(\{"Birth": 1, "Death" : -1\})\\
+\textbf{Query:} db.scientists.find(\{"\$gte" : 1980\}) - very fast.\\
+
+\textbf{Index (compound (only B+-tree!)):} db.scientists.createIndex(\{"Birth": 1, "Death" : -1\})\\
+\textbf{Query:} db.scientists.find({"Death" : 1887) - \textit{not fast} because the index first sorts on "Birth", then on "Death". The query only checks the second field.\\
+
+
+\section{Querying trees}
+
+In document stores, we have large collections of small trees and we can query with nested and heterogeneous data. We now want a querying layer above the data store (document store) in the stack.
+
+\textbf{Data independence:} We want a logical data model with a query language independent of the physical implementation. The physical layer can be changed while the logical layer stays. For ecample, Spark SQL allows to query Spark using an SQL-like language, while on the physical level, Spark translates the SQL queries to transformations and actions. Due to data independence, this translation needs to be done only once, not everytime by the user.\\
+
+However, we've seen that nested and heterogeneous data is still a problem for SQL. Using DataFrames, Spark SQL provides possible ways to deal with nestedness (explode arrays) or heterogeneity (convert everything to string) but the approach is suboptimal. We want a language that is similar to SQL but handles nestedness and heterogeneity natively $\rightarrow$ \textbf{JSONiq} (others exist).\\
+
+Declarative language: declare \textit{what} you want (e.g. I want a cake) - vs. imperative language: declare how you want it (e.g. put sugar, flour, etc. in and bake for 30min).
+
+Function language: everything transforms (functions) several instances into an instance.
+
+Set-based languages: always returns collections (e.g. rows).\\
+
+\textbf{Language ecosystem:}
+
+\begin{table}[hb!]
+\begin{tabular}{|c|c|c|}
+	\hline 
+	& XML & JSON \\ 
+	\hline 
+	Navigation & Navigation & JSONPath,
+	JSONSelect \\ 
+	\hline 
+	Transform & XSLT & JSONT \\ 
+	\hline 
+	Query & XQuery 1.0/3.0 & XQuery 3.1,
+	JSON Query,
+	JSONiq \\ 
+	\hline 
+	Update,	Scripting & XQuery Update Facility \& Scripting & JSONiq \\ 
+	\hline 
+\end{tabular} 
+\end{table}
+
+And more recently, we have languages that query collections of trees: UnQL, N1QL, GraphQL, SQL++, ArangoDB Query Language (AQL), MRQL, Asterix Query Language (AQL).
+
+
+\subsection{JSONiq Data Model (JDM)}
+
+JSONiq is a functional language that always operates on sequences of items ($\circ$, $\circ$, $\circ$, $\circ$, $\circ$, $\circ$, $\circ$, $\circ$, $\circ$).
+
+\textbf{Sequence of items:}
+
+\begin{compactitem}
+\item Heterogeneous: each item can be different (deviation from SQL!)
+\item Denormalized: some items in the sequence may be another tree.
+\item Sequence of one item = item itself: ($\circ$) = $\circ$ (different from e.g. Python where 1 $\neq$ [1])
+\item Sequences are flat: (($\circ$, $\circ$), $\circ$) = ($\circ$, $\circ$, $\circ$). You can only concatenate sequences, not nest them. Nesting is only possible with items.
+\end{compactitem}
+
+\textbf{Items:}
+
+\begin{compactitem}
+\item Atomic (int, bool, date, ...)
+\item Object (mapping)
+\item Array (ordered list)
+\item Function (encodes a function)
+\end{compactitem}
+
+\newpage
+
+\subsection{JSON Navigation (JSONiq, Rumble)}
+
+\begin{table}[hb!]
+\begin{tabular}{|p{100mm}|p{80mm}|}
+	\hline 
+	Query & Description \\ 
+	\hline 
+	json
+	-doc("myfile.json") & Open a JSON doc and returns an object (i.e. an item), which is a sequence of one item. \\ 
+	\hline 
+	json
+	-doc("myfile.json").countries & Navigate the object using ".", returns array = item = seq. of items \\ 
+	\hline 
+	json
+	-doc("myfile.json").countries[] & Unbox an array with []. Returns a sequence of all array items. \\ 
+	\hline 
+	json
+	-doc("myfile.json").countries[].name & Returns sequence of country name strings \\ 
+	\hline 
+	json
+	-doc("myfile.json").countries[].code & Returns sequence of country code strings \\ 
+	\hline 
+	json-doc("myfile.json").countries[][\$\$.code = "CH"] & \$\$: special variable for filtering. \$\$.code: look at code field for every object and compare it (= SELECTION) \\ 
+	\hline 
+	json-doc("myfile.json").countries[][\$\$.code = "CH"].name & Selection and Projection \\ 
+	\hline 
+	\end{tabular}
+	\caption{JSONiq navigation}
+\end{table}
+
+\subsection{Construction}
+
+\begin{compactitem}
+\item Strings: "foo", escaping: "This is a line\textbackslash n and this is a new line" (like in JSON).
+\item Numbers: integer: 42, decimal: 3.1415926, double: -6.022E23. (float exists as well).
+\item Booleans: true, false
+\item other numbers (cast type): long("1234567890123"), int("12345678"), short("32000"), byte("200"), nonNegativeInteger("42")
+\item Dates and times: date("2013-05-01Z"), dateTime("2013-06-21T05:00:00"), time("05:00:00-08:00"), dateTimeStamp("2013-06-21T05:00:00Z"), gYear("2019"), gMonth("--11Z"), gYearMonth("2019-11"), gMonthDay("--11-26+02:00"), gDay("---26")
+\item Durations: dayTimeDuration("PT1D2H"), yearMonthDuration("P1Y2M"), duration("P1Y3MT3D")
+\item Binaries: hexBinary("0CD7"), base64Binary("RGFzc2Vs")\\
+\end{compactitem}
+
+\textbf{Construction:}
+\begin{compactitem}
+\item JSON (objects and arrays): \texttt{[\{"foo": "bar"\}, \{"bar": [1, 2, true, null]\}]}. You can just copy any well-formed JSON to JSONiq for construction.
+\item Sequences with a comma: \texttt{[2, 3], true, "foo", \{"f": 1 \}}
+\item Sequences with a range: \texttt{1 to 100}
+\end{compactitem}
+
+\subsection{JSONiq: Basic Operations}
+
+\textbf{Arithmetics:} All operators have the form of \textit{seq. of items $\circ$ seq. of items}: 1 + 1, 42 - 1-, 6 * 7, 42.3 div 7.2 (division), 42 idiv 9 (integer division), 42 mod 9 (modulo). Type conversion is automatically taken care of. Don't use /. \% for div and mod!
+
+\textbf{Empty sequence:} () + 1 = ()
+
+\textbf{Types:} "foo" + 2 ERROR
+
+\textbf{Cardinality:} (3,4) + 2 ERROR
+
+\textbf{Strings:}
+\begin{compactitem}
+\item concatenation: "foo" | | "bar", concat("foo", "bar"), string-join(("foo", "bar", "foobar"), "-")
+\item sub-string: substr("foobar", 4, 3)
+\item length: string-length("foobar")
+\end{compactitem}
+
+If you want to e.g. concat "foo" and 2, you need to first cast 2 to string. JSONiq has a full string library.
+
+\textbf{Value Comparison}
+\begin{compactitem}
+\item equality: 1 eq 2 (=false)
+\item inequality: "foo" ne "bar" (=true)
+\item greater than: 234 gt 123 (=true), 234 ge 123 (=true)
+\item less than: 42.3 lt 7.2 (=false), 42.3 le 7.2 (=false)
+\item empty sequence: () le 2 = ()
+\item types: "foo" le 2: ERROR
+\end{compactitem}
+
+\textbf{General Comparison}
+\begin{compactitem}
+\item Existential quantification (tells if at least one item in the sequence is equal to the righthand item): (1,2,3,4,5) = 1 (=true) ((1,2,3,4,5) eq 1 would throw an error)
+\item General comparison: (1, 2, 3, 4, 5) < (2, 3, 4, 5, 6) (=true, at least one item in the left sequence is smaller than at least one item in the right sequence: 1<3), (1, 2, 3, 4, 5) >= (6, 7, 8, 9, 10) (=false, no item in the left sequence is greater or equal at least one item in the right sequence), (1, 2, 3, 4, 5) >= ("foo", 7, 8, 9, 10) (ERROR)
+\end{compactitem}
+
+This structure is driven by practical use cases, which allows us to quickly check if a large collection contains a match.
+
+\textbf{Logics}
+\begin{compactitem}
+\item conjunction: 1+1 eq 2 and 2+2 eq 4 (true and true)
+\item disjunction: 1+1 eq 2 or 2+2 eq 4 (true or true)
+\item not: not(100 mod 5 eq 0) (not true)
+\item Effective boolean value of non-booleans:
+\begin{compactitem}
+	\item true: "foo", 42, (\{"foo": "bar"\}, 1)
+	\item false: "", 0, ()\\
+\end{compactitem}
+\end{compactitem}
+
+\subsection{Composability}
+
+\textbf{Rule of thumb:} Any Expression can be the operand of any other expression.
+
+\begin{compactitem}
+\item (1 + ((\{"b":[{"a": \textbf{2+2\}}]}).b[].a)) to 50
+\item (1 + ((\{"b":[\{"a": 4\}]\})\textbf{.b[]}.a)) to 50 (access field b and get value (unboxed array))
+\item (1 + ([\{"a": 4\}][].a)) to 50
+\end{compactitem}
+
+
+\textbf{Presedence:} Use parentheses to override or when in doubt!
+
+\begin{figure}[hb!]
+	\centering
+	\includegraphics[width=0.4\linewidth]{figures/querytrees_precedence}
+	\caption{Precedence}
+	\label{fig:querytreesprecedence}
+\end{figure}
+
+JSON construction using functions:
+
+\texttt{\{"attr": string-length("foobar"), "values": [for \$i in 1 to 10 return long(\$i)]\}} becomes \texttt{\{"attr": 6, "values": [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]\}}.
+
+
+\subsection{Data Flow (XQuery, JSONiq)}
+
+\textbf{Conditional Expressions:}
+\begin{lstlisting}
+if(count(doc("file.xml")//country) gt 1000)
+then "Large file!"
+else "Small file."
+\end{lstlisting}
+
+\textbf{Switch expressions:}
+
+\begin{lstlisting}
+switch($country.code)
+case "CH" return ("gsw", "de", "fr", "it", "rm")
+case "F" return "fr"
+case "D" return "de"
+case "I" return "it"
+default return "en"
+\end{lstlisting}
+
+\textbf{Try Catch Expressions:}
+
+\begin{lstlisting}
+try {
+	integer($country.code)
+} catch * {
+	"A country code is not an integer!"
+}
+\end{lstlisting}
+
+
+\subsection{FLWOR Expressions}
+
+\textbf{Let clauses:} bind seq. of items to variable. This is not an assignment! After the return, \$x no longer exists.
+
+\begin{lstlisting}
+let $x := 2
+return $x * $x
+\end{lstlisting}
+
+\textbf{For clauses:} \$x is first bound to 1, then to 2, then to 4, ... Return is sequence of integers (left), sequence of objects (right), ...
+
+\begin{lstlisting}
+for $x in (1, 2, 4)		for $x in 1 to 10
+return $x * $x			return {"number": $x,"square": $x * $x}
+\end{lstlisting}
+
+\textbf{Where clauses:} The where clause is applied to each item in the for clause 
+
+\begin{lstlisting}
+for $x in 1 to 10
+where $x - 2 gt 5
+return $x * $x
+\end{lstlisting}
+
+\textbf{Order by clauses:} Each object is bound to \$x and then sorted by some field (default: ascending)
+
+\begin{lstlisting}
+for $x in json-file("countries.json")
+order by $x.population
+return $x.name
+\end{lstlisting}
+
+\textbf{Group by clauses:} Group countries by continent. Note: you don't have to aggregate if you group! In SQL, we have to.
+
+\begin{lstlisting}
+{"continents" : [
+  for $x in json-file("countries.json")
+  group by $continent := $x.continent
+  return {
+    "code": $continent, "countries": [for $country in $x return $country.name]
+  }]
+}
+\end{lstlisting}
+
+\subsubsection{Tuple stream semantics}
+
+JSONiq was developed by people that developed SQL $\rightarrow$ JSONiq is more precise and solves imperfections of SQL.
+
+\textbf{Tuple stream semantics:} Each item in a for loop is bound to the variable, which gives us a set of tuples. We essentially have a binding of \$x to all items over which \$x iterates. Expressions such as \textit{where} or \textit{return} can thus be evaluated against the set of tuples.
+
+\begin{figure}[hb!]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.5\linewidth]{figures/queryingtrees_tuples_11}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.6\linewidth]{figures/queryingtrees_tuples_12}
+	\end{subfigure}
+	\caption{Each item is bound to \$x, i.e. we have tuples (x,1), (x,2), ... The where clause is then evaluated against each tuple and returns tuples that fulfill the expression. The return then evaluates against these tuples.}
+\end{figure}
+
+\begin{figure}[hb!]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.7\linewidth]{figures/queryingtrees_tuples_21}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.4\linewidth]{figures/queryingtrees_tuples_22}
+	\end{subfigure}
+	\caption{For each tuple (x,1), (x,2), ..., we get a new tuple for y. \textbf{Observe:} the data may be heterogeneous, but the bindings are always homogeneous!}
+\end{figure}
+
+\begin{figure}[t!]
+	\centering
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=1\linewidth]{figures/queryingtrees_tuples_31}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.6\linewidth]{figures/queryingtrees_tuples_32}
+	\end{subfigure}
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/queryingtrees_tuples_33}
+	\end{subfigure}
+	\caption{After the group by, we have x tuples with sequence of all items with the same mod result.}
+\end{figure}
+
+\newpage
+
+\subsection{Types}
+
+Simple types: by name e.g. integer
+
+Complex types: by kind e.g. object\\
+
+\textbf{Cardinality:}
+\begin{compactitem}
+\item integer: exactly one
+\item boolean? at most one
+\item array+: at least one
+\item object*: any\\
+\end{compactitem}
+
+\textbf{Type usage:} 
+
+You can (but don't have to) specify a type for a variable. For example:
+\begin{lstlisting}
+let $x as integer := 2		let $x as object := { "foo" : 1, "bar" : 2 }
+return $x + $x			return $x.foo + $x.bar
+\end{lstlisting}
+
+You can check if a type is matched in a return (throws an error if type is not matched). For example:
+\begin{lstlisting}
+for $x as array in ([1], [2])
+return $x + $x treat as integer
+\end{lstlisting}
+
+You can change the type of a return:
+\begin{lstlisting}
+for $x as array in ([1], [2])		for $x as array in ([1], [2])
+return $x + $x cast as double		return double($x + $x)
+\end{lstlisting}
+
+You can check if an item is of instance or can be casted to an instance:
+\begin{lstlisting}
+(3.14,"foo") instance of integer*		3.14 castable as double
+\end{lstlisting}
+
+You can define functions and specify the types of function arguments (not necessary though, the default type is item*)
+\begin{lstlisting}[basicstyle=\small]
+declare function is-big-data($threshold as integer, $objects as object*) as boolean {
+  count($objects) gt $threshold
+};
+is-big-data(1000, collection("countries"))
+\end{lstlisting}
+
+\subsection{Architecture of a query processing engine}
+
+A query needs to be compiled (=text of code needs to be translated into an AST (abstract syntax tree)). Steps of compiling a JSONiq query:
+
+\begin{compactenum}
+\item Parsing: Parse the text query and translated it into an AST (abstract syntax tree).
+\item Translating: visit the AST and turn it into an expression tree.
+\item Optimization: optimize the expression tree.
+\item Code Generation: Turn the expression tree into a runtime iterator tree (actual execution). Iterator: we have a language on sequences, we thus always iterate on sequences.
+\item Execution: Core tuntime of engine
+\end{compactenum}
+
+\begin{figure}[t!]
+	\centering
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=1\linewidth]{figures/querytrees_processing_1}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.6\linewidth]{figures/querytrees_processing_2}
+	\end{subfigure}
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.6\linewidth]{figures/querytrees_processing_3}
+	\end{subfigure}
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/querytrees_processing_4}
+	\end{subfigure}
+	\begin{subfigure}[t]{.3\textwidth}
+		\centering
+		\includegraphics[width=0.4\linewidth]{figures/querytrees_processing_5}
+	\end{subfigure}
+	\caption{Architecture of a query processing engine.}
+	\vspace*{-6mm}
+\end{figure}
+
+The actual execution can be of two types:
+
+\begin{compactitem}
+\item Materialized execution: The entire sequence is computed synchronously before returning. For example, in a for loop, every single loop is executed and each tuple is produce. Only once all tuples are produce is the return applied. Imagine a for loop over $10^9$ objects.. This takes lots of memory and is very inefficient. Streaming is more efficient.
+\item Streamed execution: Directly return after materializing one single object and then forget it. For example, in a for loop produce one tuple and directly return. In order to make this sequential process even faster, one can use parallelization. We can split the data into shards and do the execution in parallel. This parallel execution strategy is orthogonal to the runtime iterator tree (is just a query plan). Rumble is constantly switching between local and parallelized. \textbf{Note:} this is not always possible! Selection, projection is ok, but group by, order by is not possible with streaming. In some cases, we have no choice but to use materialized execution.
+\end{compactitem}
+
+\section{ Performance at large scales}
+
+\subsection{Speed up}
+
+How can we make jobs faster? We need to identify \textbf{bottlenecks}! Find the overloaded part in the execution (bottleneck) and improve that part.
+
+Many different sources for bottlenecks exist: memory (full memory, paging), CPU (100\% CPU load), disk I/O (slow read/write), network I/O (slow transmission). Typically, you can look into a cluster and identify the overloaded components. There is no point in improving a component that is not overloaded when another component is. E.g. no point in adding more memory when the CPU is the bottleneck.\\
+
+MapReduce and Spark solve the (disk) I/O-bound bottleneck. If other bottlenecks are present, we might not need MapReduce or Spark.
+
+
+\subsection{Measurements}
+
+Latency = "When do I start receiving data?"
+
+Throughput = "How fast can we transmit data?"
+
+Total response time = Latency + Transfer time
+
+\begin{figure}[hb!]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=1\linewidth]{figures/performance_latencies}
+		\caption{Typical latencies}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=1\linewidth]{figures/performance_throughput}
+		\caption{Typical transfer rates}
+	\end{subfigure}
+\end{figure}
+
+$Speedup = \frac{Latency_{old}}{Latency_{new}}$\\
+
+\textbf{Amdahl's law:} When you fix a bottleneck, you only fix one part of the system. The rest of the system that doesn't depend on this will not improve. $Speedup = \frac{1}{1-p+p/s}$\\
+
+\textbf{Gustafson's law:} Gustofson assumes that once we have a speedup, people will just come with more data (more realistic). What stays constant is the computing power. $Speedup = 1-p+sp$\\
+
+with $p$ how much of the execution is parallelizable and $s$ the speedup on the parallelizable part.\\
+
+Example ($p=0.3, s=2$): Amdahl: $Speedup = \frac{1}{1-0.3+\frac{0.3}{2}} = 1.18$, Gustafson: $Speedup = 1-0.3+2*0.3 = 1.3$
+
+
+\subsection{Tuning}
+
+What can we act on?
+
+\begin{compactitem}
+\item Number of machines (scale out): easy way out but expensive
+\item Machine features (CPU, Memory, ...) (scale up): expensive
+\item Code: most important and efficient tuning
+\item Size of chunks
+\item Storage format
+\item Network usage
+\item Architecture
+\end{compactitem}
+
+How to avoid unnecessary tuning?
+
+\begin{compactitem}
+\item Avoid memory scale-up: Search for classes that are instantiated billions of times and make code more efficient. Are there unused fields? Can I find more memory-efficient data structures (TreeMap, HashMap, ArrayList, LinkedList)? Do I have redundancy? Do I really need inheritance and RTTI (mechanisms in OO languages at runtime)? 
+\item Avoid CPU scale-up: Search for gigantic loops (e.g., functions passed to transformations). Am I (over)using method calls? (spaghetti bolognese of one-line functions?). Am I calling overriden methods? (switch is faster!). Am I using class hierarchies? (interfaces are faster). Am I using using instanceof tests and casting all over the place? Am I using exceptions in normal setups?
+\item Avoid Disk I/O scale-up: Use efficient formats (e.g. BSON)! (except if one-off query). Use compression (It's read out of the box). In the storage format =, only the actual number of bits matter... compromise efficiency over reusability.
+\item Avoid network I/O scale-up: batch process, pre-filter, pre-project, pre-aggregate. Avoid/minimize shuffling and minimize the amount of data shuffled around by preparing it.
+\end{compactitem}
+
+
+\textbf{Network usage:}
+
+Example with Spark: 8 nodes, each with 16 cores and 128GB of memory. How many resources per container?
+
+\begin{compactenum}
+\item 1 container per machine (keep 1 core for application master)
+\item 1 container per core (16 conrainers per machine)
+\item Middle ground: 3 containers per machine (5 cores, 30GB memory). This is usually a sweet spot.
+\end{compactenum}
+
+\textbf{Code:} Improve code
+
+\textbf{Size of chunks:} if we have large chunks, in real life there will always be some executor that takes much longer than the others. If we have large chunks, we can't split them up and all executors have to wait for the last one to finish. Solution: smaller chunks (tasks). Then, fast executors can execute more tasks. \textit{BUT:} don't push it too far. If the chunks are too small, the latency will dominate and make things inefficient again.
+
+
+\textbf{Network usage:} Network bandwidth is limited. Too much transmitted data leads to a bottleneck. Thus, keep shuffling to a minimum.\\
+
+\subsection{Tail latencies}
+
+\begin{figure}[hb!]
+	\centering
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.4\linewidth]{figures/performance_time_ideal}
+		\caption{Ideal execution times}
+	\end{subfigure}%
+	\begin{subfigure}[t]{.5\textwidth}
+		\centering
+		\includegraphics[width=0.4\linewidth]{figures/performance_time_real}
+		\caption{Execution times in reality}
+	\end{subfigure}
+\end{figure}
+
+In reality, not all executors finish at the same time, there is always going to be one that takes a lot longer (when working with large scales). Why?
+
+\begin{compactitem}
+\item Resources are shared on a machine (lots of daemons run on one machine).
+\item Resources are shared globally.
+\item Background daemon creates hiccups.
+\item Queues
+\item Power limits
+\item Garbage collection
+\item Energy management 
+\end{compactitem}
+
+All this can happen and we cannot control it.\\
+
+\textbf{Example:} SLA, 10ms typical latency, $<$1s in 99\% of the cases.
+
+\begin{compactitem}
+\item 1 node: very high probability that it's fast (0.99), and we can just retry if it's not.
+\item 10 nodes: it's bad if at least \textit{one} of the 10 nodes fails. Probabilities sum up: $10*0.01 = 0.1$, thus one node fails with probability 10\% already.
+\item 100 nodes: fails with 63\% probability
+\item 1000 nodes: fails with 99.9999\% probability
+\end{compactitem} 
+
+A better SLA will not help, the phenomena will just reappear with a large amount of nodes. The tail latency phenomena is a physical issue and will thus always appear.\\
+
+\textbf{Hedge requests:} just execute every task twice at the same time and pick the faster one. For the tasks that are too slow, just launch a new task.
+
+
+\section{Wrap up}
+
+\subsection{10 Design Principles of	Big Data}
+
+\begin{compactenum}
+\item Learn from the past: Tables won't disappear, data shapes matter
+\item Keep the design simple: Simplicity allows to scale up and design large systems. Best example: key-value model.
+\item Modularize the architecture: Build components on top of each other. Build a stack layer by layer. Every data shape follows the same principles (paradigm, data model, syntax, query language, etc.)
+\item Homogeneity in the large: We mostly look at very large collections of small objects. This makes it easy to shard.
+\item Heterogeneity in the small
+\item Separate metadata from data
+\item Abstract logical model from its physical implementation. Allows to reuse things, e.g. store a shape on top of a different shape (cube on top of tables).
+\item Shard the data
+\item Replicate the data
+\item Buy lots of cheap hardware
+\end{compactenum}
+
+\subsection{Design choices}
+
+You may have to:
+
+\begin{compactitem}
+\item Learn an existing product
+\item Choose which product to use
+\item Design a whole new technology or product
+\end{compactitem}
+
+It's very fundamental to be aware of your data: data shape, how much data, what do I want to do with my data.
+
+Do I \textit{really, really} need to reinvent the wheel...? Learn from the past.\\
+
+\subsection{Data in 2030?}
+
+\begin{compactitem}
+\item MapReduce and Spark (or the like) will be invisible. Only engineers will directly use it. The rest of people will use a higher level query language.
+\item Data shapes will be central (and new shapes will be discovered?)
+\item Querying all data shapes will be standardized (and maybe even unified?)
+\item UIs will be the norm for end users (maybe even superseded by ML and AI)
+\item We will literally talk to our databases (Siri, Alexa, etc.)
+\item Data will be fully fungible (Web of Data 2.0)
+\item Data and money will have converged
+\item People will control and manage their own data like their own property (already happening)
+\item Machine Learning will leverage cutting edge database technologies (already happening)
+\item Databases will leverage cutting edge ML technologies (already happening)
+\item Quantum computing will become ordinary
+\item Mankind will turn the entire universe into a big database (after all, it's already a computer)
+\end{compactitem}
 
 
 \titlespacing{\subsection}{0pt}{2ex}{2ex}

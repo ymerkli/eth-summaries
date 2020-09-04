@@ -22,6 +22,7 @@
 \usepackage{xcolor}
 \usepackage{wrapfig}
 \usepackage[margin=1in]{geometry}
+\usepackage{ccicons}
 \newcommand{\hint}[1]{{\color{blue} \em #1}}
 
 \makeatletter
@@ -32,27 +33,30 @@
 \if@twocolumn\hbox{}\clearpage\fi\fi\fi}
 \makeatother
 
-\sloppy
-% \widowpenalty=10000
-% \clubpenalty=10000
-
-\title{
-    \vspace*{0.0mm}
-    \LARGE\bf\sf Advanced Topics in \\Communication Networks (Fall 2019)
-    \vspace*{10.0mm} \\
-    %
-    \Huge\bf\sf Summary
-    %
-    \vspace*{30.0mm} \\
-    \normalsize
-    %
-    \sf Author:\\[5pt]
-    \sf Yannick Merkli\\ [5pt]
-    \sf \pageref{lastpage} Pages
-}
-\date{}
+\title{Advanced Topics in Communication Networks}
+\author{Yannick Merkli, \texttt{ymerkli@ethz.ch}}
+\date{ETH Zurich, HS 2019}
 
 \begin{document}
+	
+\begin{titlepage}
+\maketitle
+\vspace{3cm}
+\thispagestyle{empty}
+
+
+\begin{abstract}
+	\noindent This document is a "lecture summary" style script that closely follows the slides of the \textit{Advanced Topics in Communication Networks} lecture  at ETH Zurich \cite{advnet}. The contribution to this is editing and refactoring as well as providing additional material for better understanding. This summary was created during the fall semester 2019. Due to updates to the syllabus content, some material may no longer be relevant for future versions of the lecture.\\
+	Most graphics are copy \& pasted from the slides. If you don't want yours here, please contact me and I will remove them. Otherwise, this work is published as CC BY-NC-SA.
+	
+	\begin{center}
+		\ccbyncsa
+	\end{center}
+	
+	\noindent I do not guarantee correctness or completeness, nor is this document endorsed by the lecturers. Feel free to point out any erratas. For the full \LaTeX \ source code, consider \texttt{\href{https://github.com/ymerkli/eth-summaries}{github.com/ymerkli/eth-summaries}}.
+\end{abstract}
+
+\end{titlepage}
 
 \maketitle
 \thispagestyle{empty}

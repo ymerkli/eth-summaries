@@ -23,6 +23,7 @@
 \usepackage{wrapfig}
 \usepackage[margin=1in]{geometry}
 \usepackage{pdfpages}
+\usepackage{ccicons}
 \newcommand{\hint}[1]{{\color{blue} \em #1}}
 
 \makeatletter
@@ -32,28 +33,39 @@
 \clearpage%
 \if@twocolumn\hbox{}\clearpage\fi\fi\fi}
 \makeatother
+\setlength\parindent{0pt}
 
-\sloppy
-% \widowpenalty=10000
-% \clubpenalty=10000
-
-\title{
-    \vspace*{0.0mm}
-    \LARGE\bf\sf Network Security (Fall 2019)
-    \vspace*{10.0mm} \\
-    %
-    \Huge\bf\sf Summary
-    %
-    \vspace*{30.0mm} \\
-    \normalsize
-    %
-    \sf Author:\\[5pt]
-    \sf Yannick Merkli\\ [5pt]
-    \sf \pageref{lastpage} Pages
-}
-\date{}
+\title{Network Security}
+\author{Yannick Merkli, \texttt{ymerkli@ethz.ch}}
+\date{ETH Zurich, HS 2019}
 
 \begin{document}
+	
+\begin{titlepage}
+\maketitle
+\vspace{3cm}
+\thispagestyle{empty}
+
+
+\begin{abstract}
+	\noindent This document is a "lecture summary" style script that closely follows the slides of the \textit{Network Security} lecture  at ETH Zurich \cite{netsec}. The contribution to this is editing and refactoring as well as providing additional material for better understanding. This summary was created during the fall semester 2019. Due to the recent update of syllabus content I believe that it is also relevant beyond that very semester.\\
+	Most graphics are copy \& pasted from the slides. If you don't want yours here, please contact me and I will remove them. Otherwise, this work is published as CC BY-NC-SA.
+	
+	\begin{center}
+		\ccbyncsa
+	\end{center}
+	
+	\noindent I do not guarantee correctness or completeness, nor is this document endorsed by the lecturers. Feel free to point out any erratas. For the full \LaTeX \ source code, consider \texttt{github.com/ymerkli/eth-summaries}.\\
+	
+	\vspace*{1cm}
+	
+	\centerline{\textbf{Disclaimer: Legal use of the material}}
+	\vspace*{2mm}
+	
+	\noindent Some knowledge, technologies, code is usable for attacks, it is illegal to use them for criminal activities. It is also illegal to make available such technologies and code without proper measures.
+\end{abstract}
+
+\end{titlepage}
 
 \maketitle
 \thispagestyle{empty}
@@ -67,13 +79,6 @@
 \tableofcontents
 \clearpage
 \pagenumbering{arabic}
-
-\begin{center}
-	\noindent \textbf{\LARGE Disclaimer: Legal use of the material}
-	
-	\noindent Some knowledge, technologies, code is usable for attacks, it is illegal to use them for criminal activities. It is also illegal to make available such technologies and code without proper measures.\\
-	This summary is based on \cite{netsec}.
-\end{center}
 
 
 \newpage
@@ -90,7 +95,7 @@ We need \textit{secrecy} to precent eavesdroppers from learning sensitive inform
 In symmetric cryptography, main challenge is key distribution as keys need to be distributed via confidential and authentic channels. In public-key systems, main challenge is key authentication (i.e., which key belongs to whom) as keys need to be distributed via authentic channels.\\
 \textit{Public-key infrastructures (PKIs) provide a way to validate public keys}.\\
 
-\noindent Terminology: 
+Terminology: 
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -103,7 +108,7 @@ In symmetric cryptography, main challenge is key distribution as keys need to be
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent Trust establishment: You cannot establish trust out of thin air - we need a root of trust to establish trust in other entities. Cryptographic operations enable transfer of trust from one entity to another.
+Trust establishment: You cannot establish trust out of thin air - we need a root of trust to establish trust in other entities. Cryptographic operations enable transfer of trust from one entity to another.
 
 \subsection{X.509}
 
@@ -120,7 +125,7 @@ X.509 defines a structure for public key certificates
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent Multi-Domain Certificates are possible and used e.g. by CDNs. Content Delivery Networks (CDN) are hosting web sites for domains and thus need a certificate to service content. CDNs are obtaining a single certificate for multiple domains.
+Multi-Domain Certificates are possible and used e.g. by CDNs. Content Delivery Networks (CDN) are hosting web sites for domains and thus need a certificate to service content. CDNs are obtaining a single certificate for multiple domains.
 
 \subsection{Compelled Certificates}
 
@@ -152,9 +157,8 @@ Have different levels of trust in certificates:
 
 \subsubsection{HTTP Strict Transport Security (HSTS)}
 
-Goal: allows servers to declare that their clients should only use HTTPS (for a specified period). This prevents some “downgrade”, “SSL stripping”, and “session hijacking” attacks. Browsers should automatically redirect to HTTPs or display a warning message. HSTS is implemented with an HTTPS header. Example: \\
-\indent \texttt{Strict-Transport-Security: max-age=31536000}\\
-\noindent HSTS doesn't help at all if valid bogus certificates are used.
+Goal: allows servers to declare that their clients should only use HTTPS (for a specified period). This prevents some “downgrade”, “SSL stripping”, and “session hijacking” attacks. Browsers should automatically redirect to HTTPs or display a warning message. HSTS is implemented with an HTTPS header. Example: \texttt{Strict-Transport-Security: max-age=31536000}\\
+HSTS doesn't help at all if valid bogus certificates are used.
 
 \subsubsection{HTTP Public-Key Pinning (HPKP)}
 
@@ -163,15 +167,15 @@ certificates for the domain. This list is delivered in an HTTP header that also 
 max-age value. The client will then “pin” those hashes — subsequent connection within the
 max-age period will only succeed if the certificate offered by the server matches the pinned
 hashes for that domain. A MitM with a different certificate would therefore fail. Example:\\
-\indent \texttt{Public-Key-Pins: max-age=2592000; pin-sha256="..."; pin-sha256="...";\\
-	\indent report-uri="...";\\
+\hspace*{5mm} \texttt{Public-Key-Pins: max-age=2592000; pin-sha256="..."; pin-sha256="...";\\
+\hspace*{5mm} report-uri="...";\\
 }
 MiTM attacks can still succeed even with HPKP: HPKP is TOFU (Trust On First Use). If the first policy received comes from an
 attacker, the browser will be happy to communicate with the bogus website and will block
 the legitimate server. Also if a weak hash function is used, the attacker could generate a
 certificate with a colliding hash — but in that case HPKP would be the last of our problems.\\
 
-\noindent Further problem with HPKP: certificates can change often (e.g with Let's encrypt). If a certificate changes but users still hold the old policy (since the max-age hasn't expired yet), clients won't accept the new certificate although it is legitimate.
+Further problem with HPKP: certificates can change often (e.g with Let's encrypt). If a certificate changes but users still hold the old policy (since the max-age hasn't expired yet), clients won't accept the new certificate although it is legitimate.
 
 \newpage
 
@@ -195,7 +199,7 @@ Problem:
 \end{itemize}
 \vspace{-\topsep} 
 
-\noindent Possible solution: OCSP stapling allows the presenter of a certificate to bear the resource cost involved in providing OCSP responses by appending ("stapling") a time-stamped OCSP response signed by the CA to the initial TLS handshake, eliminating the need for clients to contact the CA, with the aim of improving both security and performance.
+Possible solution: OCSP stapling allows the presenter of a certificate to bear the resource cost involved in providing OCSP responses by appending ("stapling") a time-stamped OCSP response signed by the CA to the initial TLS handshake, eliminating the need for clients to contact the CA, with the aim of improving both security and performance.
 
 \subsubsection{DNS-Based Authentica1on of Named Entities (DANE)}
 
@@ -216,7 +220,7 @@ ARPKI has a set of entities that audit each other's operation and disseminate mi
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent ARPKI communication flows:
+ARPKI communication flows:
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -240,7 +244,7 @@ ARPKI has a set of entities that audit each other's operation and disseminate mi
 \subsubsection{Certificate transparency (CT)}
 
 Certificate	Transparency will make all public end-entity TLS certificates public knowledge,	and	will hold CAs publicly accountable for all certificates they issue. And it will do so without introducing another trusted third party.\\
-\noindent CT uses a CT log that is an append-only list of certificates. The log server verifies the certificate chain (CA attribution for certificate miss-issuance and spam control). Periodically, all new certificates are appended to the append-only log and that list is then signed. All updates of the signed list of certificates ("the log") are published to the world. The CT log is implemented as a merkle hash tree. We have three participants in the protocol:
+CT uses a CT log that is an append-only list of certificates. The log server verifies the certificate chain (CA attribution for certificate miss-issuance and spam control). Periodically, all new certificates are appended to the append-only log and that list is then signed. All updates of the signed list of certificates ("the log") are published to the world. The CT log is implemented as a merkle hash tree. We have three participants in the protocol:
 
 \begin{figure}
 	\centering
@@ -267,10 +271,10 @@ Certificate	Transparency will make all public end-entity TLS certificates public
 
 \newpage
 
-\noindent Upon receiving a new certificate chain from domain or CA: the log verifies the certificate, issues a signed certificate timestamp (SCT) and promises to add the new certificate to the MHT (SCT is necessary since certs are only periodically added to log).\\
+Upon receiving a new certificate chain from domain or CA: the log verifies the certificate, issues a signed certificate timestamp (SCT) and promises to add the new certificate to the MHT (SCT is necessary since certs are only periodically added to log).\\
 How does CT handle revocation? The certificates stay on the log forever: Merkle trees allow for easy insertion but not for immediate deletion. The current system implements revocation transparency, which is very similar to CT, but for revocation requests.\\
 
-\noindent Disadvantages of CT:
+Disadvantages of CT:
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -308,7 +312,7 @@ Perfect forward secrecy: when obtaining a private key, I can only decrypt future
 
 \texttt{TLS\_\{KEY\_EXCHANGE\}\_\{AUTHENTICATION\}\_WITH\_\{BULK\_ENCRYPTION\}\_\{MAC\}}
 
-\noindent Example: \texttt{TLS\_DHE\_RSA\_WITH\_AES\_128\_GCM\_SHA256}\\
+Example: \texttt{TLS\_DHE\_RSA\_WITH\_AES\_128\_GCM\_SHA256}\\
 Key exchange: Ephemeral Diffie-Hellman, Authentication: RSA, Encryption: 128-bit AES GCM mode, MAC: 256-bit SHA-2
 
 \subsection{Handshake protocol}
@@ -367,7 +371,7 @@ TLS Record Protocol uses symmetric encryption, using the keys negotiated during 
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent Different record layer encryption schemes:
+Different record layer encryption schemes:
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -379,7 +383,7 @@ TLS Record Protocol uses symmetric encryption, using the keys negotiated during 
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent The TLS record protocol uses MAC-then-encrypt: this is \textit{really really bad} since this opens up the possibility of padding oracle attacks!
+The TLS record protocol uses MAC-then-encrypt: this is \textit{really really bad} since this opens up the possibility of padding oracle attacks!
 
 \begin{figure}[hb]
 	\centering
@@ -496,7 +500,7 @@ Typical properties of VPN tunnels:
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent Typical VPN setups:
+Typical VPN setups:
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -508,7 +512,7 @@ Typical properties of VPN tunnels:
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent \textbf{Why do we need VPNs when we have TLS?}
+\textbf{Why do we need VPNs when we have TLS?}
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -523,7 +527,7 @@ Typical properties of VPN tunnels:
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent \textbf{Why do we need TLS when we have VPNs?}
+\textbf{Why do we need TLS when we have VPNs?}
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -536,7 +540,7 @@ Typical properties of VPN tunnels:
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent There are many different VPN protocols but only one TLS. Why?
+There are many different VPN protocols but only one TLS. Why?
 Because TLS is universal, everybody should be able to access webservers securely through TLS.  We thus need a globally universal standard. VPNs are setup by companies, universities, private person etc. and it only affects their clients, employees etc.. For VPNs, we can thus use whatever we want.
 
 \subsection{IPsec}
@@ -579,7 +583,7 @@ After an SA was setup using IKE, we encapsulate packets and tunnel them between 
 	\label{fig:ipsecencapsulation}
 \end{figure}
 
-\noindent Similarly, decapsulation:
+Similarly, decapsulation:
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -644,7 +648,7 @@ Why are VPNs not enough? VPN server still sees metadata such as srcIP, dstIP, po
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent The following holds: $Unobservability \rightarrow Anonymity \rightarrow Unlinkability$
+The following holds: $Unobservability \rightarrow Anonymity \rightarrow Unlinkability$
 
 \subsection{How to send a message anonymously}
 
@@ -660,18 +664,18 @@ The proxy should perform \textbf{batching and mixing}. Batching: collect a numbe
 before forwarding (threshold). Mixing: change the order of (mix) the messages.\\
 An adversary can still mount an intersection attack: Often, users only communicate with a
 small subset of other users. Idea: every time a message is seen by the target, register the sets of destinations. To achieve full unobservability, use \textbf{cover traffic}, both for sending and receiving. Now we are fully anonymous... as long as the mix is trusted!. We should use multiple mixes to avoid single point of failure (cascade). Each mix should only know its direct neighbor and only the first mix should know the sender and only the last mix should know the receiver.\\
-\indent How do we handle return addresses? Alice prepares a return address and encloses it in her first message. That address contains layered information.
+How do we handle return addresses? Alice prepares a return address and encloses it in her first message. That address contains layered information.
 
 \subsection{Circuit-based systems (AKA onion-routing system)}
 
 Mix-nets are very secure but very slow. We want a system that can support web browsing. Main ideas: use layered encryption, no batching and mixing, no cover traffic. Flow-based: establish a virtual circuit (keys) once per flow, reuse it for all packets in the flow using only symmetric key crypto. The threat model is constrained: only a local adversary (e.g. ISP) which cannot launch confirmation attacks.\\
-\indent \textbf{Terminology:} Circuit-based anonymous communication systems, commonly known as Onion Routing Systems. The nodes are called relays (also nodes or routers). The virtual circuit is also called tunnel.
+\textbf{Terminology:} Circuit-based anonymous communication systems, commonly known as Onion Routing Systems. The nodes are called relays (also nodes or routers). The virtual circuit is also called tunnel.
 
 \subsubsection{Circuit setup}
 
 The sender negotiates shared keys with all relays on the path (this requires expensive asymmetric key cryptography).\\
-\noindent \textbf{Direct circuit setup:} a packet is sent through the whole system and returned and at each step the state is generated. The encryption keys of data are only based on public keys of relays. Thus (immediate) FS does not hold since no ephemeral information is used.\\
-\noindent \textbf{Telescopic circuit setup:} Keys are negotiated one relay at a time. The circuit is “extended” by one hop at a time (that’s why it is called telescopic). Ephemeral session keys are negotiated before the circuit is extended. This setup is slower... but it offers immediate forward secrecy: As soon as the circuit is closed, the session keys are deleted.
+\textbf{Direct circuit setup:} a packet is sent through the whole system and returned and at each step the state is generated. The encryption keys of data are only based on public keys of relays. Thus (immediate) FS does not hold since no ephemeral information is used.\\
+\textbf{Telescopic circuit setup:} Keys are negotiated one relay at a time. The circuit is “extended” by one hop at a time (that’s why it is called telescopic). Ephemeral session keys are negotiated before the circuit is extended. This setup is slower... but it offers immediate forward secrecy: As soon as the circuit is closed, the session keys are deleted.
 
 \subsubsection{Data forwarding}
 
@@ -704,7 +708,7 @@ One general attack is fingerprinting. This can be done in multiple ways:
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent There are two possible approaches on how to defend against fingerprinting:
+There are two possible approaches on how to defend against fingerprinting:
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -715,7 +719,7 @@ One general attack is fingerprinting. This can be done in multiple ways:
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent In order to prevent fingerprinting, you should omit \textit{everything} that makes you stand out: don't install any plugins, never use TOR in fullscreen mode (gives away your screen resolution), don't type inside the browser, type inside a text-editor and copy-paste messages into webforms, etc.
+In order to prevent fingerprinting, you should omit \textit{everything} that makes you stand out: don't install any plugins, never use TOR in fullscreen mode (gives away your screen resolution), don't type inside the browser, type inside a text-editor and copy-paste messages into webforms, etc.
 
 \subsubsection{Higher-layer attacks}
 
@@ -728,7 +732,7 @@ One general attack is fingerprinting. This can be done in multiple ways:
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent To achieve anonymity, all layers need to be anonymized: Any gap will break anonymity!
+To achieve anonymity, all layers need to be anonymized: Any gap will break anonymity!
 
 \subsection{TOR}
 
@@ -746,7 +750,7 @@ TOR basics:
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent TOR additional features:
+TOR additional features:
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -817,7 +821,7 @@ DNS uses hierarchical namespaces to scale: tree structure down from root level "
 	\label{fig:dnsnamespacehierarchy}
 \end{figure}
 
-\noindent \textbf{DNS protocols \& elements}
+\textbf{DNS protocols \& elements}
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -829,7 +833,7 @@ DNS uses hierarchical namespaces to scale: tree structure down from root level "
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent Each DNS response has a TTL. Caching resolvers will redo a recursive lookup once the TTL for a cached response has expired. A shorter TTL leads to shorter living cache entries, leading to faster refreshes for end users in case of an update. However, this means that there will be more load on the DNS servers for doing the recursive lookup again.
+Each DNS response has a TTL. Caching resolvers will redo a recursive lookup once the TTL for a cached response has expired. A shorter TTL leads to shorter living cache entries, leading to faster refreshes for end users in case of an update. However, this means that there will be more load on the DNS servers for doing the recursive lookup again.
 
 \subsubsection{Root servers}
 
@@ -862,8 +866,8 @@ The authoritative name server for a second-level domain is managed by private en
 
 \textbf{Attack Methodology:} DNS queries are typically transmitted over UDP - they are fire and forget. The source IP can be spoofed and the receiver has no way of determining its veracity before responding. The attacker will spoof the srcIP to the victim's IP - the response will thus be reflected to the victim and overload his servers. DNS also is capable of generating a much larger response than query (e.g. \texttt{dig ANY isc.org @x.x.x.x} query is 64 bytes, the response is 3,223 bytes). There are many powerful and well connected DNS servers, which can be abused to redirect large DNS responses to any target. The key to this attack are \textit{open} DNS resolvers (recursive resolver that replies to any DNS query, coming from any device
 on the Internet).\\
-\noindent \textbf{Key ingredients of a reflection/amplification attack:} stateless protocol (UDP), can spoof the srcAddr (reflection), small request generates large response (amplification). Other protocols that also fulfill these criteria: memcached, NTP.\\
-\noindent \textbf{Mitigation:} Source IP verification (reject packets with source addresses not reachable via the actual packet’s path), disable recursion on authoritative name servers, limit recursion to authorized clients, Response Rate Limiting (RRL).\\
+\textbf{Key ingredients of a reflection/amplification attack:} stateless protocol (UDP), can spoof the srcAddr (reflection), small request generates large response (amplification). Other protocols that also fulfill these criteria: memcached, NTP.\\
+\textbf{Mitigation:} Source IP verification (reject packets with source addresses not reachable via the actual packet’s path), disable recursion on authoritative name servers, limit recursion to authorized clients, Response Rate Limiting (RRL).\\
 However, the main mitigation is hosting a service on different locations in the internet, s.t. it gets harder for an attacker to target all possible locations. Using BGP anycast, the same IP address is advertised on different locations on the internet.\\
 A user is directed to the nearest service location. This helps to distribute the load on different sites. There are CDN services like Akamai or CloudFlare that offer this as a service.
 
@@ -880,7 +884,7 @@ On TCP, this attack would not work as is since the second message after the TCP 
 
 \textbf{Attack Methodology:} Attacker abuses caching capability of domain name system. Inject faked Domain\textgreater IP information into cache of caching name server. Subsequent requests by any user to this server are served this fake information from cache.\\
 \textbf{Example:} Attacker owns authoritative name server for bad.com and tricks user to resolve bad.com (phishing, hacked site, attachment, hidden picture, ..). Attacker adds multiple resolution entries for e.g. bank.com into the \texttt{ADDITIONAL SECTION} of the DNS reply  for bad.com. The client will cache this information even though he didn't ask for it.\\
-\noindent \textbf{Mitigation:} The example attack is no longer really a problem since software no longer accepts entries from additional section which are for different domains.
+\textbf{Mitigation:} The example attack is no longer really a problem since software no longer accepts entries from additional section which are for different domains.
 
 \subsection{DNS/Domain Hijacking}
 
@@ -927,7 +931,7 @@ Cyber criminals organize compromised machines and devices in centrally controlle
 	\label{fig:dnsbotnetarchitecture}
 \end{figure}
 
-\noindent The ability of a bot agent to locate the command and control (CnC) infrastructure
+The ability of a bot agent to locate the command and control (CnC) infrastructure
 is a critical requirement for maintaining control of the entire botnet. However, criminals want to evade law enforcement. By using \textit{fixed IPs} it would be easy to identify bot agent and controller and blocking the botnet would be easy (one firewall rule). By using \textit{fixed domains} it would be easy to identify bot agent, harder to identify controller. Shutting down the botnet would also be harder (DNS caches). More flexibility is obtained through IP flux or domain flux: domain names and/or IP addresses change frequently both technologies are extensively used by professional botnet operators very dynamic, moving target, hard to shut down botnet.
 
 \subsubsection{Fluxing Approaches}
@@ -962,7 +966,7 @@ DNSSEC zone data is digitally signed using a private key for that zone. A DNS se
 	\label{fig:dnssecresourcerecords}
 \end{figure}
 
-\noindent \textbf{DS record:} The DS record contains a hash of the KSK (key signing key) belonging to the
+\textbf{DS record:} The DS record contains a hash of the KSK (key signing key) belonging to the
 child zone. Once the DNS resolver knows the contents of DS, it can retrieve the KSK and ZSK (zone
 signing key) belonging to the child zone. KSK is checked against DS. ZSK is validated using
 the KSK. Finally, if the child zone is the actual target of the query, the answer
@@ -985,7 +989,7 @@ A firewall is a system used to protect or separate a trusted network from an unt
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent Host based firewalls have context, know exactly what is running on a host. This allows for more fine-grained decisions. Host based firewalls are good for mobile devices (e.g. phones). Network firewalls are good if you e.g. can't install a firewall on a device (e.g. printer).\\
+Host based firewalls have context, know exactly what is running on a host. This allows for more fine-grained decisions. Host based firewalls are good for mobile devices (e.g. phones). Network firewalls are good if you e.g. can't install a firewall on a device (e.g. printer).\\
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -1017,13 +1021,13 @@ Managing and maintaining firewall rules in a company is challenging. Firewall ru
 
 \textit{Make decision whether some traffic is good or bad.}
 
-\noindent This faces many challenges: encrypted traffic (can't inspect content, only headers and statistical analysis), high number of false positives, high link speeds, induced latency, application level attacks (JavaScript, ..), etc.
+This faces many challenges: encrypted traffic (can't inspect content, only headers and statistical analysis), high number of false positives, high link speeds, induced latency, application level attacks (JavaScript, ..), etc.
 
-\noindent Accurate = right direction, on target. Precise = clustered values with low scatter.\\
+Accurate = right direction, on target. Precise = clustered values with low scatter.\\
 
 \textit{“It is better to be roughly right than precisely wrong.”}\\
 
-\noindent Never believe an IDS that advertise perfect detection with 0\% FNR or 0\% FPR:
+Never believe an IDS that advertise perfect detection with 0\% FNR or 0\% FPR:
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -1034,7 +1038,7 @@ Managing and maintaining firewall rules in a company is challenging. Firewall ru
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent The difficulty: Build a detector with optimal balance between FP and FN. FNR and FPR should never be considered in isolation. Ideally, consider a joint detection metric such as the F1 score.\\
+The difficulty: Build a detector with optimal balance between FP and FN. FNR and FPR should never be considered in isolation. Ideally, consider a joint detection metric such as the F1 score.\\
 Accurate detection is very challenging when rate of attacks is very low. If we have lots of traffic but very few attacks, we'll have lots of false positives, which lowers trust in the detector. 
 
 \subsection{Detection Methods}
@@ -1095,7 +1099,7 @@ Basic detection approaches:
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent Malware development lifecycle with detection evasion by design:
+Malware development lifecycle with detection evasion by design:
 
 \vspace{-\topsep}
 \begin{enumerate}
@@ -1128,11 +1132,11 @@ Basic detection approaches:
 \end{enumerate}
 \vspace{-\topsep}
 
-\noindent The malware used in a targeted attack will not be detected by anti-malware tools at the time of attack – because it was tested beforehand.
+The malware used in a targeted attack will not be detected by anti-malware tools at the time of attack – because it was tested beforehand.
 
-\noindent \textbf{Polymorphism technique:} Swapping equivalent code constructs, changing the order of code, insert noise, compiler modulation.
+\textbf{Polymorphism technique:} Swapping equivalent code constructs, changing the order of code, insert noise, compiler modulation.
 
-\noindent \textbf{Binders:} Binders are used by malware authors to “embed” and Trojan other software packages (e.g. add trojan to Adobe Photoshop torrent). This helps to propagate malware, trick users into downloading and executing seemingly legit software. 
+\textbf{Binders:} Binders are used by malware authors to “embed” and Trojan other software packages (e.g. add trojan to Adobe Photoshop torrent). This helps to propagate malware, trick users into downloading and executing seemingly legit software. 
 
 \subsection{Layered defense}
 
@@ -1181,7 +1185,7 @@ Mirai infection technique:
 \end{enumerate}
 \vspace{-\topsep}
 
-\noindent Mirai is non-persistent: the binary is loaded into memory and immediately deleted from disk. Rebooting will remove the malware, but the device can still be reinfected. This makes detection and forensic analysis more difficult, especially for IoT devices.\\
+Mirai is non-persistent: the binary is loaded into memory and immediately deleted from disk. Rebooting will remove the malware, but the device can still be reinfected. This makes detection and forensic analysis more difficult, especially for IoT devices.\\
 Mirai infected devices were fingerprinted by the fact that Mirai generated probe packets had their sequence number equal to the IP of the scanned device. Probability of this happening is $\frac{1}{2^{32}}$.
 
 \subsection{Stuxnet}
@@ -1207,11 +1211,11 @@ We no longer live in a complicated system but in a complex adaptive system \text
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent We have to adopt to permanent change, high dynamics, and decreased predictability.\\
+We have to adopt to permanent change, high dynamics, and decreased predictability.\\
 
 Humans and nature take different approaches to handle unpredictability: humans prevent shock (reliant on accuracy, fragile, short-term strategy), nature absorbs shocks (anti-fragile, long-term strategy). Degree of optimization: Tradeoff between short term gains vs. long term survival.
 
-\noindent Consequences from properties of CAS for cyber security: new \& innovative attacks, predicability of attacks decreases, remote effects \& cascades.
+Consequences from properties of CAS for cyber security: new \& innovative attacks, predicability of attacks decreases, remote effects \& cascades.
 
 \subsection{IoT (and IIOT, ICS, SCADA, OT\&OT)}
 
@@ -1229,9 +1233,9 @@ Humans and nature take different approaches to handle unpredictability: humans p
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent Our world is quickly changing in an irreversible move towards IT/OT convergence. Extending security models to include the OT domain introduces many challenges: conventional IT security thinking hasn't reached (I)OT industry yet, OT devices must not be assumed to be ‘just another end point’.
+Our world is quickly changing in an irreversible move towards IT/OT convergence. Extending security models to include the OT domain introduces many challenges: conventional IT security thinking hasn't reached (I)OT industry yet, OT devices must not be assumed to be ‘just another end point’.
 
-\noindent \textbf{Key Differences between IT and OT:}
+\textbf{Key Differences between IT and OT:}
 
 \begin{tabular}{|c|c|}
 	\hline 
@@ -1260,7 +1264,7 @@ IOT connects innumerable everyday devices and systems. Previously closed systems
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent Further, user perception of risks in cyber security is usually wrong: most users perceive their PC as exposed to malware and fear getting malware but think their smart TV, smart toaster, smart everything (\href{https://twitter.com/internetofshit}{@internetofshit}) are great and don't pose any risks. In reality, the opposite is the case: PC security is rather sophisticated (hardened over 20 years) and we have frequent security updates (e.g.finding a vulnerability in Win10 is hard). But IoT devices ran in isolation for years and only recently became connected. They are designed for high availability and safety, \textit{not} security. Further, IoT devices rarely get security updates. However, the threat environment only gets worse over time, thus we rapidly create a huge future liability with devices lacking an automated and robust protection functionality.\\
+Further, user perception of risks in cyber security is usually wrong: most users perceive their PC as exposed to malware and fear getting malware but think their smart TV, smart toaster, smart everything (\href{https://twitter.com/internetofshit}{@internetofshit}) are great and don't pose any risks. In reality, the opposite is the case: PC security is rather sophisticated (hardened over 20 years) and we have frequent security updates (e.g.finding a vulnerability in Win10 is hard). But IoT devices ran in isolation for years and only recently became connected. They are designed for high availability and safety, \textit{not} security. Further, IoT devices rarely get security updates. However, the threat environment only gets worse over time, thus we rapidly create a huge future liability with devices lacking an automated and robust protection functionality.\\
 To make matters worse:
 
 \vspace{-\topsep}
@@ -1311,9 +1315,9 @@ The attacker wants to get the biggest impact with the least effort, to stay pers
 	\label{fig:supplychain}
 \end{figure}
 
-\noindent Nowadays, the production of electronic devices goes through many different stages and hands - there's almost no single company that handles their supply chain end-to-end. Many tiers limit visibility and make it impossible to track the origins of all individual components.
+Nowadays, the production of electronic devices goes through many different stages and hands - there's almost no single company that handles their supply chain end-to-end. Many tiers limit visibility and make it impossible to track the origins of all individual components.
 
-\noindent \textbf{Cyber supply chain - points of compromise:}
+\textbf{Cyber supply chain - points of compromise:}
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -1325,7 +1329,7 @@ The attacker wants to get the biggest impact with the least effort, to stay pers
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent There is a long history of supply chain attacks by nation states as well as by organized crime.
+There is a long history of supply chain attacks by nation states as well as by organized crime.
 
 \subsection{Blind spot}
 
@@ -1342,9 +1346,9 @@ Supply chain attack - scenarios and exposed sectors:
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent Software vulnerabilities have been known for a long time and are known terrain. Hardware is much less protected \textit{and} it's much harder to detect compromised hardware.
+Software vulnerabilities have been known for a long time and are known terrain. Hardware is much less protected \textit{and} it's much harder to detect compromised hardware.
 
-\noindent We can differentiate:
+We can differentiate:
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -1371,9 +1375,9 @@ Cyber security remained largely software focused in the last few years. However,
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent Hardware attacks are harder to conduct since far fewer people have the skills and access. \textit{But} they are also much harder to defend since hardware is extremely complex and replacing corrupted hardware can be extremely difficult and expensive.
+Hardware attacks are harder to conduct since far fewer people have the skills and access. \textit{But} they are also much harder to defend since hardware is extremely complex and replacing corrupted hardware can be extremely difficult and expensive.
 
-\noindent \textbf{Example: The Chip Design Ecosystem: More Globalized, More Complex}\\
+\textbf{Example: The Chip Design Ecosystem: More Globalized, More Complex}\\
 In the earliest days, a single company would produce chips from specification to shipment. Few companies like IBM, Intel, Samsung, and Texas Instruments still do this. Most companies however send their designs to an external facility known as a “foundry” for manufacturing. Designs are provided to manufacturers as descriptions of the shapes and locations of all the silicon and metal structures that must be built into the chip.\\
 A skilled attacker could: Compromise a design \& minimizing the chance of detection (chips are so complex that testing is only partial), introduce a flaw with plausible deniability (characterizing the back door as a feature to assist in testing early prototypes of the chips). Statistically, there are enough people with the skills, access, and motivation to intentionally compromise a chip design.\\
 
@@ -1393,10 +1397,10 @@ Note that not only server hardware has BMCs for remote code execution - modern l
 
 Network traffic monitoring is crucial in today's internet. Applications of traffic monitoring are broad: anomaly detection (detect DoS attack or port scans, enforce QoS), network management (accounting (often deterministic monitoring), usage-based pricing, traffic engineering). Without network management, we have no idea what's happening inside the network.\\
 Large content providers such as Google, Akamai, Cloudflare constantly monitor their network to detect large traffic loads and (D)DoS attacks.\\
-\noindent Why do we want probabilistic monitoring? It's more efficient.
-\noindent Why do we want deterministic monitoring for accounting? Accounting happens at the edge of the network there we have enough compute power to store all states.\\
+Why do we want probabilistic monitoring? It's more efficient.
+Why do we want deterministic monitoring for accounting? Accounting happens at the edge of the network there we have enough compute power to store all states.\\
 
-\noindent Traffic monitoring can be done at different granularities:
+Traffic monitoring can be done at different granularities:
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -1407,7 +1411,7 @@ Large content providers such as Google, Akamai, Cloudflare constantly monitor th
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent Traffic monitoring is difficult:
+Traffic monitoring is difficult:
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -1434,10 +1438,10 @@ Sample every packet (standard Netflow) or sample every k-th packet (sampled Netf
 
 \newpage
 
-\noindent \textbf{Advantages:} simple and efficient.\\
+\textbf{Advantages:} simple and efficient.\\
 \textbf{Disadvantages:} Memory overhead (one entry per flow in worst case), imprecise estimate, especially for short-lived flows (we have both FP and FN), attacker could exploit by only sending large traffic in between sampling (solution: sample with probability $\frac{1}{k}$)\\
 
-\noindent General-purpose flow measurement is either imprecise or infeasible. Solution: focus on specific traffic information (large flows, number of flows, flow distribution, ...).
+General-purpose flow measurement is either imprecise or infeasible. Solution: focus on specific traffic information (large flows, number of flows, flow distribution, ...).
 
 \subsection{Large-Flow (Elephant) Detectors}
 
@@ -1450,7 +1454,7 @@ This is essentially a variant of Netflow.\\
 \textbf{Sample:} We sample each byte with probability p. Practically, samples a packet of size s with probability $p_s$, $p_s = 1-(1-p)^s \approx p*s$ (when p is small).\\
 \textbf{Hold:} updates a flow entry for all subsequent packets once it is created. Requires flow-table lookup for every incoming packet. Flow-table stores $\{C_{pkt}, C_{byte}\}$.\\
 
-\noindent A problem with sample-and-hold is that for large flows we need to look at all packets. Once we've seen all flows, we might need to keep track of a lot of flows.
+A problem with sample-and-hold is that for large flows we need to look at all packets. Once we've seen all flows, we might need to keep track of a lot of flows.
 
 \subsubsection{Multistage Filter (Sketch based)}
 
@@ -1464,7 +1468,7 @@ Use a CountMin sketch to estimate the number of packets of a flow.\\
 \textbf{Algorithm:} We have $k$ counters. For each new packet $p \in f$ (flow $f$), we increase the corresponding counter for $f$ by the packet size. If no counter tracks $f$, we start tracking it. If all counters are used, we decrease \textit{all} counters by the packet size. If one counter reaches zero while decreasing, we add the current flow with the remaining packet size.\\
 \textbf{Virtual traffic:} Use “virtual flows” for each idle period. Each virtual flow is at most equal to a low-bandwidth threshold ($Th_L$).\\
 
-\noindent \textbf{Properties of EARDet:} no FN for large flows, no FP for small flows, FN \& FP possible for medium flows, deterministic (keep performance regardless of input traffic or attack pattern), relatively small storage cost (but many counters are needed)
+\textbf{Properties of EARDet:} no FN for large flows, no FP for small flows, FN \& FP possible for medium flows, deterministic (keep performance regardless of input traffic or attack pattern), relatively small storage cost (but many counters are needed)
 \textbf{Disadvantage}: per-packet counter update is an expensive operation
 
 \newpage
@@ -1476,7 +1480,7 @@ Use a CountMin sketch to estimate the number of packets of a flow.\\
 	\label{fig:eardetalgorithm}
 \end{figure}
 
-\noindent EARDet is an adaption of the MG-algorithm, instead of increasing counters by number of packets, we increase counters by packet size.
+EARDet is an adaption of the MG-algorithm, instead of increasing counters by number of packets, we increase counters by packet size.
 
 \subsection{Finding Duplicates: Bloom Filters}
 
@@ -1484,7 +1488,7 @@ Use a CountMin sketch to estimate the number of packets of a flow.\\
 \textbf{Challenge}: cannot store all previous elements\\
 \textbf{Solution}: Bloom filter provides probabilistic data structure for set membership testing\\
 
-\noindent Bloom filters are a more memory-efficient approach for insertions and membership queries. Bloom filters consist of a fixed size table \texttt{bf} with $M$ 1-bit cells and $K$ hash functions and we write a 1 at each position indicate by each hash function.
+Bloom filters are a more memory-efficient approach for insertions and membership queries. Bloom filters consist of a fixed size table \texttt{bf} with $M$ 1-bit cells and $K$ hash functions and we write a 1 at each position indicate by each hash function.
 
 \begin{figure}[hb]
 	\begin{minipage}[t]{.5\textwidth} 
@@ -1532,15 +1536,15 @@ $N$ elements, $M$ cells, $K$ hash functions, $FP$ false positive rate.
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent For an approximation, use: $p := P(FP) = (1 - (1 - \frac{1}{M})^{KN})^K \approxeq (1 - e^{-KN/M})^K$.\\
+For an approximation, use: $p := P(FP) = (1 - (1 - \frac{1}{M})^{KN})^K \approxeq (1 - e^{-KN/M})^K$.\\
 
-\noindent There's a global minimum when $K = \ln(2) * \frac{M}{N}  \approx 0.7*\frac{M}{N}$ found by taking derivative of $P(FP)$.\\
+There's a global minimum when $K = \ln(2) * \frac{M}{N}  \approx 0.7*\frac{M}{N}$ found by taking derivative of $P(FP)$.\\
 For that choice of $K$, resulting $p := P(FP) = 2^{-K} \approx 0.6185^{M/N}$.\\
 Given optimal $K$, choice of optimal $M = -\frac{N \ln p}{(\ln2)^2}$ $\rightarrow O(N)$ space.
 
 \newpage
 
-\noindent \textbf{In practice:} if we use the Bloom filter for a long time, it's going to fill up, which leads to more false positives (a full bloom filter we just conclude that every packet is in the filter). We thus need to reset the Bloom filter periodically. Simply resetting the whole Bloom filter leads to false negatives (all cells are back to 0 after reset).\\
+\textbf{In practice:} if we use the Bloom filter for a long time, it's going to fill up, which leads to more false positives (a full bloom filter we just conclude that every packet is in the filter). We thus need to reset the Bloom filter periodically. Simply resetting the whole Bloom filter leads to false negatives (all cells are back to 0 after reset).\\
 In practice, we use \textit{two} same-sized Bloom filters and alternate them. We only put values into one single BF at a time and switch after a reset. \textit{BUT} for membership queries, we always check both filters! However, for very old packets we can still get FNs. Solution: use timestamps on packets and remove tracking for old packets. This gives us the FN guarantee.
 
 \subsection{Probabilistic Counting: Estimating the Number of Flows}
@@ -1549,7 +1553,7 @@ In practice, we use \textit{two} same-sized Bloom filters and alternate them. We
 Expectation value of smallest value is 1 / (number of flows + 1).\\
 Estimate the number of flows by the smallest value v seen so far: $\tilde{n} \approx 1/v - 1$.\\
 
-\noindent \textbf{Problems:}
+\textbf{Problems:}
 \vspace{-\topsep}
 \begin{itemize}
 	\setlength{\itemsep}{0pt}
@@ -1559,7 +1563,7 @@ Estimate the number of flows by the smallest value v seen so far: $\tilde{n} \ap
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent \textbf{Proposal by Bar-Yossef et al. (2002):}
+\textbf{Proposal by Bar-Yossef et al. (2002):}
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -1594,20 +1598,20 @@ Why should we care about BGP security when we have secure connections (TLS, VPN,
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent The problem with BGP is that endusers can't protect themselves. Solving these issues is only possible with ISP cooperation.
+The problem with BGP is that endusers can't protect themselves. Solving these issues is only possible with ISP cooperation.
 
 \newpage
 
-\noindent \textbf{BGP vs. OSPF:} BGP is used as an inter Autonomous System protocol, while OSPF is used to establish routes inside an AS. Also, OSPF is a link-state protocol: routers exchange what they know about the network until all routers have a complete map of the network; then the routers compute the routing tables independently. In BGP, we have a path-vector mechanism: every AS announces the prefixes it owns and all the paths that go through it to neighboring ASes.
+\textbf{BGP vs. OSPF:} BGP is used as an inter Autonomous System protocol, while OSPF is used to establish routes inside an AS. Also, OSPF is a link-state protocol: routers exchange what they know about the network until all routers have a complete map of the network; then the routers compute the routing tables independently. In BGP, we have a path-vector mechanism: every AS announces the prefixes it owns and all the paths that go through it to neighboring ASes.
 
 \subsection{IP Addresses, Autonomous Systems \& the Border Gateway Protocol}
 
 \textbf{IP addresses:} are globally assigned by ICANN (global authority). ICANN assigns certain IP regions to certain parts of the world. Regional Internet Registries (RIRs) are then responsible to further assign IPs. As of 25th November 2019 15:35 UTC+1, we have officially run out of IPv4 addresses.\\
 IP addresses are assigned in prefixes (e.g. /16 prefix has $2^{32-16} - 2= 65534)$ IPs).\\
 
-\noindent \textbf{Internet:} The Internet is a network of networks (autonomous systems). Autonomous systems can be ISPs (e.g. DT, Swisscom), global backbone network (e.g. Verizon), universities and large companies (e.g. ETH, Google).\\
+\textbf{Internet:} The Internet is a network of networks (autonomous systems). Autonomous systems can be ISPs (e.g. DT, Swisscom), global backbone network (e.g. Verizon), universities and large companies (e.g. ETH, Google).\\
 
-\noindent \textbf{BGP:} BGP "glues" the internet together: routing protocol between ASes, disseminates information about location and paths for IP prefixes. BGP is a path-vector protocol and follows typical business relationships.\\
+\textbf{BGP:} BGP "glues" the internet together: routing protocol between ASes, disseminates information about location and paths for IP prefixes. BGP is a path-vector protocol and follows typical business relationships.\\
 BGP speaker sends and receives messages from peers over TCP connections on port 179. Messages sent include: \texttt{OPEN, UPDATE, KEEPALIVE, NOTIFICATION}. Route information is disseminated through \texttt{UPDATE} message using attributes: \texttt{Withdraw, path attributes, network layer reachability information}.\\
 
 \begin{figure}
@@ -1617,7 +1621,7 @@ BGP speaker sends and receives messages from peers over TCP connections on port 
 	\label{fig:bgpases}
 \end{figure}
 
-\noindent \textbf{BGP route selection criteria:}
+\textbf{BGP route selection criteria:}
 
 \vspace{-\topsep}
 \begin{enumerate}
@@ -1633,7 +1637,7 @@ BGP speaker sends and receives messages from peers over TCP connections on port 
 
 \newpage
 
-\noindent ASes have different business relationships with each other: provider, peer, customer. Each AS implements peering policies. These decide routes are accepted and advertised based on policies. Policies are configured in the BGP daemons of the AS. Policies can be used to implement filters to prevent route leaks (= falsely announced prefixes), or for business reasons.
+ASes have different business relationships with each other: provider, peer, customer. Each AS implements peering policies. These decide routes are accepted and advertised based on policies. Policies are configured in the BGP daemons of the AS. Policies can be used to implement filters to prevent route leaks (= falsely announced prefixes), or for business reasons.
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -1654,7 +1658,7 @@ BGP was designed during the early days of the internet - security was of no conc
 If I advertise some prefix as mine, BGP will \textit{not} check if I actually own that prefix.\\
 This allows malicious ASes to hijack prefixes: assume AS V owns prefix \textit{v} (129.132.0.0/16). Malicious AS M can just advertise \textit{v} as well and since there is no validation, other ASes don't know which one is the correct advertisement.  Some ASes will thus pick the malicious advertisement (selection based on properties such as AS path length). However, ther is an even stronger version of this:\\
 
-\noindent \textbf{Sub-Prefix Hijacking:} AS M can announce a \textit{more specific} prefix for the victim's (AS V) address space (up to /24 is allowed). AS M could announce two /17 prefixes for V's prefix 129.132.0.0/16. Since routing in the internet is based on longest prefix matching, \textit{all} routers will pick the more specific prefix.\\
+\textbf{Sub-Prefix Hijacking:} AS M can announce a \textit{more specific} prefix for the victim's (AS V) address space (up to /24 is allowed). AS M could announce two /17 prefixes for V's prefix 129.132.0.0/16. Since routing in the internet is based on longest prefix matching, \textit{all} routers will pick the more specific prefix.\\
 Prefixes up to /24 are allowed - always announcing /24 prefixes as protection doesn't work since (a) routing tables would become huge and (b) BGP routers would probably merge the prefixes anyway.
 
 \begin{figure}
@@ -1664,7 +1668,7 @@ Prefixes up to /24 are allowed - always announcing /24 prefixes as protection do
 	\label{fig:bgpsubprefixhijack}
 \end{figure}
 
-\noindent \textbf{What can be done to the hijacked traffic?}
+\textbf{What can be done to the hijacked traffic?}
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -1676,7 +1680,7 @@ Prefixes up to /24 are allowed - always announcing /24 prefixes as protection do
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent BGP interception can be made more sophisticated:
+BGP interception can be made more sophisticated:
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -1687,13 +1691,13 @@ Prefixes up to /24 are allowed - always announcing /24 prefixes as protection do
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent BGP hijacking is not as easy as it sounds (you can't just announce route from your home router). You need access to a BGP router (your own AS or compromised AS).
+BGP hijacking is not as easy as it sounds (you can't just announce route from your home router). You need access to a BGP router (your own AS or compromised AS).
 
 \subsection{Problem 2: BGP does not validate the content of	advertisements}
 
 After a BGP message has been announced, the content of the advertisement is not validated! ASes that receive the advertisement can modify it!
 
-\noindent \textbf{ASes can modify the BGP path:}
+\textbf{ASes can modify the BGP path:}
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -1740,7 +1744,7 @@ When using ACME (Automated Certificate Management Environment), a domain is vali
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent Read \cite{bgp_fake_cert} for more information.
+Read \cite{bgp_fake_cert} for more information.
 
 \subsection{Other attacks on BGP}
 
@@ -1773,7 +1777,7 @@ BCPs are essentially "gentlemen's agreement" between ASes. ASes promise to apply
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent None of these actually have strong security properties (no crypto).
+None of these actually have strong security properties (no crypto).
 
 \subsubsection{Origin Authentication (OA) (solution to \ref{bgp_problem_1})}
 
@@ -1782,7 +1786,7 @@ OA uses a Resource Public-Key Infrastructure (RPKI) to prove ownership of resour
 RIRs are trust roots.\\
 This enables issuance of Route Origination Authorizations (ROAs): state which AS is authorized to advertise certain IP prefixes, determine the max length of a prefix (avoid sub-prefix hijacking). Certs follow the same delegation as IP addresses from RIRs. OA requires no actual modification to BGP. Trusted local caches collect information from RPKI servers and whitelists are periodically pushed to routers: the verification of signatures is therefore performed offline.\\
 
-\noindent If AS M now tries to hijack AS V's prefix $v$, routers will check against ROAs in RPKI for prefix $v$ and see that the announcement is invalid and thus drop it.\\
+If AS M now tries to hijack AS V's prefix $v$, routers will check against ROAs in RPKI for prefix $v$ and see that the announcement is invalid and thus drop it.\\
 \textbf{However}, AS M can announce that it has a path to AS V by appending itself on the path \textit{after} the entry for AS V. BGP routers in other ASes check against ROAs in RPKI for prefix $v$, and find a valid ROA for prefix $v$. AS M manages to attract a fraction of traffic for AS V.
 
 \begin{figure}
@@ -1812,9 +1816,9 @@ This enables issuance of Route Origination Authorizations (ROAs): state which AS
 In order to prevent the problem of ASes illegitimately appending themselves to AS paths, we need to secure the AS-path attribute, which prevents crafting a valid origin on path and path poisoning. BGPsec is trying to achieve this through Origin authentication and cryptographic signatures.\\
 BGPsec signs received update message to prove that path was correctly updated and includes the next AS in the signature. This way, BGPsec can validate that the AS path indicates the order ASes were traversed and that no intermediate ASes were added or removed. RPKI is used to verify AS key material (as in origin authentication).\\
 
-\noindent Example, figure \ref{fig:bgpsec}: AS 701 send out advertisement and signs msg with its privatekey. AS 6939 can verify the signature (pubKey of AS 701) and add the next AS to the path and again sign the message. ASes always need include the next AS on the path and then sign - otherwise there would be no link between ASes and only individual ASes are secured but not the linking between them.
+Example, figure \ref{fig:bgpsec}: AS 701 send out advertisement and signs msg with its privatekey. AS 6939 can verify the signature (pubKey of AS 701) and add the next AS to the path and again sign the message. ASes always need include the next AS on the path and then sign - otherwise there would be no link between ASes and only individual ASes are secured but not the linking between them.
 
-\noindent \textbf{Problems:}
+\textbf{Problems:}
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -1847,7 +1851,7 @@ Important observation: AS paths today are very short! Average AS-level path leng
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent This has several advantages over full BGPsec: Lower overhead, requires no cooperation from other ASes, no full deployment necessary, stronger incentive for early adopters.
+This has several advantages over full BGPsec: Lower overhead, requires no cooperation from other ASes, no full deployment necessary, stronger incentive for early adopters.
 
 \newpage
 
@@ -1868,7 +1872,7 @@ The Russian Telecom company Rostelecom started advertising 50 prefixes as own. T
 
 BGP security issues have been going on for years. Instead of trying to fix and patch BGP, why not just develop a completely new inter-AS protocol with modern requirements as features.\\
 
-\noindent \textbf{Goals of SCION:} High availability, Secure entity authentication, Flexible trust, Transparent operation, Balanced control, Scalability, efficiency
+\textbf{Goals of SCION:} High availability, Secure entity authentication, Flexible trust, Transparent operation, Balanced control, Scalability, efficiency
 
 \subsection{Control plane: How to find end-to-end paths?}
 
@@ -1878,10 +1882,10 @@ The architecture of SCION mandates that the Internet is partitioned into \textit
 
 Beaconing is am asynchronous process through which paths are found in SCION. The Core ASes in an ISD (Isolation Domain) periodically flood the ISD with PCBs, by sending them in an anycast fashion (dubbed service anycast in SCION). Any AS receiving this packet will send it to its beacon server, which will add the current AS info and send the PCB to the ASes downstream. When beacons reach leaf nodes in the AS graph, the process is completed. Each AS receives multiple PCBs representing path segments to a core AS.\\
 
-\noindent Each AS deploys one or multiple beacon servers. SCION border routers receive PCB
+Each AS deploys one or multiple beacon servers. SCION border routers receive PCB
 and select one beacon server to forward it to. Beacon servers coordinate to resend PCBs periodically to downstream ASes (currently every 5 seconds). ASes can choose to which customers and peers to forward which beacons, but in the end it is the sources that determine the final path.\\
 
-\noindent \textbf{PCB contents:} PCB contains an info field with: PCB creation time. Each AS on path adds: AS name, Hop field for data-plane forwarding (Link identifiers, Expiration time, Message Authentication Code (MAC)), AS signature.\\
+\textbf{PCB contents:} PCB contains an info field with: PCB creation time. Each AS on path adds: AS name, Hop field for data-plane forwarding (Link identifiers, Expiration time, Message Authentication Code (MAC)), AS signature.\\
 \textit{Link identifier}: ASes have multiple interface numbers. The hop field has an \texttt{IN} and \texttt{OUT} link identifier, they say where traffic enters/ leaves the AS.\\
 \textit{MAC}: highly efficient (verified in a few ns) but needs symmetric keys (only known inside the AS). This allows the AS to verify its own forwarding information.
 
@@ -1904,7 +1908,7 @@ and select one beacon server to forward it to. Beacon servers coordinate to rese
 
 \newpage
 
-\noindent \textbf{Up-Path and Down-Path Segments:} PCBs contain path segments that
+\textbf{Up-Path and Down-Path Segments:} PCBs contain path segments that
 can be used as communication paths. A path segment is any contiguous subsequence of ASes contained in a PCB, provided that at least one of the extremes is a core AS. They owe their name to the fact that they represent different segments of a whole path. Each path is comprised of an \textbf{up-path segment} (from source AS to a core AS) plus a \textbf{core-path segment} (from core AS to core AS, possibly on a different ISD), plus a \textbf{down-path segment} (from core to destination AS).\\
 
 \subsubsection{Core Beaconing for Inter-ISD Path Exploration}
@@ -1914,7 +1918,7 @@ Beaconing that happens inside ISDs also happens across ISDs $\rightarrow$ core A
 
 \subsubsection{Path server infrastructure}
 
-\noindent Every AS has its own path server. Non-core AS's path server contains up-path segments to reach the core ASes. Core AS's path server contains down-path segments and core-path segments. Caches along the way cache paths at various levels.\\
+Every AS has its own path server. Non-core AS's path server contains up-path segments to reach the core ASes. Core AS's path server contains down-path segments and core-path segments. Caches along the way cache paths at various levels.\\
 \textbf{Up-Path Segment Registration:} AS selects path segments to announce
 as up-path segments for local hosts. Up-path segments are registered at local path servers.\\
 \textbf{Down-Path Segment Registration:} AS selects path segments to announce as down-path segments for others to use to communicate with AS. Down-path segments are uploaded to core path server in core AS.
@@ -1927,7 +1931,7 @@ In IP, the router looks up a routing table and (usually based on the destination
 
 Disadvantage of SCION over today's internet: we need to look up paths. In today's internet, we just lookup an IP, send a packet and pray.\\
 
-\noindent \textbf{Steps of a host to obtain path segments:}
+\textbf{Steps of a host to obtain path segments:}
 
 \vspace{-\topsep}
 \begin{enumerate}
@@ -1944,10 +1948,10 @@ Disadvantage of SCION over today's internet: we need to look up paths. In today'
 
 \newpage
 
-\noindent \textbf{Path lookup: local ISD}\\
+\textbf{Path lookup: local ISD}\\
 In step 2, client requests path segments from local path server. If down-path segments are not cached, local path server sends request to core path server.\\
 
-\noindent \textbf{Path Lookup: remote ISD}\\
+\textbf{Path Lookup: remote ISD}\\
 In step 2, client requests path segments from local path server. If down-path segments are not cached, local path server send request to core path server. If core path server does not have path segments cached, it will contact remote core path server.
 
 \begin{figure}[t!]
@@ -1967,9 +1971,9 @@ In step 2, client requests path segments from local path server. If down-path se
 	\caption{}
 \end{figure}
 
-\noindent Path segments are valid for several hours and cached locally. Otherwise the whole process would take too much time for each time we want to send. SCION’s path combination of up-path, core-path, and down-path segments reflect current Internet routing.\\
+Path segments are valid for several hours and cached locally. Otherwise the whole process would take too much time for each time we want to send. SCION’s path combination of up-path, core-path, and down-path segments reflect current Internet routing.\\
 
-\noindent Problem: Economic incentives are not all prevailed in SCION: customer could choose to use a very costly link (path) since we have multiple paths available. This would be bad for the provider. \textit{But:} this could be solved by the provider by setting BW limits or just making customers pay more if they use more expensive links.
+Problem: Economic incentives are not all prevailed in SCION: customer could choose to use a very costly link (path) since we have multiple paths available. This would be bad for the provider. \textit{But:} this could be solved by the provider by setting BW limits or just making customers pay more if they use more expensive links.
 
 \begin{figure}[hb]
 	\centering
@@ -1995,7 +1999,7 @@ A SCION packet has multiple headers:
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent SCION does not look at srcIP \& dstIP in the network! Only when the packet gets to the destination AS will IPs be considered. \textbf{This allows for communication between private address spaces!} E.g. 192.168.0.1 in AS X could communicate with 192.168.0.1 in AS Y. Also, this would solve IPv4 address exhaustion (although IPv6 already solved it).
+SCION does not look at srcIP \& dstIP in the network! Only when the packet gets to the destination AS will IPs be considered. \textbf{This allows for communication between private address spaces!} E.g. 192.168.0.1 in AS X could communicate with 192.168.0.1 in AS Y. Also, this would solve IPv4 address exhaustion (although IPv6 already solved it).
 
 \begin{figure}[t!]
 	\begin{subfigure}[t]{.5\textwidth}
@@ -2055,7 +2059,7 @@ With AESni HW crypto, only ~30 cycles are needed to compute MAC!
 
 \subsection{Deployment and use cases}
 
-\noindent \textbf{ISP deployment:} Core ASes have to adapt quite a lot and need to do quite a bit of work for SCION. For regular ASes, most of this work is not needed. Integration of SCION limits to additional infrastructure such as beacon server, path server, RAINS, certificate, SIBRA and time servers.
+\textbf{ISP deployment:} Core ASes have to adapt quite a lot and need to do quite a bit of work for SCION. For regular ASes, most of this work is not needed. Integration of SCION limits to additional infrastructure such as beacon server, path server, RAINS, certificate, SIBRA and time servers.
 
 \subsubsection{Use Case: Low-Latency Connectivity}
 
@@ -2070,7 +2074,7 @@ Generally, two paths exist between Europe and Southeast Asia:
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent BGP is a “money routing protocol”, traffic follows cheapest path, typically highest bandwidth path. Thus, Europe-SEA traffic generally takes the western route. There is no wrong path (both have advantages and disadvantages) but the wrong thing to do is to only advertise one single path (as BGP does).
+BGP is a “money routing protocol”, traffic follows cheapest path, typically highest bandwidth path. Thus, Europe-SEA traffic generally takes the western route. There is no wrong path (both have advantages and disadvantages) but the wrong thing to do is to only advertise one single path (as BGP does).
 
 \subsubsection{Use Case: Low Earth Orbit Satellite Networks}
 
@@ -2088,9 +2092,9 @@ Denial of Service (DoS) attack: attempt to consume resources which are then not 
 
 \subsubsection{Volumetric attacks}
 
-\noindent \textbf{Attack:} \textit{Consume the bandwidth} either within the target network/service, or between the target network/service and the rest of the Internet. This causes congestion.\\
-\noindent \textbf{Metric:} bits/sec\\
-\noindent \textbf{Typical vectors:}
+\textbf{Attack:} \textit{Consume the bandwidth} either within the target network/service, or between the target network/service and the rest of the Internet. This causes congestion.\\
+\textbf{Metric:} bits/sec\\
+\textbf{Typical vectors:}
 \vspace{-\topsep}
 \begin{itemize}
 	\setlength{\itemsep}{0pt}
@@ -2103,13 +2107,13 @@ Denial of Service (DoS) attack: attempt to consume resources which are then not 
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent \textbf{Why are volumetric attacks so successful?} Because of TCP. Link flooding causes congestion \& high loss rates for incoming traffic. TCP tremendously slows down under congestion/ packet loss (throughput deteriorates).
+\textbf{Why are volumetric attacks so successful?} Because of TCP. Link flooding causes congestion \& high loss rates for incoming traffic. TCP tremendously slows down under congestion/ packet loss (throughput deteriorates).
 
 \subsubsection{Protocol attacks}
 
-\noindent \textbf{Attack:} Designed to \textit{exhaust resources available on the target or on a specific device} between the target and the Internet (e.g. routers, load balancers, security devices). Once the attack consumes a resource such as a device’s TCP state table, no new connections can be opened. Protocol DDoS attacks don't need to consume all of the target’s available bandwidth to make it inaccessible. They can take down even high-capacity devices capable of maintaining state on millions of connections.\\
-\noindent \textbf{Metric:} packets/sec\\
-\noindent \textbf{Typical vectors:}
+\textbf{Attack:} Designed to \textit{exhaust resources available on the target or on a specific device} between the target and the Internet (e.g. routers, load balancers, security devices). Once the attack consumes a resource such as a device’s TCP state table, no new connections can be opened. Protocol DDoS attacks don't need to consume all of the target’s available bandwidth to make it inaccessible. They can take down even high-capacity devices capable of maintaining state on millions of connections.\\
+\textbf{Metric:} packets/sec\\
+\textbf{Typical vectors:}
 \vspace{-\topsep}
 \begin{itemize}
 	\setlength{\itemsep}{0pt}
@@ -2123,9 +2127,9 @@ Denial of Service (DoS) attack: attempt to consume resources which are then not 
 
 \subsubsection{Application-Layer Attacks}
 
-\noindent \textbf{Attack:} Target various aspects of an \textit{application or service} at Layer 7. Most sophisticated and stealthy attacks as they can be very effective with as few as one attacking machine generating traffic at a low rate. Attacks are very difficult to proactively detect with traditional flow-based monitoring solutions. Application-layer attacks are often referred to as stealthy or low-and-slow attacks.\\
-\noindent \textbf{Metric:} requests/sec\\
-\noindent \textbf{Typical vectors:}
+\textbf{Attack:} Target various aspects of an \textit{application or service} at Layer 7. Most sophisticated and stealthy attacks as they can be very effective with as few as one attacking machine generating traffic at a low rate. Attacks are very difficult to proactively detect with traditional flow-based monitoring solutions. Application-layer attacks are often referred to as stealthy or low-and-slow attacks.\\
+\textbf{Metric:} requests/sec\\
+\textbf{Typical vectors:}
 \vspace{-\topsep}
 \begin{itemize}
 	\setlength{\itemsep}{0pt}
@@ -2142,13 +2146,13 @@ Denial of Service (DoS) attack: attempt to consume resources which are then not 
 
 In a two way communication, each channel between peers needs a unique session number. This session number has to be known at the server to match requests to the right session/ channel. Keep in mind that servers have limited memory.\\
 \noindent\textbf{Attack:} Exhaust the session table of the server.\\
-\noindent \textbf{Result:} Server can no longer accept new connections, existing connections are dropped, maybe the server / service crashes.
+\textbf{Result:} Server can no longer accept new connections, existing connections are dropped, maybe the server / service crashes.
 
 \subsubsection{SYN Flood Attack}
 
 TCP uses a three-way handshake to establish a connection. The client initiates the handshake by sending a SYN packet. The server stores a new state for the received SYN packet.\\
-\noindent \textbf{Attack:} The attacker can send lots of TCP SYN packets with spoofed srcIP. The server tries to keep state for every single packet. Eventually, the state table overflows and the server is unable to accept new legit connections. For each second where the packet is in buffer, its TTL is decreased by 1. It thus takes 255 seconds until the state is dropped.\\
-\noindent \textbf{Mitigation:} SYN Cookies - no state table needed. Server doesn't create session state for TCP SYN packet. Instead, the server replies with SYN+ACK and a cookie (sequence number) $B=F(time,IP,port,...)$. On the next reply, the server then checks if the client sent $B+1$ along. Attacker can just send the cookie too...? No! Since the srcIP is typically spoofed, the attacker won't receive the cookie. The attacker could try to spoof the cookie (if she knows the function F...). The server should use cryptographic hashes or salted hashing such that the attacker can only guess $B$.
+\textbf{Attack:} The attacker can send lots of TCP SYN packets with spoofed srcIP. The server tries to keep state for every single packet. Eventually, the state table overflows and the server is unable to accept new legit connections. For each second where the packet is in buffer, its TTL is decreased by 1. It thus takes 255 seconds until the state is dropped.\\
+\textbf{Mitigation:} SYN Cookies - no state table needed. Server doesn't create session state for TCP SYN packet. Instead, the server replies with SYN+ACK and a cookie (sequence number) $B=F(time,IP,port,...)$. On the next reply, the server then checks if the client sent $B+1$ along. Attacker can just send the cookie too...? No! Since the srcIP is typically spoofed, the attacker won't receive the cookie. The attacker could try to spoof the cookie (if she knows the function F...). The server should use cryptographic hashes or salted hashing such that the attacker can only guess $B$.
 
 \subsubsection{IP spoofing defense}
 \label{ip_spoofing_defense}
@@ -2175,7 +2179,7 @@ This can for example cause an IDS to become very slow.
 
 \newpage
 
-\noindent \textbf{Mitigation:}
+\textbf{Mitigation:}
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -2206,7 +2210,7 @@ Example: input aaaaaa!@gmail.com to:\\
 Slowloris allows a single machine to take down another machine's web server with minimal bandwidth and side effects on unrelated services and ports.\\
 \textbf{Basic idea:} Slowloris tries to keep many connections to the target web server open and hold them open as long as possible. Periodically, it will send subsequent HTTP headers, adding to - but never completing - the request. This will fill the maximum concurrent session pool of the server, eventually denying additional connection attempts from clients.\\
 
-\noindent \textbf{Mitigation:}
+\textbf{Mitigation:}
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -2224,7 +2228,7 @@ Slowloris allows a single machine to take down another machine's web server with
 
 See section \ref{dns_ddos} for more information.\\
 
-\noindent \textbf{Attack:} Attacker sends lots of UDP packets to a system whose replies are much larger than the requests (e.g. DNS, NTP, memcached) (amplification). Attacker further spoofs the srcIP to the victim's IP, such that the victim gets the large response traffic (reflection).
+\textbf{Attack:} Attacker sends lots of UDP packets to a system whose replies are much larger than the requests (e.g. DNS, NTP, memcached) (amplification). Attacker further spoofs the srcIP to the victim's IP, such that the victim gets the large response traffic (reflection).
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -2241,7 +2245,7 @@ See section \ref{dns_ddos} for more information.\\
 	\label{fig:ddoswithreflectors}
 \end{figure}
 
-\noindent Attackers can also use a botnet in addition to a normal amplification attack $\rightarrow$ \textit{distributed} denial of service attack (DDoS). Here multiple agents (bots) send the DNS request with the spoofed srcIP.
+Attackers can also use a botnet in addition to a normal amplification attack $\rightarrow$ \textit{distributed} denial of service attack (DDoS). Here multiple agents (bots) send the DNS request with the spoofed srcIP.
 
 \newpage
 
@@ -2260,7 +2264,7 @@ See section \ref{dns_ddos} for more information.\\
 
 Any protocol / service with these attributes can be abused for a reflection attack.
 
-\noindent \textbf{Mitigation:}
+\textbf{Mitigation:}
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -2280,7 +2284,7 @@ Network Time Protocol (NTP) is used to synchronize all participating computers t
 $\rightarrow$ spoofing \checkmark, amplification \checkmark, reflection \checkmark, open resolver \checkmark\\
 $\rightarrow$ can be abused for (D)DoS attack!
 
-\noindent \textbf{NTP-based DDoS Attack Recipe:}
+\textbf{NTP-based DDoS Attack Recipe:}
 
 \vspace{-\topsep}
 \begin{enumerate}
@@ -2294,7 +2298,7 @@ $\rightarrow$ can be abused for (D)DoS attack!
 \end{enumerate}
 \vspace{-\topsep}
 
-\noindent \textbf{Mitigation:}
+\textbf{Mitigation:}
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -2311,16 +2315,16 @@ $\rightarrow$ can be abused for (D)DoS attack!
 
 Conventional bandwidth-based DoS requires sending high-rate attack traffic (like an elephant). Can we achieve the same effect by sending low-rate attack traffic (like a fierce shrew)? YES!\\
 
-\noindent \textbf{Shrew DoS Attack:} Exploits TCP congestion control feature. Researchers discovered that if you send traffic during very short but specific amounts of time, you can completely disrupt TCP. This is due to TCP congestion control resending packets at multiple whole seconds granularity (1s, 2s, 4s, 8s, ...). By only creating congestion during these time periods 
+\textbf{Shrew DoS Attack:} Exploits TCP congestion control feature. Researchers discovered that if you send traffic during very short but specific amounts of time, you can completely disrupt TCP. This is due to TCP congestion control resending packets at multiple whole seconds granularity (1s, 2s, 4s, 8s, ...). By only creating congestion during these time periods 
 the attacker forces TCP flows to repeatedly enter a retransmission timeout state by sending high-rate but short-duration bursts! We deny the bandwidth of legitimate TCP flows as it makes TCP believe there is a long-term congestion.\\
 
-\noindent \textbf{Temporal lensing:} "multiple rounds simultaneous impact”. Use time as an additional amplification factor. Different paths have different transmission delays. An attacker can send packets at different times s.t. they \textit{all} arrive at the target \textit{at the same time}. So that a low-bandwidth source can also perform a shrew attack.
+\textbf{Temporal lensing:} "multiple rounds simultaneous impact”. Use time as an additional amplification factor. Different paths have different transmission delays. An attacker can send packets at different times s.t. they \textit{all} arrive at the target \textit{at the same time}. So that a low-bandwidth source can also perform a shrew attack.
 
 \subsection{IoT botnets}
 
 IoT is expanding, more \& more devices go online. The curse of IoT is that devices are generally setup-and-forget and they are difficult and tedious to update which leads to many vulnerable devices (see section \ref{iot}).\\
 
-\noindent IoT devices are ideal for DDoS botnets for a variety of reasons:
+IoT devices are ideal for DDoS botnets for a variety of reasons:
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -2333,9 +2337,9 @@ IoT is expanding, more \& more devices go online. The curse of IoT is that devic
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent Example: Mirai botnet, $10^6$ bots (mostly IP cameras), 1.3 Tbps against github (see \ref{mirai_botnet}).
+Example: Mirai botnet, $10^6$ bots (mostly IP cameras), 1.3 Tbps against github (see \ref{mirai_botnet}).
 
-\noindent \textbf{IoT botnet mitigation:}
+\textbf{IoT botnet mitigation:}
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -2382,7 +2386,7 @@ sports events).
 
 \textit{Main point: DDoS is solved if you are very rich.}
 
-\noindent So what is the problem? DDoS is essentially solved, Akamai and Cloudflare have invested so much in infrastructure that they can mitigate any DDoS attack. \textit{But:} these services are very expensive! It's essentially only for the rich. Also, you have to pay for a certain level of protection (i.e. how much bandwidth). Attacker could just send more and I'd be vulnerable again.
+So what is the problem? DDoS is essentially solved, Akamai and Cloudflare have invested so much in infrastructure that they can mitigate any DDoS attack. \textit{But:} these services are very expensive! It's essentially only for the rich. Also, you have to pay for a certain level of protection (i.e. how much bandwidth). Attacker could just send more and I'd be vulnerable again.
 
 \subsubsection{Cloud-based DDoS Mitigation Service}
 
@@ -2434,7 +2438,7 @@ RTBH is a generic technique that can be used to mitigate volumetric DoS attacks 
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent RTBH will drop traffic at the border routers, so that the traffic does not even enter the AS. The main solution is to sink all traffic that is destined to a particular placeholder IP address, chosen among an unused subnet. The subnet usually chosen is 192.0.2.0/24, technically reserved for testing purposes. Let’s say that we want all traffic destined to 192.0.2.1 to be dropped: we will then create the following static route. \texttt{ip route 192.0.2.1 255.255.255.255 null0}.\\
+RTBH will drop traffic at the border routers, so that the traffic does not even enter the AS. The main solution is to sink all traffic that is destined to a particular placeholder IP address, chosen among an unused subnet. The subnet usually chosen is 192.0.2.0/24, technically reserved for testing purposes. Let’s say that we want all traffic destined to 192.0.2.1 to be dropped: we will then create the following static route. \texttt{ip route 192.0.2.1 255.255.255.255 null0}.\\
 The RTBH will be triggered by an admin that will insert route updates that route traffic destined to the
 attacked IP to the placeholder IP, 192.0.2.1 . These routes will then be propagated via iBGP to the edge routers, effectively making them send all the attack traffic to \texttt{null0}.
 
@@ -2470,7 +2474,7 @@ Adversary can exhaust bandwidth on victim link. As a result, the attack traffic 
 \subsubsection{Crossfire attack}
 
 \textbf{Goal:} attacker wants to disconnect part of the internet from the rest.\\
-\noindent Attacker detects some target links that connect a target region to the rest of the internet. Due to route optimization, few links are actually used to connect a
+Attacker detects some target links that connect a target region to the rest of the internet. Due to route optimization, few links are actually used to connect a
 target region to rest of Internet. The attacker then overloads these specific target links by using a distributed bot army she controls. The bots communicate with target servers in/ near the target region and simply send TCP SYN packets. This can be enough to congest due to lots of target servers. This is hard to stop since only connection establish packets (TCP SYN) are sent.\\
 \textbf{Result:} disconnect target region from remainder of Internet
 
@@ -2496,17 +2500,17 @@ target region to rest of Internet. The attacker then overloads these specific ta
 \subsubsection{SCION: Hidden paths}
 
 AS does not announce a path to a core path server to the world, instead it keeps it secret. In SCION, we announce paths to the global path server (path server of a core AS) from where other entities can fetch the path. If we \textit{don't} announce a path to a global path server, other entities (and thus attackers) do not have a HOP field for it $\rightarrow$ packets would be dropped early if sent anyway over this path.
-\noindent If for example some branch office wants to reach a central office via a hidden path, we need some rendez-vous service.\\
+If for example some branch office wants to reach a central office via a hidden path, we need some rendez-vous service.\\
 
-\noindent \textbf{Attack against hidden path:} if an attacker can obtain the hub field by catching a packet with the field, the attacker can then send on the hidden path. A hub field is valid for ca. 8 hours $\rightarrow$ this is rather long.\\
+\textbf{Attack against hidden path:} if an attacker can obtain the hub field by catching a packet with the field, the attacker can then send on the hidden path. A hub field is valid for ca. 8 hours $\rightarrow$ this is rather long.\\
 
-\noindent In conclusion, hidden paths are a rather weak DDoS defense.
+In conclusion, hidden paths are a rather weak DDoS defense.
 
 \subsubsection{DRKey}
 
 Idea: use a per-AS secret value to derive keys with an efficient Pseudo-Random Function (PRF). Every AS has a local secret from which different keys are derived $\rightarrow$ no need to fetch keys from memory, you can just rederive them in CPU.\\
 
-\noindent \textbf{Example:} AS X creates a key for AS Y (s.t. AS Y can be source-authenticated when communicating with AS X) using secret value $SV_X$
+\textbf{Example:} AS X creates a key for AS Y (s.t. AS Y can be source-authenticated when communicating with AS X) using secret value $SV_X$
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -2518,14 +2522,14 @@ Idea: use a per-AS secret value to derive keys with an efficient Pseudo-Random F
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent \textbf{Notation:} $K_{X\rightarrow Y}$: X can locally derive the key for Y (fast, based on a single local key $SV_X$) but on side of Y, you need to contact the local key server to fetch the key (slow). Arrow indicates direction of key derivation, not the direction of communication. Data flow is opposite to the key generation flow: AS Y uses $K_{X\rightarrow Y}$ for MACing data, and X checks those MACs. In this way, the burden of fetching the key (a slower operation) is on the
+\textbf{Notation:} $K_{X\rightarrow Y}$: X can locally derive the key for Y (fast, based on a single local key $SV_X$) but on side of Y, you need to contact the local key server to fetch the key (slow). Arrow indicates direction of key derivation, not the direction of communication. Data flow is opposite to the key generation flow: AS Y uses $K_{X\rightarrow Y}$ for MACing data, and X checks those MACs. In this way, the burden of fetching the key (a slower operation) is on the
 sender, while the receiver can always efficiently verify the data it receives.\\
 
-\noindent \textbf{Key Server Infrastructure:}
+\textbf{Key Server Infrastructure:}
 
-\noindent Key servers that are deployed in each AS build backbone of key hierarchy. Responsible for key exchange, local key establishment and key management. After AS-level keys are established, symmetric keys for end hosts can be provided using key derivation. Keys can be used to provide source authenticity of packet without costly key exchange between communicating parties. Each host is required to contact their local key server.\\
+Key servers that are deployed in each AS build backbone of key hierarchy. Responsible for key exchange, local key establishment and key management. After AS-level keys are established, symmetric keys for end hosts can be provided using key derivation. Keys can be used to provide source authenticity of packet without costly key exchange between communicating parties. Each host is required to contact their local key server.\\
 
-\noindent \textbf{Key Hierarchy:} Key establishment using a multi-level key hierarchy using a one-way pseudo-random function. Whoever has the 0th level key can quickly derive all other keys (for its AS).
+\textbf{Key Hierarchy:} Key establishment using a multi-level key hierarchy using a one-way pseudo-random function. Whoever has the 0th level key can quickly derive all other keys (for its AS).
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -2537,9 +2541,9 @@ sender, while the receiver can always efficiently verify the data it receives.\\
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent AS A creates key hierarchy from secret value A ($SV_A$) using a pseudo-random function (PRF): $K_{A\rightarrow B} = PRF_{SV_A}("B")$. Similarly, AS B creates key hierarchy based on $SV_B$.\\
+AS A creates key hierarchy from secret value A ($SV_A$) using a pseudo-random function (PRF): $K_{A\rightarrow B} = PRF_{SV_A}("B")$. Similarly, AS B creates key hierarchy based on $SV_B$.\\
 
-\noindent \textbf{First-level DRKey:} Each AS has a key server with the 0th level key SV. An AS Y needs to fetch key $K_{X\rightarrow Y}$ from AS X in order to communicate with AS X. Key server in AS Y fetches $K_{X\rightarrow Y}$ from AS X through a secure channel set up based on AS certificates. Key server distributes local secret value SV to trusted infrastructure nodes inside same AS.\\
+\textbf{First-level DRKey:} Each AS has a key server with the 0th level key SV. An AS Y needs to fetch key $K_{X\rightarrow Y}$ from AS X in order to communicate with AS X. Key server in AS Y fetches $K_{X\rightarrow Y}$ from AS X through a secure channel set up based on AS certificates. Key server distributes local secret value SV to trusted infrastructure nodes inside same AS.\\
 Insight: SV enables high-speed local key derivation of any other AS’ key.
 
 \newpage
@@ -2551,7 +2555,7 @@ Insight: SV enables high-speed local key derivation of any other AS’ key.
 	\label{fig:drkeyfirstlevelkeyexchange}
 \end{figure}
 
-\noindent \textbf{Second-level DRKey:} apply PRF once more on AS-to-AS key to derive AS-to-Host symmetric key. AS X creates a key for host $H_y$ in AS Y:
+\textbf{Second-level DRKey:} apply PRF once more on AS-to-AS key to derive AS-to-Host symmetric key. AS X creates a key for host $H_y$ in AS Y:
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -2562,11 +2566,11 @@ Insight: SV enables high-speed local key derivation of any other AS’ key.
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent Knowing secret value SV X any entity in AS X can derive $K_{X\rightarrow *:*}$. Knowing $K_{X\rightarrow Y}$, key server in AS Y can derive $K_{X\rightarrow Y:*}$. Host-to-Host keys $K_{X:*\rightarrow Y:*}$ can be similarly derived.\\
+Knowing secret value SV X any entity in AS X can derive $K_{X\rightarrow *:*}$. Knowing $K_{X\rightarrow Y}$, key server in AS Y can derive $K_{X\rightarrow Y:*}$. Host-to-Host keys $K_{X:*\rightarrow Y:*}$ can be similarly derived.\\
 
-\noindent \textbf{DRKey use case: SCMP authentication}\\
+\textbf{DRKey use case: SCMP authentication}\\
 
-\noindent SCMP instead of ICMP. Send an error when border router encounters error with a packet\\ $\rightarrow$ source-authenticate error message with DRKey. Assume Host H in AS A sends an SCMP message, and AS C, which receives this message, wants to authenticate it:
+SCMP instead of ICMP. Send an error when border router encounters error with a packet\\ $\rightarrow$ source-authenticate error message with DRKey. Assume Host H in AS A sends an SCMP message, and AS C, which receives this message, wants to authenticate it:
 
 \vspace{-\topsep}
 \begin{enumerate}
@@ -2589,16 +2593,16 @@ Insight: SV enables high-speed local key derivation of any other AS’ key.
 
 \subsubsection{EPIC (Every Packet Is Checked)}
 
-\noindent \textbf{Goal:} Every router can source authenticate every packet in the internet with almost no overhead. Achieve per-packet source authentication, duplicate suppression, per-packet variable hop fields. Assumption: global time synchronization ($\pm$ 100 ms). EPIC can prevent attacks such as: (1) Malicious router replays packets or increases packet size. (2) Hop field MAC is brute forced and destination attacked until expiration time.\\
+\textbf{Goal:} Every router can source authenticate every packet in the internet with almost no overhead. Achieve per-packet source authentication, duplicate suppression, per-packet variable hop fields. Assumption: global time synchronization ($\pm$ 100 ms). EPIC can prevent attacks such as: (1) Malicious router replays packets or increases packet size. (2) Hop field MAC is brute forced and destination attacked until expiration time.\\
 
-\noindent \textbf{EPIC level 1:} 
+\textbf{EPIC level 1:} 
 
 Current SCION hop field MAC: $MAC_{K_i}(TS||IgIF||EgIF||ExpT||\sigma_{i-1})$\\
 
-\noindent TS: time beacon creation, ExpT: Expiration time, IgIF/EgIF: Ingress/Egress Interface,\\
+TS: time beacon creation, ExpT: Expiration time, IgIF/EgIF: Ingress/Egress Interface,\\
 T: time packet creation, $\sigma_{i-1}$: previous hop field MAC.\\
 
-\noindent With EPIC, we have one additional level of indirection:
+With EPIC, we have one additional level of indirection:
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -2610,11 +2614,11 @@ T: time packet creation, $\sigma_{i-1}$: previous hop field MAC.\\
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent Hop key $K_H$ is distributed via beacon (PCB), $S_i$ is included in packet header. Result: every packet has unique hop field MAC, foiling brute force attacks on hop field MAC.\\
+Hop key $K_H$ is distributed via beacon (PCB), $S_i$ is included in packet header. Result: every packet has unique hop field MAC, foiling brute force attacks on hop field MAC.\\
 
-\noindent \textbf{EPIC level 2:}
+\textbf{EPIC level 2:}
 
-\noindent Goal: achieve source authentication for every packet by including DRKey $K_{X\rightarrow Y:H}$ in hop field MAC. For host e in AS E, traversing AS X:
+Goal: achieve source authentication for every packet by including DRKey $K_{X\rightarrow Y:H}$ in hop field MAC. For host e in AS E, traversing AS X:
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -2626,7 +2630,7 @@ T: time packet creation, $\sigma_{i-1}$: previous hop field MAC.\\
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent Router in AS X can efficiently derive $K_{X \rightarrow E:e}$ (2 AES operations). Host e needs to fetch one key per AS traversed from local certificate server. Result: efficient per-packet per-hop source authentication! (5 AES op).
+Router in AS X can efficiently derive $K_{X \rightarrow E:e}$ (2 AES operations). Host e needs to fetch one key per AS traversed from local certificate server. Result: efficient per-packet per-hop source authentication! (5 AES op).
 
 
 \subsubsection{PISKES}
@@ -2637,7 +2641,7 @@ DRKey and verify packet. Throughput is only slightly worse (0.2\% less for 128B 
 
 \subsubsection{History-based filtering}\
 
-\noindent \textbf{Basic idea (omitting details)}: create a list of ASes that you communicate with and through monitoring, set a number of packets you allow these ASes to have in a given time period. Under a DDoS attack, you then filter based on ASes $\rightarrow$ only hosts from the AS with the attacker in it are affected.
+\textbf{Basic idea (omitting details)}: create a list of ASes that you communicate with and through monitoring, set a number of packets you allow these ASes to have in a given time period. Under a DDoS attack, you then filter based on ASes $\rightarrow$ only hosts from the AS with the attacker in it are affected.
 
 \newpage
 
@@ -2656,7 +2660,7 @@ Key ideas:
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent \textbf{Link BW Decomposition:}
+\textbf{Link BW Decomposition:}
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -2669,9 +2673,9 @@ Key ideas:
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent \textbf{Segment Reservation:}
+\textbf{Segment Reservation:}
 
-\noindent Reservation on SCION path segment is initiated by the source AS of each path segment. Bandwidth class indicates the guaranteed and maximum bandwidth. Maximum validity period 5 minutes.\\
+Reservation on SCION path segment is initiated by the source AS of each path segment. Bandwidth class indicates the guaranteed and maximum bandwidth. Maximum validity period 5 minutes.\\
 Example: ID A-42 allocate(min:10, max:20), AS A: max:20, alloc 20, AS B: max 15, alloc 15, AS C: max 18, alloc 15
 
 \begin{figure}[hb]
@@ -2691,7 +2695,7 @@ Example: ID A-42 allocate(min:10, max:20), AS A: max:20, alloc 20, AS B: max 15,
 	\caption{}
 \end{figure}
 
-\noindent \textbf{Admission Algorithm: Properties}
+\textbf{Admission Algorithm: Properties}
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -2702,14 +2706,14 @@ Example: ID A-42 allocate(min:10, max:20), AS A: max:20, alloc 20, AS B: max 15,
 \end{itemize}
 \vspace{-\topsep}
 
-\noindent \textbf{Need for Monitoring:}
+\textbf{Need for Monitoring:}
 
-\noindent Misbehaving end host might exceed their reserved bandwidth and disrupt the network. Each Edge AS is accountable for its hosts and is required to perform per-flow (stateful) policing. At the edge, we can do per-flow monitoring. In the core, we need probabilistic monitoring.
+Misbehaving end host might exceed their reserved bandwidth and disrupt the network. Each Edge AS is accountable for its hosts and is required to perform per-flow (stateful) policing. At the edge, we can do per-flow monitoring. In the core, we need probabilistic monitoring.
 
 \newpage
 
-\noindent \textbf{Attacks:} Legacy traffic could be dangerous since an attacker could simply congest a link using legacy IPv4/IPv6 traffic and prevent SCION communication.\\
-\noindent \textbf{Solution}: use of IP prioritization/ queuing: Reserve QoS classes for SCION traffic and configure prioritization on each switch/ router to reserve bandwidth for SCION.
+\textbf{Attacks:} Legacy traffic could be dangerous since an attacker could simply congest a link using legacy IPv4/IPv6 traffic and prevent SCION communication.\\
+\textbf{Solution}: use of IP prioritization/ queuing: Reserve QoS classes for SCION traffic and configure prioritization on each switch/ router to reserve bandwidth for SCION.
 
 \subsection{Conclusion}
 

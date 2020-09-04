@@ -55,7 +55,7 @@
 		\ccbyncsa
 	\end{center}
 	
-	\noindent I do not guarantee correctness or completeness, nor is this document endorsed by the lecturers. Feel free to point out any erratas. For the full \LaTeX \ source code, consider \texttt{github.com/ymerkli/eth-summaries}.\\
+	\noindent I do not guarantee correctness or completeness, nor is this document endorsed by the lecturers. Feel free to point out any erratas. For the full \LaTeX \ source code, consider \texttt{\href{github.com/ymerkli/eth-summaries}{github.com/ymerkli/eth-summaries}}.\\
 	
 	\vspace*{1cm}
 	
@@ -88,7 +88,7 @@
 \subsection{SSL/TLS Overview}
 
 Goal: Secure Internet communication.\\
-We need \textit{secrecy} to precent eavesdroppers from learning sensitive information and we need entity and message authentication to prevent message alteration/ injection.
+We need \textit{secrecy} to prevent eavesdroppers from learning sensitive information and we need entity and message authentication to prevent message alteration/ injection.
 
 \subsection{PKI overview}
 
@@ -812,7 +812,7 @@ The Internet is a critical infrastructure, yet its operation depends on the fund
 
 \subsection{Domain Name System (DNS)}
 
-DNS uses hierarchical namespaces to scale: tree structure down from root level ".", to top-level domains (TLD, e.g. .com) to second-level domains (SLD, e.g. google.com). A fully qualified domain name (FQDN) for example is mail.ethz.ch. The hierarchy descends from right to left. Domains are namespaces: verything below .com is the \textit{com} domain, everything below .ibm.com. is the \textit{ibm.com} domain.
+DNS uses hierarchical namespaces to scale: tree structure down from root level ".", to top-level domains (TLD, e.g. .com) to second-level domains (SLD, e.g. google.com). A fully qualified domain name (FQDN) for example is mail.ethz.ch. The hierarchy descends from right to left. Domains are namespaces: everything below .com is the \textit{com} domain, everything below .ibm.com. is the \textit{ibm.com} domain.
 
 \begin{figure}[hb]
 	\centering
@@ -866,7 +866,7 @@ The authoritative name server for a second-level domain is managed by private en
 
 \textbf{Attack Methodology:} DNS queries are typically transmitted over UDP - they are fire and forget. The source IP can be spoofed and the receiver has no way of determining its veracity before responding. The attacker will spoof the srcIP to the victim's IP - the response will thus be reflected to the victim and overload his servers. DNS also is capable of generating a much larger response than query (e.g. \texttt{dig ANY isc.org @x.x.x.x} query is 64 bytes, the response is 3,223 bytes). There are many powerful and well connected DNS servers, which can be abused to redirect large DNS responses to any target. The key to this attack are \textit{open} DNS resolvers (recursive resolver that replies to any DNS query, coming from any device
 on the Internet).\\
-\textbf{Key ingredients of a reflection/amplification attack:} stateless protocol (UDP), can spoof the srcAddr (reflection), small request generates large response (amplification). Other protocols that also fulfill these criteria: memcached, NTP.\\
+\textbf{Key ingredients of a reflection/amplification attack:} stateless protocol (UDP), can spoof the srcAdr (reflection), small request generates large response (amplification). Other protocols that also fulfill these criteria: memcached, NTP.\\
 \textbf{Mitigation:} Source IP verification (reject packets with source addresses not reachable via the actual packet’s path), disable recursion on authoritative name servers, limit recursion to authorized clients, Response Rate Limiting (RRL).\\
 However, the main mitigation is hosting a service on different locations in the internet, s.t. it gets harder for an attacker to target all possible locations. Using BGP anycast, the same IP address is advertised on different locations on the internet.\\
 A user is directed to the nearest service location. This helps to distribute the load on different sites. There are CDN services like Akamai or CloudFlare that offer this as a service.
@@ -1065,7 +1065,7 @@ Accurate detection is very challenging when rate of attacks is very low. If we h
 		\item Multi-Dimensional: instead of triggering on a single signature, a	multi-dimensional signature was created. More efficient and effective than single approach.
 	\end{itemize}
 	\item Sandboxing: Run (potential) malware in a VM and examine its behavior. This is proactive and doesn't need signature updates but is resource intensive and difficult to scale. Malware can further evade sandboxing (e.g. malware could wait for 3 days before becoming malicious).
-	\item Machine Learning: Apply supervised and unsupervised machine learning algorithms to detect malicous traffic, malware, etc. Problem with SL models: training data \textit{needs} to be clean (no unknown attacks), otherwise the SL model learns something wrong. With USL models, interpretability is an issue (also with SL).
+	\item Machine Learning: Apply supervised and unsupervised machine learning algorithms to detect malicious traffic, malware, etc. Problem with SL models: training data \textit{needs} to be clean (no unknown attacks), otherwise the SL model learns something wrong. With USL models, interpretability is an issue (also with SL).
 \end{itemize}
 \vspace{-\topsep}
 
@@ -1145,7 +1145,7 @@ The malware used in a targeted attack will not be detected by anti-malware tools
 	\setlength{\itemsep}{0pt}
 	\setlength{\parskip}{0pt}
 	\item Direct attack: “server-side” exploits, the threat/exploit is executed remotely by the attacker against a vulnerable application and/or operating system
-	\item Indirect attack: the threat/exploit is initiated by the vulnerable target. The attacker has little or no controll over when the target user executes the threat.
+	\item Indirect attack: the threat/exploit is initiated by the vulnerable target. The attacker has little or no control over when the target user executes the threat.
 \end{itemize}
 \vspace{-\topsep}
 
@@ -1215,7 +1215,7 @@ We have to adopt to permanent change, high dynamics, and decreased predictabilit
 
 Humans and nature take different approaches to handle unpredictability: humans prevent shock (reliant on accuracy, fragile, short-term strategy), nature absorbs shocks (anti-fragile, long-term strategy). Degree of optimization: Tradeoff between short term gains vs. long term survival.
 
-Consequences from properties of CAS for cyber security: new \& innovative attacks, predicability of attacks decreases, remote effects \& cascades.
+Consequences from properties of CAS for cyber security: new \& innovative attacks, predictability of attacks decreases, remote effects \& cascades.
 
 \subsection{IoT (and IIOT, ICS, SCADA, OT\&OT)}
 

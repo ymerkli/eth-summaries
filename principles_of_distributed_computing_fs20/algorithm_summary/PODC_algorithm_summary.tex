@@ -1,0 +1,209 @@
+\documentclass{article}
+\usepackage[a4paper,margin=0.3in,landscape]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{blindtext}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{array,multirow,graphicx,multicol}
+\usepackage{float}
+\usepackage{rotating}
+\usepackage{ccicons}
+\usepackage{hyperref}
+
+\newcommand\RotText[1]{\rotatebox{90}{\parbox{2.5cm}{\raggedright#1}}}
+
+
+\begin{document}
+	
+\begin{multicols*}{3}
+	
+\section*{Disclaimer}
+
+This document is an exam summary that follows the script of the \textit{Principles of Distributed Computing} lecture  at ETH Zurich. The contribution to this is a list of algorithms with their most important properties. This summary was created during the spring semester 2020. Due to updates to the syllabus content, some material may no longer be relevant for future versions of the lecture. This work is published as CC BY-NC-SA.
+
+\begin{center}
+	\ccbyncsa
+\end{center}
+
+\noindent I do not guarantee correctness or completeness, nor is this document endorsed by the lecturers. Feel free to point out any erratas. For the full \LaTeX \ source code, consider \texttt{\href{https://github.com/ymerkli/eth-summaries}{github.com/ymerkli/eth-summaries}}.
+
+\end{multicols*}
+
+\newpage
+	
+\begin{table}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}p{3mm}|p{30mm}|p{2mm}|p{13mm}|p{117mm}|p{30mm}|p{25mm}|p{2mm}|p{2mm}|p{2mm}|p{2mm}|p{3mm}}
+	\hline 
+	\RotText{\textbf{chapter}} & \textbf{Problem} & \RotText{\textbf{local/congest}} & \RotText{\textbf{topology}} & \textbf{algorithm \& comments} & \RotText{\textbf{time complexity}} & \RotText{\textbf{msg complexity}} & \RotText{\textbf{synchronous}} & \RotText{\textbf{needs n}} & \RotText{\textbf{needs IDs}} & \RotText{\textbf{needs leader}} & \RotText{\textbf{randomized}} \\
+	\hline 
+	1 & vertex coloring & L & all & Reduce, $(\Delta + 1)$-coloring & $\mathcal{O}(n)$ & $\mathcal{O}(2n\Delta)$ & x &  & x &  & \\ 
+	\hline 
+	
+	1 & vertex coloring & L & R tree & "Slow tree coloring", 2-coloring & $\mathcal{O}(D) = \mathcal{O}(n)$ & $\mathcal{O}(n^2)$ & x &  & x &  & \\ 
+	\hline 
+	
+	1 & vertex coloring & L & R tree & "6-color", 6-coloring & $\mathcal{O}(\log^* n)$ &  & x &  & x &  & \\ 
+	\hline 
+	
+	1 & vertex coloring & L & R tree & "Six-2-three", 3-coloring & $\mathcal{O}(\log^* n)$ & x & x & x &  &  & \\ 
+	\hline 
+	
+	1 & vertex coloring & L & ring & Ex1.3a) non-uniform b) uniform & $\mathcal{O}(\log^* n)$ &  & x &  & x &  &  \\ 
+	\hline 
+	
+	&  &  &  &  &  &  &  &  &  &  &  \\ 
+	\hline 
+	
+	2 & Inform nodes, collect info & L & all & "Flooding/ Echo" & $\mathcal{O}(D)$ & $\mathcal{O}(m+n)$ &  &  &  &  & \\ 
+	\hline 
+	
+	2 & BFS-construction & L & all & Synchronous performing of "flooding/echo" creates a BFS & $\mathcal{O}(n)$ & $\mathcal{O}(m)$ &  &  &  &  & \\ 
+	\hline 
+	
+	2 & BFS-construction & L & all & Dijkstra BFS. Initiated by single node & $\mathcal{O}(D^2)$ & $\mathcal{O}(m+nD)$ &  &  &  &  & \\ 
+	\hline 
+	
+	2 & BFS-construction & L & all & Bellman-Ford BFS. Initiated by single node & $\mathcal{O}(D)$ & $\mathcal{O}(nm)$ &  &  &  &  & \\ 
+	\hline 
+	
+	2 & BFS-construction & L & all & Best "tradeoff" algorithm for BFS construction & $\mathcal{O}(D\log^3 n)$ & $\mathcal{O}(m + n\log^3 n)$ &  &  &  &  & \\ 
+	\hline 
+	
+	2 & MST construction & L & all & "GHS". All nodes start synchronously. Creates ST minimizing edge weights. (no weights? Set all weights=1) & $\mathcal{O}(n\log n)$ & $\mathcal{O}(m \log n)$ &  &  & x &  & \\ 
+	\hline 
+	
+	2 & Pair Matchup in Tree & L & R tree & Ex2.1a) Match up nodes in a tree as pairs with Echo & $\mathcal{O}(D)$ & $\mathcal{O}(n)$ & x &  &  &  &  \\ 
+	\hline 
+	
+	&  &  &  &  &  &  &  &  &  &  &  \\ 
+	\hline 
+	
+	3 & vertex coloring & L & all & "Linial's coloring algorithm", $\mathcal{O}(\Delta^2 \log \Delta)$-coloring & $\mathcal{O}(\log^* n)$ &  & x &  & x &  &  \\ 
+	\hline 
+	
+	3 & vertex coloring & L & all & "Kuhn-Wattenhofer coloring algorithm", $(\Delta + 1)$-coloring & $\mathcal{O}(\Delta \log \Delta + \log^* n)$ &  & x &  & x &  &  \\ 
+	\hline
+	
+	3 & vertex coloring & L & all & "Kuhn-Wattenhofer algorithm via defective coloring", $(\Delta + 1)$-coloring & $\mathcal{O}(\Delta + \log^* n)$ &  & x &  & x &  &  \\ 
+	\hline
+	
+	&  &  &  &  &  &  &  &  &  &  &  \\ 
+	\hline 
+	
+	4 & vertex coloring & L & UR tree & "Iterated peeling", 3-coloring & $\mathcal{O}(\log n)$ &  & x &  &  &  &  \\ 
+	\hline 
+	
+	&  &  &  &  &  &  &  &  &  &  &  \\ 
+	\hline 
+	
+	5 & MIS & L & all & "Slow MIS algorithm" & $\mathcal{O}(n)$ & $\mathcal{O}(m)$ & x &  & x &  &  \\ 
+	\hline 
+	
+	5 & MIS & L & all & "Luby's MIS algorithm", \textit{non-deterministic} & whp $\mathcal{O}(\log n)$ &  & x &  &  &  & x \\ 
+	\hline 
+	
+	5 & vertex coloring \underline{from} MIS & L & all & Coloring from MIS: finds a $(\Delta + 1)$-coloring, \textit{non-deterministic} & whp $\mathcal{O}(\log n)$ &  & x &  &  &  & x \\ 
+	\hline 
+	
+	5 & vertex coloring \underline{to} MIS & L & all & Coloring to MIS: Given a $C$-coloring in time $T$, constructs MIS in time: & $\mathcal{O}(T+C)$ &  &  &  &  &  & x \\ 
+	\hline 
+	
+	&  &  &  &  &  &  &  &  &  &  &  \\ 
+	\hline 
+	
+	6 & network decomp. & L & all & "Rozhon-Ghaffari algorithm", $(C,D) = (\mathcal{O}(\log n), \mathcal{O}(\log n))$ decomp. & $poly(\log n)$ &  & x &  & x &  &  \\ 
+	\hline
+	
+	6 & network decomp. & L & all & Randomized network decomp. algorithm, $(C,D) = (\mathcal{O}(\log n), \mathcal{O}(\log n))$, \textit{non-deterministic} & whp $\mathcal{O}(\log n)$ &  & x &  & x &  & x \\ 
+	\hline
+	
+\end{tabular} 
+\end{table}
+
+
+\begin{table}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}p{3mm}|p{30mm}|p{2mm}|p{13mm}|p{117mm}|p{30mm}|p{25mm}|p{2mm}|p{2mm}|p{2mm}|p{2mm}|p{3mm}}
+	\hline 
+	\RotText{\textbf{chapter}} & \textbf{Problem} & \RotText{\textbf{local/congest}} & \RotText{\textbf{topology}} & \textbf{algorithm \& comments} & \RotText{\textbf{time complexity}} & \RotText{\textbf{msg complexity}} & \RotText{\textbf{synchronous}} & \RotText{\textbf{needs n}} & \RotText{\textbf{needs IDs}} & \RotText{\textbf{needs leader}} & \RotText{\textbf{randomized}} \\
+	\hline 
+	
+	7 & shared objects & L & all & "Arrow" algorithm, needs ST, complexities for "find" operation & $\mathcal{O}(D)$ & $\mathcal{O}(D)$ &  &  &  &  &  \\ 
+	\hline 
+	
+	7 & shared objects & L & all & "Read/write caching". Needs underlying ST. & - & 3-competitive &  &  &  &  &  \\ 
+	\hline 
+	
+	7 & shared objects & L & all & "Ivy"-Algorithm. Needs underlying ST, complete graph. Complexities for the"find" operation: & avg. $\mathcal{O}(\log n)$ &  &  &  &  &  &  \\ 
+	\hline 
+	
+	&  &  &  &  &  &  &  &  &  &  &  \\ 
+	\hline 
+	
+	8 & sorting & C & array & "odd even sort" for Array & $\mathcal{O}(n)$ & $\mathcal{O}(n^2)$ &  &  &  &  &  \\ 
+	\hline 
+	
+	8 & sorting & C & grid & "Shearsort" for mesh & $\mathcal{O}(\sqrt{n}(\log(n) + 1))$ &  & x & x &  &  &  \\ 
+	\hline 
+	
+	8 & sorting & C & sorting network & "Batcher" & $\mathcal{O}(\log^2 n)$ &  & x &  &  &  &  \\ 
+	\hline 
+	
+	&  &  &  &  &  &  &  &  &  &  &  \\ 
+	\hline 
+	
+	9 & diameter & C & all & Diameter via APSP & $\mathcal{O}(D)$ &  & x &  &  & x &  \\ 
+	\hline 
+	
+	&  &  &  &  &  &  &  &  &  &  &  \\ 
+	\hline 
+	
+	10 & MST construction & C & all, ($D$\small{$<<$}$n$) & Improved Boruvka MST algorithm & whp $\mathcal{O}((D + \sqrt{n})\log n)$ &  & x &  &  &  & x \\ 
+	\hline 
+	
+	&  &  &  &  &  &  &  &  &  &  &  \\ 
+	\hline 
+	
+	11 & minimum cut & C & all & $(2+\epsilon)$ approximation algorithm for min. cut & \footnotesize{$\mathcal{O}(K'(D + \sqrt{n})\log^2 n)$} &  &  &  &  &  &  \\ 
+	\hline
+	
+	&  &  &  &  &  &  &  &  &  &  &  \\ 
+	\hline 
+	
+	12 & routing & C & all-to-all & Distributed routing problem, using random relay, $\mathcal{O}(\frac{n}{\log n})$ messages per node & $\mathcal{O}(1)$ &  &  &  &  &  & x \\ 
+	\hline 
+	
+	&  &  &  &  &  &  &  &  &  &  &  \\ 
+	\hline 
+	
+	13 & Non-uniform init & L & wireless & repeatedly select leader, e.g. with Slotted Aloha  & $\mathcal{O}(n)$ &  & x & x &  &  & x \\ 
+	\hline 
+	
+	13 & Uniform init w/ CD & L & wireless & Random repeated splitting into 2 groups & $\mathcal{O}(n)$ &  & x &  &  &  & x \\ 
+	\hline 
+	
+	13 & Uniform init wo/ CD & L & wireless & Needs a leader, overhead of factor 2 & $\mathcal{O}(n)$ &  & x &  &  &  & x \\ 
+	\hline 
+	
+	13 & Non-uniform leader election w/ CD & L & wireless & "Slotted Aloha" & whp $\mathcal{O}(\log n)$ &  & x & x &  &  & x \\ 
+	\hline 
+	
+	13 & Uniform leader election wo/ CD & L & wireless & Exponential backoff algorithm (13.10) & whp $\mathcal{O}(\log^2 n)$ &  & x &  &  &  & x \\ 
+	\hline 
+	
+	13 & Uniform leader election w/ CD & L & wireless & Fast "Uniform leader election with CD"-Algorithm & whp $\mathcal{O}(\log n)$ &  & x &  &  &  & x \\ 
+	\hline 
+	
+	13 & Uniform leader election w/ CD & L & wireless & Even faster "fast uniform leader election". Elects leader wp $1 - \frac{\log \log n}{\log n}$ & wp $\mathcal{O}(\log \log n)$ &  & x &  &  &  & x \\ 
+	\hline 
+	
+	&  &  &  &  &  &  &  &  &  &  &  \\ 
+	\hline 
+	
+\end{tabular} 
+\end{table}
+
+
+
+\end{document}

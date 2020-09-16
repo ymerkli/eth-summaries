@@ -1,0 +1,47 @@
+\section*{Regression}
+\subsection*{Linear Regression $f(x)=w^Tx$}
+Error: $\hat{R}(w) = \sum_{i=1}^n (y_i - w^Tx_i)^2 = ||Xw-y||^2_2$\\
+$w^* = \operatorname{argmin_w} \sum_{i=1}^n (y_i - w^Tx_i)^2$\\
+Closed form: $w^*=(X^T X)^{-1} X^T y$, $X\in\mathbb{R}^{n \times d}$\\
+$\nabla_w \hat{R}(w) = -2 \sum_{i=1}^n (y_i-w^T x_i) \cdot x_i = 2X^T (Xw-y)$
+
+
+\subsection*{Gradient Descent}
+1. Start arbitrary $w_o \in \mathbb{R}$\\
+2. For $i$ do $w_{t+1} = w_t - \eta_t \nabla \hat{R}(w_t)$
+
+\subsection*{Expected Error (True Risk)}
+Assumption: data set generated iid: $R(w) =$\\ 
+$\int P(x,y) (y-w^Tx)^2 \partial x \partial y = \mathbb{E}_{x,y}[(y-w^Tx)^2]$\\
+$\hat{R}_D(w) = \frac{1}{|D|}\sum_{(x,y)\in D (y-w^Tx)^2}$ (estimating error)
+
+\subsection*{Gaussian/Normal Distribution}
+$\sigma =$ standard deviation, $\sigma^2 =$ var., $\mu =$ mean:\\
+$f(x) = \frac{1}{\sqrt{2\pi\sigma^2}} exp(-\frac{(x-\mu)^2}{2\sigma^2})$\\
+$f(x_1,.,x_k)=\frac{1}{\sqrt{(2\pi)^k|\Sigma|}}
+exp(-\frac{1}{2}(\boldsymbol{x-\mu})^T\Sigma^{-1}(\boldsymbol{x-\mu}))$
+
+\subsection*{Ridge regression}
+Regularization: $\underset{w}{\operatorname{min}} \sum \limits_{i=1}^n (y_i - w^Tx_i)^2 + \lambda ||w||_2^2$\\
+Closed form solution: $w^*=(X^T X + \lambda I)^{-1} X^T y$
+Gradient: $\nabla_w \hat{R}(w) = -2 \sum \limits_{i=1}^n (y_i-w^T x_i) \cdot x_i + 2 \lambda w$
+
+%\subsection*{L1-regularized regression (the Lasso)}
+%Regularization: $\underset{w}{\operatorname{min}} \sum \limits_{i=1}^n (y_i - w^Tx_i)^2 + \lambda ||w||_1$\\
+%Encourages coefficients to be exactly 0.
+
+\subsection*{Standardization}
+Goal: each feature: $\mu = 0$, unit $\sigma^2$: $\tilde{x}_{i,j} = \frac{(x_{i,j}-\hat{\mu}_j)}{\hat{\sigma}_j}$\\
+$\hat{\mu}_j = \frac{1}{n}\sum_{i=1}^n x_{i,j}$, $\hat{\sigma}_j^2 = \frac{1}{n}\sum_{i=1}^n {(x_{i,j}-\hat{\mu}_j)}^2$ 
+
+
+
+
+%\subsection*{Regularization}
+%The error term $L$ and the regularization $C$ with regularization parameter $\lambda$: $\min \limits_w L(w) + \lambda C(w)$\\
+%L1-regularization for number of features \\
+%L2-regularization for the length of $w$
+
+%my idea
+%\subsection*{Regularization}
+%A lot of supervised learning problems can be written in this way: $\lambda$: $\min \limits_w \hat{R}(w) + \lambda C(w)$\\

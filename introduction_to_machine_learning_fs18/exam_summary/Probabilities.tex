@@ -1,0 +1,18 @@
+\section*{Probabilities}
+$P(X,Y)=P(X|Y)P(Y)=P(Y|X)P(X)\\
+P(X,Y|Z)=P(X|Y,Z)P(Y|Z)\\
+P(X,Y|Z)=P(Y|X,Z)P(X|Z)$\\
+$\text{X,Y iid:}P(X,Y|Z)=P(X|Z)P(Y|Z)$\\
+$P(X=x)=\sum_{y'\in Y}P(X=x,Y=y')$\\
+$\text{iid:}P(X_1,...,X_n|Y)=\prod_{i=1}^{n}P(X_i|Y)$\\
+$\mathbb{E}_x[X] = \begin{cases}
+   \int x \cdot p(x) \partial x  &|\mathbb{E}_x[f(x)] =\\
+   \sum_x x \cdot p(x) &|\int f(x) \cdot p(x) \partial x
+  \end{cases}$\\
+%$\mathbb{E}_x[f(x)] = \int f(x) \cdot p(x) \partial x $\\
+$\mathbb{E}[X+Y]=\mathbb{E}[X]+\mathbb{E}[Y]$\\
+$\sigma_X^2=Var[X] = \mathbb{E}[(X-\mu_X)^2] = \mathbb{E}[X^2] - \mathbb{E}[X]^2$\\
+$p(Z|X,\theta) = \frac{p(X,Z|\theta)}{p(X|\theta)}$\\
+%\subsection*{Linearity of expectation}
+%$X, Y$ rand. var., $a, b \in \mathbb{R}$:\\
+%$\mathbb{E}_{x,y}[aX + bY] = a\mathbb{E}_x[X] + b \mathbb{E}_y[Y]$

@@ -1,0 +1,76 @@
+\section*{Kernels $k: \mathcal{X} \times \mathcal{X} \rightarrow \mathbb{R};\, x_i^Tx_j \rightarrow k(x_i,x_j)$}
+\subsection*{Reformulating the perceptron}
+Ansatz: $w=\sum_{j=1}^n \alpha_j y_j x_j$\\
+$w^*=\operatorname{min_{w\in\mathbb{R}^d}} \sum_{i=1}^n \max [0, -y_i w^T x_i]$\\
+%$= \min \limits_{\alpha_{1:n}} \sum_{i=1}^n \max [0,-y_i  ( \sum_{j=1}^n \alpha_j y_j x_j  )^T x_i ]$\\
+$\Leftrightarrow \alpha^* = \min \limits_{\alpha_{1:n}} \sum_{i=1}^n \max  [0,- \sum_{j=1}^n \alpha_j y_i y_j x_i^T x_j ]$
+
+%\subsection*{Polynomial kernel}
+%$k(x,y) = (x^Ty)^m$  all monomials of deg. m \\
+%$k(x,y) = (1+x^Ty)^m$ all monomials up to deg. m
+
+\subsection*{Kernelized Perceptron}
+1. Initialize $\alpha_1 = ... = \alpha_n = 0$\\
+2. For $t = 1, 2, ...$ do \\
+Pick data $(x_i,y_i) \in_{u.a.r} D$\\
+Predict $\hat{y} = sign(\sum_{j=1}^n \alpha_j y_j k(x_j,x_i))$\\
+If $\hat{y} \not = y_i$ set $\alpha_i^{(t)} = \alpha_i^{(t-1)} + \eta_t$| else:$\alpha_i^{(t)} = \alpha_i^{(t-1)}$\\
+Predict new point x: $\hat{y} = sign(\sum_{j=1}^n \alpha_j y_j k(x_j,x))$
+
+\subsection*{Perceptron and SVM}
+Perceptron: $\underset{\alpha}{min}\sum_{i=1}^n max\{0,-y_i \alpha^T k_i\}$\\
+SVM: $k_i=[y_1 k(x_i,x_1), ..., y_n k(x_i,x_n)]$:\\
+$\underset{\alpha}{min}\sum_{i=1}^n max\{0,1-y_i \alpha^T k_i\} +\lambda\alpha^T D_y K D_y \alpha$\\
+Prediction: $y = sign(\sum_{j=1}^n \alpha_j y_j k(x_j,x))$
+
+\subsection*{Properties of kernel $k(x,y) = \phi(x)^T\phi(y)$}
+k must be symmetric: $k(x,y) = k(y,x)$\\
+Kernel matrix must be positive semi-definite.
+
+%\subsection*{Kernel matrix}
+%The kernel matrix $K$ is positive semi-definite.\\
+%$K = 
+%\begin{bmatrix}
+%	k(x_1,x_1) & \dots & k(x_1,x_n) \\
+%	\vdots & \ddots & \vdots \\
+%	k(x_n, x_1) & \dots & k(x_n,x_n)
+%\end{bmatrix}$\\
+%Semi-definite matrices $\Leftrightarrow$ kernels
+%$\left ( XX^T \right )$ for inner product as kernel.
+
+\subsection*{positive semi-definite matrices}
+$M \in \mathbb{R}^{n\times n}$ is psd $\Leftrightarrow \forall x \in \mathbb{R}^n: x^TMx \geq 0 \Leftrightarrow$\\
+all eigenvalues of $M$ are positive: $\lambda_i\geq 0$
+
+\subsection*{k Nearest Neighbor classifier}
+$y=sign(\sum_{i=1}^n y_i [x_i \text{ among k nn of } x])$
+
+\subsection*{Examples of kernels on $\mathbb{R}^d$}
+Linear kernel: $k(x,y)=x^T y$\\
+Polynomial kernel: $k(x,y)=(x^T y + 1)^d$\\
+Gaussian kernel: $k(x,y) = exp(-||x-y||_2^2/h^2)$\\
+Laplacian kernel: $k(x,y) = exp(-||x-y||_1/h)$
+
+
+\subsection*{Kernel engineering}
+$k_1(x,y) + k_2(x,y)$; $k_1(x,y) \cdot k_2(x,y)$; $c \cdot k_1(x,y)$,$c>0$;\\
+$f(k_1(x,y))$, where $f$ is a polynomial with positive coefficients or the exponential function
+
+%without Parametric vs. Nonparametric
+\iffalse
+\subsection*{Parametric vs. Nonparametric}
+\emph{Parametric}: have finite set of parameters\\
+E.g. linear regression, linear perceptron,...\\
+%$f(x) = w^Tx, w\in \mathbb{R}^d$ (d is independent of \# data)\\
+\emph{Nonparametric}: grow in complexity with the size of the data\\
+E.g. kernelized Perceptron, k-NN,...
+%$f(x) = \sum_{i=1}^n \alpha_i y_i k(x_i,x_n)$ (depends on \# data)\\
+\fi
+
+\subsection*{Kernelized linear regression}
+Ansatz: $w^*=\sum_i \alpha_i x$\\
+Parametric: $w^* = \underset{w}{\operatorname{argmin}} \sum_i (w^Tx_i-y_i)^2 + \lambda ||w||_2^2$\\
+%$= \underset{\alpha_{1:n}}{\operatorname{argmin}} \sum \limits_{i=1}^n (\sum \limits_{j=1}^n \alpha_j x_j^T x_i - y_i)^2 + \lambda \sum \limits_i \sum \limits_j \alpha_i \alpha_j (x_i^T x_j)$\\
+%$= \underset{\alpha_{1:n}}{\operatorname{argmin}} \sum \limits_{i=1}^n (\alpha^T K_i - y_i)^2 + \lambda \alpha^T K \alpha$\\
+$= \operatorname{amin_{\alpha}} ||\alpha^T K -y||_2^2 + \lambda \alpha^T K \alpha$, $\alpha^* = (K+\lambda I)^{-1} y$\\
+Prediction: $y = w^{*T} x = \Sigma_{i=1}^n \alpha_i^* k(x_i,x)$

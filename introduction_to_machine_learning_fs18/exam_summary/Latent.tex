@@ -1,0 +1,97 @@
+\section*{Latent: Missing Data \red{(Gaussian distr.)}}
+\subsection*{Mixture modeling $\color{red} P(x|\theta)=P(x|\mu;\Sigma,w)$}
+1)Model each cluster j as prob. distr. $P(x|\theta_j)$\\
+%Assuming data iid, likelihood is
+2)data iid, lklh.: $P(D|\theta) = \prod_{i=1}^n \sum_{j=1}^k w_j P(x_i|\theta_j)$\\
+%Choose parameters to minimize negative log l.\\
+3)$\theta$ should minimize neg log-likelihood:\\ $\theta^*=\underset{\theta}{\operatorname{amin}}L(D;\theta) = \underset{\theta}{\operatorname{amin}} - \sum_i log \sum_j w_j P(x_i| \theta_j)$\\
+\textbf{Ex:} $\color{red} P(x|\theta)=\Sigma_iw_i\mathcal{N}(x;\mu_i,\Sigma_i), P(z_i=j)=w_j$\\
+$\color{red} \Sigma w_i=1,\, P(z,x)=w_z\mathcal{N}(x|\mu_z,\Sigma_z)$
+
+\subsection*{Gaussian-Mixture Bayes classifiers}
+Estimate class prior $P(y)$; Est. cond. distr. for each class:
+$P(x|y) = \sum_{j=1}^{k_y} w_j^{(y)} \mathcal{N}(x; \mu_j^{(y)}, \Sigma_j^{(y)})$\\
+$P(y|x) = \frac{1}{P(x)} p(y) \sum_{j=1}^{k_y} w_j^{(y)} \mathcal{N}(x; \mu_j^{(y)}, \Sigma_j^{(y)})$
+
+\subsection*{Hard-EM algorithm}
+Initialize parameters $\theta^{(0)}$\\
+For $t=1,2..$:
+%p.: point
+Predict class $z_i$ for each $x_i$:\\
+\textbf{E: }$z_i^{(t)} = \operatorname{argmax_z} P(z|x_i, \theta^{(t-1)})=\\
+= \operatorname{argmax_z} P(z|\theta^{(t-1)}) P(x_i|z,\theta^{(t-1)})=$\\
+$\color{red} =\operatorname{argmax_z} w_z^{(t-1)}\mathcal{N}(x_i|\mu_z^{(t-1)},\Sigma_z^{(t-1)})$\\
+\textbf{M: }Compute the MLE as for the Gaussian B. class.:
+$\theta^{(t)} = \operatorname{argmax_\theta} P(D^{(t)}|\theta)$\\
+Special case: fix $w_z=\frac{1}{k}, \text{spher. cov. } \Sigma_z=\sigma^2\mathbb{I}$\\
+$\rightarrow \text{k-means:}$ \textbf{E: } $z_i^{(t)}=\operatorname{argmin_z}||x_i-\mu_z^{(t-1)}||_2^2$\\
+\textbf{M: }$\mu_j^{(t)}=\frac{1}{n_j}\Sigma _{i:z_i^{(t)}=j} x_i$
+\iffalse
+$\text{; Soft-EM:as }\sigma \rightarrow 0,\\ \gamma_i(x_i) \rightarrow \{0,1\} \text{ determ.}$
+\fi
+
+\subsection*{Soft-EM algorithm: While not converged}
+\textbf{E-step:} For each i and j calculate $\gamma_j^{(t)}(x_i)$\\
+$\gamma_j^t(x_i) = P(Z_i=j|x_i, \theta_t) = \frac{P(x_i|Z_i=j, \theta_t) P(Z_i=j|\theta_t)}{P(x_i;\theta_t)}=$\\
+$\color{red} =\frac{w_j P(x|\Sigma_j,\mu_j)}{\Sigma_l w_l P(x|\Sigma_l,\mu_l)}  
+=\frac{w_j \mathcal{N}(x;\Sigma_j,\mu_j)}{\Sigma_l w_l \mathcal{N}(x;\Sigma_l,\mu_l)}$
+
+
+$Q(\theta;\theta^{(t-1)})=\mathbb{E}_{y_{1:n}}[\log P(x_{1:n},y_{1:n}|\theta)|x_{1:n},\theta^{(t-1)}]$ 
+$=\mathbb{E}_{y_{1:n}}[\log \Pi_{i=1}^nP(x_i,y_i|\theta)|x_{1:n},\theta^{(t-1)}]=$ \\
+$=\sum_{i=1}^n \mathbb{E}_{y_i}[\log P(x_{1:n},y_i;\theta)|x_i,\theta^{(t-1)}] = $ \\
+$\sum_{i=1}^n \sum_{j=1}^k P(y_i=j|x_i,\theta^{(t-1)})\log (P(x_i,y_i=j;\theta) )$ \\
+$=\sum_{i=1}^n \sum_{j=1}^k \gamma_{j}^t(x_i) \log (P(y_i=j)P(x_i|y_i=j;\theta) )$ \\
+If constraint $\Sigma_{j=1}^m P(y_i=j;\theta)=1$ (m: \#labels):
+$\rightarrow \mathcal{L}(\theta,\lambda)=Q(\theta;\theta^{(t-1)})+
+\lambda(\Sigma_j^mP(y_i=j)-1) $
+
+
+\textbf{M-step:} Fit clusters to weighted data points:
+
+Genrl: $\theta^{(t)} = \operatorname{argmax_\theta} Q(\theta;\theta^{(t-1)}), \gamma_{j}^t(x_i) fixed!$\\
+$\color{red} w_j^{(t)} \leftarrow \frac{1}{n} \sum_{i=1}^n \gamma_j^{(t)} (x_i)$;  %\text{|semi-supervised}\\
+$\color{red} \mu_j^{(t)} \leftarrow \frac{\sum_{i=1}^n \gamma_j^{(t)} (x_i) x_i}{\sum_{i=1}^n \gamma_j^{(t)} (x_i)}\\ %\text{|learning with GMMs } ^t = ^*\\
+\Sigma_j^{(t)} \leftarrow \frac{\sum_{i=1}^n \gamma_j^{(t)}(x_i) (x_i - \mu_j^{(t)}) (x_i - \mu_j^{(t)})^T}{\sum_{i=1}^n \gamma_j^{(t)}(x_i)} \{+\nu^2\mathbb{I}\}$\\ %\text{|}\gamma^{(t) = \gamma}$
+
+SSL w/ GMMs: labeled p.: $y_i$: $\gamma_j^{(t)}(x_i) = 1[j = y_i]$\\
+unl. p.: $\gamma_j^{(t)}(x_i) = P(Z=j|x_i, \mu^{(t-1)}, \Sigma^{(t-1)}, w^{(t-1)})$
+%unlabeled points
+%unl. p.: $\gamma_j^{(t)}(x_i) = P(Z=j|x_i, \mu^{(t-1)}, \Sigma^{(t-1)}, w^{(t-1)})$
+%labeled points with label $y_i$: $\gamma_j^{(t)}(x_i) = [j = y_i]$
+
+%If enough space put this on summary.
+%\subsection*{Log-likelihood}
+%$l(\theta) = log P(\mathcal{D})$\\
+%$=\sum_{\overset{i=1}{y_i=\times}}^n log P(x_i;\theta) + \sum_{\overset{i=1}{y_i\not=\times}}^n log P(x_i,y_i;\theta)$\\
+%$=\sum_{\overset{i=1}{y_i=\times}}^n log \sum_{j=1}^m P(x_i, Y=j;\theta) +$\\
+%$ \sum_{\overset{i=1}{y_i\not=\times}}^n log P(x_i,y_i;\theta)$\\
+%$=\sum_{\overset{i=1}{y_i=\times}}^n log \sum_{j=1}^m P(x_i|Y=j;\theta)P(Y=j;\theta) +$\\
+%$ \sum_{\overset{i=1}{y_i\not=\times}}^n log P(x_i,y_i;\theta)$
+
+%Only until here.
+\iffalse
+\subsection*{Log-likelihood}
+$l(\theta) = log P(\mathcal{D})$ \\
+$=\sum_{\overset{i=1}{y_i=\times}}^n log P(x_i;\theta) + \sum_{\overset{i=1}{y_i\not=\times}}^n log P(x_i,y_i;\theta)$\\
+$=\sum_{\overset{i=1}{y_i=\times}}^n log \sum_{i=1}^m P(x_i, Y=j;\theta) +$\\
+$ \sum_{\overset{i=1}{y_i\not=\times}}^n log P(x_i,y_i;\theta)$\\
+$=\sum_{\overset{i=1}{y_i=\times}}^n log \sum_{i=1}^m P(x_i|Y=j;\theta)P(Y=j|\theta) +$\\
+$ \sum_{\overset{i=1}{y_i\not=\times}}^n log P(x_i,y_i;\theta)$
+
+\subsection*{Latent variable}
+We denote the latent variable indicating the component the point is sampled from by Z, which takes on values in $\{1,...,k\}$.
+
+\subsection*{E-step: Posterior probabilities}
+$\gamma_j^t(x_i) = P(Z=j|x_i, \theta_t) = \frac{P(x_i|Z=j, \theta_t) P(Z=j|\theta_t)}{P(x_i;\theta_t)}$
+
+\subsection*{M-step: maximizing expected log likelihood}
+$\mathbb{E}_{\gamma^t}[\log P(\mathcal{D;\theta})] = 
+\mathbb{E}_{\gamma^t}[\log \Pi_{i=1}^nP(x_i,z_i;\theta)] = $ \\
+$\sum_{i=1}^n \mathbb{E}_{\gamma^t}[\log P(x_i,z_i;\theta)] = $ \\
+$\sum_{i=1}^n \sum_{j=1}^k \gamma_j^t(x_i) \log (P(x_i|z_i=j;\theta) P(z_i=j;\theta))$ \\
+$\theta_{t+1} = \underset{\theta}{\operatorname{argmax}} \mathbb{E}_{\gamma^t}[\log P(\mathcal{D;\theta})]$
+\fi
+
+\textbf{Additions:} small variance \& high bias $\rightarrow$ too simple model\\
+CNN filter output size: $L=\frac{n+2p-f}{s}+1$

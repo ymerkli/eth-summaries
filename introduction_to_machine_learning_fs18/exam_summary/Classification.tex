@@ -1,0 +1,47 @@
+\section*{Classification}
+
+\subsection*{Perceptron $y=sign(f(x))=sign(w^Tx)$}
+Perceptron loss is convex and not differentiable, but gradient is informative.\\
+$l_{P} (w;y_i,x_i) = max\{0, -y_i w^T x_i \}$\\
+$w^* = \operatorname{argmin_w} \sum_{i=1}^n l_p (w;y_i,x_i)$\\
+$\nabla_w l_p(w;y_i,x_i) = (-y_ix_i)1[y_iw^Tx_i<0]$
+
+\subsection*{Stochastic Gradient Descent (SGD)}
+1. Start at an arbitrary $w_0 \in \mathbb{R}^d$\\
+2. For $t = 1, 2,  ...$ do: \\
+	Pick data point $(x',y') \in_{u.a.r.} D$\\
+	$w_{t+1} = w_t - \eta_t \nabla_w l(w_t;x',y')$\\
+Perceptron Alg: SGD with Perceptron loss
+
+%\subsection*{Perceptron Algorithm}
+%Stoch. Gradient Descent with Perceptron loss\\
+%\emph{Theorem:} If $D$ is linearly separable $\Rightarrow$ Perceptron will obtain a linear separator.
+
+%\subsection*{Hinge loss}
+%Loss for Support Vector Machine.\\
+%$l_H(w;x,y) = max \{0,1-y w^T x\}$
+
+\subsection*{Support Vector Machine}
+Hinge loss: $l_H(w;x,y) = max \{0,1-y w^T x\}$\\
+Goal: Max. a ``band'' around the separator.\\
+$w^* = \underset{w}{\operatorname{argmin}} \frac{1}{n}\sum_{i=1}^n  (max \{0,1-y_i w^T x_i\} + \lambda ||w||_2^2)\\
+g_i(w) = max \{0,1-y_i w^T x_i\} + \lambda ||w||_2^2\\
+\nabla_w g_i(w) = \begin{cases}
+    -y_i x_i + 2\lambda w &\text{ , if $y_i w^T x_i<1$}\\
+		2\lambda w &\text{ , if $y_i w^T x_i \geq 1$}
+\end{cases}$
+
+%\subsection*{L1-SVM}
+%$\underset{w}{\operatorname{min}} \lambda ||w||_1 + \sum_{i=1}^n max(0,1-y_i w^T x_i)$
+
+%\subsection*{Matrix-Vector Gradient}
+%multiply transposed matrix to the same side as its occurance w.r.t. derivate variable: $\beta \in \mathbb{R}^d$
+%$\nabla_\beta ( ||y-X\beta||_2^2 + \lambda ||\beta||_2^2 ) = 2X^T (y-X\beta) + 2\lambda \beta$\\
+
+\subsection*{Multi-Class Classification}
+Confidence $\rightarrow$ Distance from Decision Bound.\\
+$y=\operatorname{amin_{i \in \{1,.,c\}}}f_i(x),\, f_i(x)=\widetilde{w_i}^Tx,\, \widetilde{w_i}=\frac{w_i}{||w_i||_2}$\\
+\textbf{OvA: }$\hat{y}_i=\operatorname{argmax_{j \in \{1,.,c\}}}w_j^Tx_i;$
+C bin. classif\\
+\textbf{OvO: }Train $\frac{c(c-1)}{2}$ bin. classif., one for each pair (i,j). Voting $\rightarrow$ class with most positive preditions wins (slower, but no confidence needed)
+

@@ -1,0 +1,80 @@
+\section*{Probability Modeling}
+Assumption: Data set is generated iid\\
+Find $h:X\rightarrow Y$ that minimizes pred. error $R(h) = \int P(x,y)l(y;h(x)) \partial x \partial y = \mathbb{E}_{x,y}[l(y;h(x))]$\\
+$h^*(x) = \mathbb{E}[Y|X=x]$ for $R(h) = \mathbb{E}_{x,y}[(y-h(x))^2]$\\
+Prediction: $\hat{y} = \hat{\mathbb{E}}[Y|X=x] = \int \hat{P}(y|X=x)y\partial y$
+
+\subsection*{Maximum Likelihood Estimation (MLE)}
+Choose a particular parametric form $\hat{P}(Y|X,\theta)$
+
+$\theta^* = \underset{\theta}{\operatorname{amax}} \hat{P}(y_{1:n}|x_{1:n},\theta)$
+$\iid$
+$\underset{\theta}{\operatorname{amax}} \prod_{i=1}^n \hat{P}(y_i|x_i, \theta)$
+$= \operatorname{amin_\theta} - \sum_{i=1}^n log \hat{P}(y_i|x_i,\theta)$\\
+\textbf{Ex: }$y_i \sim \mathcal{N} (w^T x_i, \sigma^2): 
+w^*=\operatorname{amin_w}\Sigma_i^n(y_i-w^Tx_i)$
+
+\iffalse
+\subsection*{Example: MLE for linear Gaussian}
+$y_i \sim \mathcal{N} (w^T x_i, \sigma^2):$\\
+$y_i = w^T x_i + \epsilon_i, \epsilon_i \sim \mathcal{N}(0, \sigma^2)$\\
+Maximizing the log likelihood:\\
+$\underset{w}{\operatorname{argmax}} P(y_1,...,y_n|x_1,...,x_n,w)\\
+= \underset{w}{\operatorname{argmax}} \prod \limits_i \frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{1}{2} \frac{(y_i-w^T x_i)^2}{\sigma^2}}$\\
+$= \underset{w}{\operatorname{argmin}}  \sum_i^n (y_i-w^Tx_i)^2$
+\fi
+
+\subsection*{Bias/Variance/Noise}
+Prediction error = $Bias^2 + Variance + Noise$
+
+\subsection*{Maximum a posteriori estimate (MAP)}
+Introduce bias by expressing assumption through a Bayesian prior $w_i \sim \mathcal{N}(0, \beta^2)$\\
+Bayes: $P(w|x,y) = \frac{P(w|x) P(y|x,w)}{P(y|x)} = \frac{P(w) P(y|x,w)}{P(y|x)}$\\
+assume w indep. of x:
+$ \operatorname{argmax_w} P(w|x,y)=$\\ 
+$= \operatorname{argmin_w} - log P(w) - log P(y|x,w) + const.$ \\
+$= \operatorname{argmin_w} \lambda ||w||_2^2 + \sum_{i=1}^n (y_i - w^Tx_i)^2$ , $\lambda = \frac{\sigma^2}{\beta^2}$\\
+($=\underset{w}{\operatorname{argmax}} P(w) \prod_i P(y_i|x_i,w)$, assuming noise $P(y|x,w)$ iid Gaussian, prior $P(w)$ Gaussian)
+
+\subsection*{Logistic regression}
+Assume iid Bernoulli noise instead of Gauss.\\
+$P(y|x,w) = Ber(y; \sigma(w^Tx)) = \frac{1}{1+exp(-y w^T x)}$\\
+$l_{logistic}(w;x_i,y_i)=log(1+exp(-y_iw^Tx_i))$\\
+$\nabla_wl(w)=\frac{(-y_ix_i)}{1+exp(+y_iw^Tx_i)}=P(Y=-y|x,w)(-y_ix_i)$
+%$=\begin{cases}
+%1/(1+exp(-w^Tx)) = \sigma(w^T x)\\
+%		1 - 1/(1+exp(-w^Tx)) = \sigma (-w^T x)\\
+%\end{cases}$
+%Learning: $w = \underset{w}{\operatorname{argmax}} P(w|x,y)$\\
+%Classification: Use $P(y|x,w) = \frac{1}{1+exp(-yw^Tx)}$ and predict most likely class label.
+
+\subsection*{Example: MLE for logistic regression}
+$\operatorname{argmax_w} P(y_{1:n}|w,x_{1:n})\\
+= \operatorname{argmin_w} - \sum_{i=1}^n log P(y_i|w,x_i)\\
+= \operatorname{argmin_w} \sum_{i=1}^n log(1+exp(-y_i w^T x_i))\\
+\hat{R}(w) = \sum_{i=1}^n log(1+exp(-y_i w^T x_i))$ (neg log l. f.)
+%negative log likelihood function
+
+%\subsection*{Gradient for logistic regression}
+%Loss function $l(w) = log(1+exp(-yw^Tx))$\\
+%$\nabla_w l(w) = \frac{1}{1+exp(-yw^Tx)} exp(-yw^Tx) (-yx)$\\
+%$=\frac{1}{1+exp(yw^Tx)} (-yx)$\\
+%$=P(Y = -y|w, x) (-yx)$
+
+\subsection*{Logistic regression and regularization}
+$\underset{w}{\operatorname{min}} \sum_{i=1}^n log(1+exp(-y_i w^T x_i)) + 
+\lambda (||w||_1 or ||w||_2^2)$
+
+\subsection*{SGD for logistic regression}
+\iffalse
+1. Initialize w\\
+2. For t=1,2,...\\
+Pick data $(x,y) \in_{u.a.r} D$\\
+Prob. of misclas. $\hat{P}(Y = -y|w,x) = \frac{1}{1+exp(yw^Tx)}$\\
+\fi
+Update $w \leftarrow w + \eta_t y x \hat{P}(Y = -y|w,x)$\\
+\textbf{L2 regularized logistic regression:}\\
+Update $w \leftarrow w (1-2\lambda \eta_t) + \eta_t y x \hat{P}(Y = -y|w,x)$
+
+\subsection*{Multiclass Logistic Regression}
+$P(Y=i|x,w_1,..,w_c)=exp(w_i^Tx)/\Sigma_j^c exp(w_j^Tx)$

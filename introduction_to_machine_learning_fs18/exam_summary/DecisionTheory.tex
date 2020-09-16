@@ -1,0 +1,77 @@
+\section*{Bayesian decision theory}
+- Conditional distribution over labels $P(y|x)$\\
+- Set of actions $\mathcal{A}$
+- Cost function $C:Y\times \mathcal{A} \rightarrow \mathbb{R}$\\
+Pick action that minimizes the expected cost:
+$a^* = \operatorname{argmin_{a \in \mathcal{A}}} \mathbb{E}_y[C(y,a)|x] = \sum_y P(y|x)C(y,a)$\\
+$\mathbb{E}_y[C(y,+)|x]=P(-|x)C(-,+);$\\
+$\mathbb{E}_y[C(y,-)|x]=P(+|x)C(+,-);$\\
+$\mathbb{E}_y[C(y,D)|x]=P(+|x)C_{d+}+P(-|x)C_{d-}$
+
+\subsection*{Optimal decision for logistic regression}
+$a^* = \operatorname{argmin_y} \hat{P}(y|x) = sign(w^T x)$
+
+% \subsection*{Example: logistic regression}
+% \begin{itemize}
+% 	 Est. cond. dist: $P(y|x,w) = Ber(\sigma(w^Tx))$
+% 	 Action set: $\mathcal{A} = \{ +1, -1\}$
+% 	 Cost function: $C(y,a) = [y \not = a]$ \\ 
+% 	$= \left \{ 
+% 		\begin{array}{lr}
+% 			1 \text{ , if } y \not = a\\
+% 			0 \text{ , otherwise}
+% 		\end{array}
+% 		$
+% \end{itemize}
+% $a^* = \underset{a \in \mathcal{A}}{\operatorname{argmin}} \mathbb{E}_y[C(y,a)|x]$\\
+% $= \underset{a \in \mathcal{A}}{\operatorname{argmin}} P(y=1|x,w)[a=1] + P(Y=-1|x,w)[a=+1]$\\
+% $= \underset{a \in \mathcal{A}}{\operatorname{argmin}} P(y \not = a | x,w) = \underset{a \in \mathcal{A}}{\operatorname{argmin}} \frac{1}{1+exp(aw^Tx)}$\\
+% $=\underset{a \in \mathcal{A}}{\operatorname{argmax}} (1 + exp(aw^Tx))$
+% $=\underset{a \in \mathcal{A}}{\operatorname{argmax}} (aw^Tx)$\\
+% $= sign (w^Tx)$
+
+%\subsection*{Example: Asymmetric costs}
+%	 Est. cond. dist: $\hat{P}(y|x,w) = Ber(\sigma(w^Tx))$
+%	 Action set: $\mathcal{A} = \{ +1, -1\}$
+%	 Cost function: $C(y,a) =
+%	 \begin{cases}
+%	 	c_{FP} \text{ , if $y=-1$ and $y=+1$}\\
+%			c_{FN} \text{ , if $y=+1$ and $y=-1$}\\
+%			0 \text{ , otherwise}
+%	 \end{cases}
+%		$
+%The action that minimizes the expected cost is:\\
+%$C_+ = \mathbb{E}_y[C(y,+1)|x] = P(y=+1|x) \cdot 0 + (P(y=-1)|x) \cdot c_{FP}$\\
+%$C_- = \mathbb{E}_y[C(y,-1)|x] = P(y=+1|x) \cdot c_{FN} + P(y=-1|x) \cdot 0$\\
+%Predict +1 if $C_+ \leq C_- \Leftrightarrow P(y=+1|x) \geq \frac{c_{FP}}{c_{FP} + c_{FN}}$
+
+\subsection*{Doubtful logistic regression}
+	 Est. cond. distr.: $\hat{P}(y|x) = Ber(y;\sigma(\hat{w}^Tx))$\\
+	 Action set: $\mathcal{A} = \{ +1, -1, D\}$;  Cost function:\\
+	 $C(y,a) = \begin{cases}
+			[y \neq a] &\text{if } a \in \{+1,-1\}\\
+			c &\text{if } a = D
+       \end{cases}$\\
+$\rightarrow a^* = y \text{ if } \hat{P}(y|x) \geq 1-c\text{, D otherwise}$
+%$a^* = \begin{cases}
+%		y &\hat{P}(y|x) \geq 1-c\\
+%		D &\text{otherwise}
+%	   \end{cases}
+%$
+
+\subsection*{Linear regression}
+	 Est. cond. distr.: $\hat{P}(y|x,w) = \mathcal{N}(y;w^Tx, \sigma^2)$\\
+ $\mathcal{A} = \mathbb{R}$; $C(y,a) = (y-a)^2$\\
+$\rightarrow a^* = \mathbb{E}_y[y|x] = \int \hat{P}(y | x) \partial y = \hat{w}^Tx$
+
+\subsection*{Asymmetric cost for regression}
+	 Est. cond. distr.: $\hat{P}(y|x) = \mathcal{N}(\hat{y};\hat{w}^Tx, \sigma^2)$\\
+	 $\mathcal{A} = \mathbb{R}$; $C(y,a) = c_1 \max(y-a,0) + c_2 \max(a-y,0)$
+$\rightarrow a^* = \hat{w}^Tx + \sigma \Phi^{-1} (\frac{c_1}{c_1 + c_2})$, $\Phi$: Gaussian CDF
+%$\frac{\partial}{\partial a}$\\
+%$\frac{\partial}{\partial a} \mathbb{E}_y[C(y,a)|x] = \int_{-\infty}^{\infty} C(y,a) P(y | x) dy \overset{!}{=} 0$\\
+%$= -c_1 \int_{a}^{\infty} P(y | x) dy + c_2 \int_{-\infty}^{a} P(y | x) dy$\\
+%$= -c_1 [1-\phi(a; w^Tx, \sigma^2)] + c_2 \phi(a; w^Tx, \sigma^2)$\\
+%$\phi(a; w^Tx, \sigma^2) = \frac{c_1}{c_1 + c_2}$\\
+%using $\phi(u;v,w) = \phi((u-v)/\sqrt{w};0,1)$ and applying inverse CDF of std. ND $\phi^{-1}$ we get\\
+%$a^* = w^Tx + \sigma\phi^{-1} (\frac{c_1}{c_1 + c_2})$

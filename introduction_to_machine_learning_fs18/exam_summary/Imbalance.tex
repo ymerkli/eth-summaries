@@ -1,0 +1,8 @@
+\section*{Imbalance}
+\subsection*{Cost Sensitive Classification}
+Replace loss by: $l_{CS}(w;x,y) = c_y l(w;x,y)$
+
+\subsection*{Metrics (convention: positive = rare)}
+Accuracy=$\frac{\text{\#correct predictions}}{\#all\, predictions}$=$\frac{TP+TN}{TP+TN+FP+FN}$, Precision=$\frac{\#correct'+'predictions}{\#all'+'predictions}$=$\frac{TP}{TP+FP}$\\
+Recall=TPR=$\frac{TP}{TP+FN}=\frac{TP}{n_+}$, FPR=$\frac{FP}{TN+FP}=\frac{FP}{n_-}$\\
+F1 score $=\frac{2TP}{2TP+FP+FN}=\frac{2}{\frac{1}{Precision}+\frac{1}{Recall}}$

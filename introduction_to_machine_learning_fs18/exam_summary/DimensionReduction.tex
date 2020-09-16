@@ -1,0 +1,22 @@
+\section*{Dimension Reduction}
+\subsection*{Principal component analysis (PCA)}
+Given: $D=\{x_1,...,x_n\} \subset \mathbb{R}^d$, $1\leq k \leq d$\\
+$\Sigma_{d \times d} = \frac{1}{n}\sum_{i=1}^n x_i x_i^T$, $\mu =\frac{1}{n}\sum_{i = 1}^n x_i = 0$ !!\\
+Sol.:
+$(W,z_1,...,z_n) = \operatorname{argmin} \sum_{i=1}^n||W z_i - x_i||_2^2$,\\
+where $W \in \mathbb{R}^{d \times k}$ is orthogonal, $W^* = (v_1|...|v_k)$ w/ $v_i$ evec. of $\Sigma$ and evals $\lambda_1 \geq ... \geq \lambda_d \geq 0$.\\
+Projections $z_1,...,z_n\in\mathbb{R}^k$ are given by\\
+$z_i = W^T x_i$ where $\Sigma = \sum_{i=1}^d \lambda_i v_i v_i^T$, 
+
+\textbf{Kernel PCA}\\
+%$\alpha*=\operatorname{argmax_{\alpha^TK\alpha=1}}\alpha^TK^TK\alpha$\\
+For general $k\geq1$, the Kernel PC are given by $\alpha^{(1)},...,\alpha^{(k)}\in \mathbb{R}^n$, where $\alpha^{(i)} = \frac{1}{\sqrt{\lambda_i}}v_i$ is obtained from: $K = \sum_{i=1}^n \lambda_i v_i v_i^T$, $\lambda_1 \geq ... \geq \lambda_d \geq 0$\\
+Point $x$ projected as $z \in \mathbb{R}^k$:
+$z_i = \sum_{j=1}^n\alpha_j^{(i)}k(x,x_j)$
+
+\subsection*{Autoencoders $f_1: \mathbb{R}^d \rightarrow \mathbb{R}^k, f_2:\mathbb{R}^k \rightarrow \mathbb{R}^d$}
+Try to learn identity function: $x \approx f(x;\theta)$\\
+$f(x;\theta) = f_2(f_1(x_1;\theta_1);\theta_2)$; $f_1:$ en-, $f_2:$ decoder\\
+d input, d output units, 1 layer w/ $k<d$ units\\
+$ W^*=\operatorname{argmin_w}\sum_{i=1}^n||x_i-W^{(2)}\varphi(W^{(1)}x^{(i)})||_2^2$\\
+$\varphi(z)=z: NNA=PCA, w^{(1)}=PCA(x)=w^{(2)^T}$

@@ -1,0 +1,68 @@
+\section*{Discriminative vs. Generative Modeling}
+Discriminative models: aim to estimate $P(y|x)$\\
+G. m.:  aim to estimate joint distribution $P(y,x)$
+
+Typical approach to generative modeling:\\
+- Estimate prior on labels $P(y)$\\
+- Estimate cond. distr. $P(x|y)$ for each class y\\
+- Obtain predictive distr. using Bayes' rule:\\
+$P(y|x) = \frac{P(y) P(x|y)}{P(x)} = \frac{P(x,y)}{P(x)}$, $P(x) = \sum_y P(x,y)$
+
+%\subsection*{Example: Naive Bayes Model}
+%cond. ind.:$P(X_1,...,X_d|Y) = \prod_{i=1}^d P(X_i|Y)$
+
+\subsection*{Example MLE for P(y)}
+Want: $P(Y=1) = p, P(y=-1) = 1-p$\\
+Given: $D=\{(x_1,y_1),...,(x_n,y_n)\}$\\
+$P(D|p) = \prod_{i=1}^n p^{1[y_i=+1]} (1-p)^{1[y_i=-1]}$\\
+$=p^{n_+} (1-p)^{n_-}$, where $n_+ = $ \# of $y=+1$\\
+$\frac{\partial}{\partial p} log P(D|p) = n_+ \frac{1}{p} - n_- \frac{1}{1-p} \overset{!}{=} 0 \Rightarrow p=\frac{n_+}{n_+ + n_-}$
+
+\subsection*{Example MLE for P=(x|y)}
+Assume: $P(X=x_i|y) = \mathcal{N}(x_i;\mu_{i,y}, \sigma_{i,y}^2)$\\
+Given: $D, D_{x_i|y} = \{x \text{, s.t. } x_{j,i}=x, y_j=y\}$\\
+Thus MLE yields:
+$\hat{\mu}_{i,y} = \frac{1}{n_y} \sum_{x\in D_{x_i|y}} x$;\\ %,where $n_y=|D_{x_i|y}|$\\
+$\hat{\sigma}_{i,y}^2 = \frac{1}{n_y} \sum_{x\in D_{x_i|y}} (x-\hat{\mu}_{i,y})^2$
+
+\subsection*{Deriving decision rule}
+%In order to predict label y for new point x, use\\
+$P(y|x) = \frac{1}{Z} P(y)P(x|y)$, $Z = \sum_y P(y) P(x|y)$\\
+$y = \operatorname{argmax_{y'}} P(y'|x) = \operatorname{argmax_{y'}} P(y') \prod_{i=1}^d P(x_i|y')\\
+= \operatorname{argmax_{y'}} log P(y') + \sum_{i=1}^d log P(x_i|y')$
+
+\subsection*{Gaussian Naive Bayes classifier}
+Indep. feat. giv. Y: $P(X_1,..,X_n|Y) = \Pi_{i=1}^dP(X_i|Y)$\\
+MLE for class prior: $\hat{P}(Y=y) = \hat{p}_y = \frac{\operatorname{Count(Y = y)}}{n}$\\
+MLE for feature distr.: $\hat{P}(x_i|y_i) =  \mathcal{N}(x_i;\hat{\mu}_{y,i}, \sigma_{y,i}^2)$\\
+$\hat{\mu}_{y,i} = \frac{1}{\operatorname{Count}(Y=y)} \sum_{j:y_j=y} x_{j,i}$\\
+$\sigma_{y,i}^2 = \frac{1}{\operatorname{Count}(Y=y)} \sum_{j:y_j=y} (x_{j,i} - \hat{\mu}_{y,i})^2$\\
+Prediction given new point x:\\
+$y = \operatorname{argmax_{y'}} \hat{P}(y'|x) = \operatorname{argmax_{y'}} \hat{P}(y') \prod_{i=1}^d \hat{P}(x_i|y')$
+
+\subsection*{Categorical Naive Bayes Classifier}
+MLE class prior: $\hat{P}(Y=y) = p_y = \frac{Count(Y=y)}{n}$\\
+MLE for feature distr.:
+$\hat{P}(X_i = c|Y = y) = \theta_{c|y}^{(i)}\\
+\theta_{c|y}^{(i)} = \frac{Count(X_i = c, Y = y)}{Count(Y=y)}$, Pred: $y= \operatorname{amax_{y'}}\hat{P}(y'|x)$\\
+Discr fnc: $f(x)=log\frac{P(y=1|x)}{P(y=-1|x)};p(x)=\frac{1}{1+exp(-f(x))}$
+
+\subsection*{Gaussian Bayes Classifier}
+MLE for class prior: $\hat{P}(Y=y) = \hat{p}_y = \frac{\operatorname{Count(Y = y)}}{n}$\\
+MLE for feature distr.: $\hat{P}(\boldsymbol{x}|y) = \mathcal{N}(\boldsymbol{x} ; \hat{\mu}_y, \hat{\Sigma}_y)$\\
+$\boldsymbol{\hat{\mu}_{y}} = \frac{1}{\operatorname{Count}(Y=y)} \sum_{i:y_i=y} \boldsymbol{x_i} \in \mathbb{R}^d$\\
+$\hat{\Sigma}_{y} = \frac{1}{\operatorname{Count}(Y=y)} \sum_{i:y_i=y} (x_i - \hat{\mu}_{y})(x_i-\hat{\mu}_y)^T \in \mathbb{R}^{d \times d}$
+
+\subsection*{Fisher's linear discriminant analysis (LDA; c=2)}
+Assume: $p = 0.5$; $\hat{\Sigma}_- = \hat{\Sigma}_+ = \hat{\Sigma}$\\
+discriminant f.: $f(x) = log \frac{p}{1-p} + \frac{1}{2}[log \frac{|\hat{\Sigma}_-|}{|\hat{\Sigma}_+|}\\
++ ((x - \hat{\mu}_-)^T \hat{\Sigma}_-^{-1} (x - \hat{\mu}_-)) - ((x - \hat{\mu}_+)^T \hat{\Sigma}_+^{-1} (x - \hat{\mu}_+))]$\\
+Predict: $y = sign(f(x)) = sign (w^T x + w_0)$\\
+$w = \hat{\Sigma}^{-1}(\hat{\mu}_+ - \hat{\mu}_-)$; $w_0 = \frac{1}{2}(\hat{\mu}_-^T\hat{\Sigma}^{-1}\hat{\mu}_- - \hat{\mu}_+^T \hat{\Sigma}^{-1}\hat{\mu}_+)$
+
+\subsection*{Outlier Detection}
+$P(x) = \sum_{y=1}^c P(y) P(x|y) = \sum_y \hat{p}_y \mathcal{N}(x|\hat{\mu}_y,\hat{\Sigma}_y) \leq \tau$
+
+
+
+

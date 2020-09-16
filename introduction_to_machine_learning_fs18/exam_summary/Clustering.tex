@@ -1,0 +1,15 @@
+\section*{Clustering}
+\subsection*{k-mean}
+Loss: $\hat{R}(\mu) = \hat{R}(\mu_1,...,\mu_k) = \sum_{i=1}^n \underset{j\in\{1,...k\}}{\operatorname{min}}||x_i-\mu_j||_2^2$\\
+$\hat{\mu} = arg \underset{\mu}{\operatorname{min}}\hat{R}(\mu)$; non-convex, $\mathcal{O}(NP)$\\
+\textbf{Algorithm (Lloyd's heuristic):}\\
+Initialize cluster centers $\mu^{(0)} = [\mu_1^{(0)},...,\mu_k^{(0)}]$\\
+While still changes in assignments:\\
+$z_i = \underset{j\in\{1,...,k\}}{\operatorname{argmin}}||x_i - \mu_j^{(t-1)}||_2^2$; $\mu_j^{(t)} = \frac{1}{n_j}\sum_{i:z_i=j}x_i$\\
+
+\subsection*{k-mean++:}
+- Start with random data point as center\\
+- Add centers 2 to k randomly, proportionally to squared distance to closest selected center\\
+for $j=2$ to $k$:
+$i_j$ sampled with prob.\\
+$P(i_j=i) = \frac{1}{z} \underset{1\leq l<j}{min}||x_i-\mu_l||_2^2$; $\mu_j \leftarrow x_{i_j}$

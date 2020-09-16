@@ -29,6 +29,31 @@
 \usepackage{paralist}
 \usepackage{makecell}
 \newcommand{\hint}[1]{{\color{blue} \em #1}}
+\usepackage{listings}
+\usepackage{ccicons}
+
+\usepackage{color}
+\definecolor{gray}{rgb}{0.4,0.4,0.4}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.6}
+\definecolor{cyan}{rgb}{0.0,0.6,0.6}
+
+\lstset{
+	basicstyle=\ttfamily,
+	columns=fullflexible,
+	showstringspaces=false,
+	commentstyle=\color{gray}\upshape
+}
+
+\lstdefinelanguage{XML}
+{
+	morestring=[b]",
+	morestring=[s]{>}{<},
+	morecomment=[s]{<?}{?>},
+	stringstyle=\color{black},
+	identifierstyle=\color{darkblue},
+	keywordstyle=\color{cyan},
+	morekeywords={xmlns,version,type}% list your attributes here
+}
 
 \makeatletter %% <- make @ usable in command names
 \newcommand*\Neg[2][0mu]{\Neginternal{#1}{\negslash}{#2}}
@@ -50,7 +75,6 @@
 \newcommand*\sssnegslash[1]{\rotatebox[origin=c]{60}{$\m@th#1\dabar@$}}
 \makeatother  %% <- revert @
 
-\makeatletter
 \def\cleardoublepage{\clearpage\if@twoside \ifodd\c@page\else%
 \hbox{}%
 \thispagestyle{empty}%
@@ -62,23 +86,30 @@
 % \widowpenalty=10000
 % \clubpenalty=10000
 
-\title{
-    \vspace*{0.0mm}
-    \LARGE\bf\sf Big Data for Engineers (Spring 2020)
-    \vspace*{10.0mm} \\
-    %
-    \Huge\bf\sf Summary
-    %
-    \vspace*{30.0mm} \\
-    \normalsize
-    %
-    \sf Author:\\[5pt]
-    \sf Yannick Merkli\\ [5pt]
-    \sf \pageref{lastpage} Pages
-}
-\date{}
+\title{Big Data for Engineers}
+\author{Yannick Merkli, \texttt{ymerkli@ethz.ch}}
+\date{ETH Zurich, FS 2020}
 
 \begin{document}
+
+\begin{titlepage}
+\maketitle
+\vspace{3cm}
+\thispagestyle{empty}
+
+
+\begin{abstract}
+	\noindent This document is a "lecture summary" style script that closely follows the slides of the \textit{Big Data for Engineers} lecture  at ETH Zurich. The contribution to this is editing and refactoring as well as providing additional material for better understanding. This summary was created during the spring semester 2020. Due to updates to the syllabus content, some material may no longer be relevant for future versions of the lecture.\\
+	Most graphics are copy \& pasted from the slides. If you don't want yours here, please contact me and I will remove them. Otherwise, this work is published as CC BY-NC-SA.
+	
+	\begin{center}
+		\ccbyncsa
+	\end{center}
+	
+	\noindent I do not guarantee correctness or completeness, nor is this document endorsed by the lecturers. Feel free to point out any erratas. For the full \LaTeX \ source code, consider \texttt{\href{https://github.com/ymerkli/eth-summaries}{github.com/ymerkli/eth-summaries}}.
+\end{abstract}
+
+\end{titlepage}
 
 \maketitle
 \thispagestyle{empty}
@@ -92,12 +123,7 @@
 \tableofcontents
 \clearpage
 \pagenumbering{arabic}
-
 \setlength\parindent{0pt}
-\titlespacing{\subsection}{0pt}{2ex}{2ex}
-
-
-\newpage
 
 \section{Introduction}
 
@@ -154,7 +180,7 @@ There are three paramount factors to big data:
 \end{itemize}
 \vspace{-\topsep}
 
-Capacity has improved incredibly much over the past 60 years (1956: huge HDD had 5MB storage, 2020: there are palm sized 20TB HDDs). Capacity has increased by a factor $200 * 10^9$ (per unit of volume). However, throughput and latency have only improved by a factor $10'000$ and $200$ respectively. This discrepancy creates problems: the throughput no longer scales to the amount of data and the latency no longer scales to the throughput. Solution:
+Capacity has improved incredibly much over the past 60 years (1956: huge HDD had 5MB storage, 2020: there are palm sized 20TB HDDs). Capacity has increased by a factor $200 * 10^9$ (per unit of volume). However, throughput and latency have only improved by a factor $10'000$ and $8$ respectively. This discrepancy creates problems: the throughput no longer scales to the amount of data and the latency no longer scales to the throughput. Solution:
 
 \vspace{-\topsep}
 \begin{itemize}
@@ -232,7 +258,7 @@ In SQL, tabular integrity, atomic integrity and domain integrity all hold. In No
 
 \begin{compactitem}
 	\item Data Models: A data model is a notation for describing the structure of the data in a database, along with the constraints on that data. The data	model also normally provides a notation for describing operations on that data: queries and data modifications.
-	\item Relational Model: Relations axe tables representing information. Columns are headed by attributes; each attribute has an associated domain, or	data type. Rows are called tuples, and a tuple has one component for each attribute of the relation.
+	\item Relational Model: Relations are tables representing information. Columns are headed by attributes; each attribute has an associated domain, or	data type. Rows are called tuples, and a tuple has one component for each attribute of the relation.
 	\item Schemas: A relation name, together with the attributes of that relation and their types, form the relation schema. A collection of relation schemas forms a database schema. Particular data for a relation or collection of relations is called an instance of that relation schema or database schema.
 	\item Keys: An important type of constraint on relations is the assertion that an attribute or set of attributes forms a key for the relation. No two tuples of a relation can agree on all attributes of the key, although they can agree on some of the key attributes.
 	\item Semistructured Data Model: In this model, data is organized in a tree or graph structure. XML is an important example of a semistructured data model.
@@ -562,7 +588,6 @@ Issues with local storage:
 \textbf{So how do we make this scale?}
 
 \begin{compactitem}
-	\item Use explicit block storage for better performance (expose singe blocks to users). This is not very convenient but performs better.
 	\item Throw away the hierarchy and use a \textbf{flat} file system.
 	\item Make metadata flexible - don't force metadata to be a table - it can be any data shape.
 	\item Make the data model trivial - just assign a name to every object, i.e. an ID for each file, no more structure - essentially a \textbf{key-value store}.
@@ -590,7 +615,7 @@ One single machine is not good enough - how do we scale?
 
 \subsection{Scaling out}
 
-\textbf{Data centers:} All these single machines need to live somewhere - in a data center. A data center is essentially a collection of \textit{1'000 - 100'000 servers}, each of which has \textit{1-100 cores}. Having more than 100'000 servers in a single DC is hard because of coordination but mainly due to energy consumption for power and cooling. Each server has \textit{1-20TB of storage} and \textit{16GB - 6TB of RAM}. Servers are connected and the network achieves \textit{1-100 GB/s throughput} - high network throughput is very important since servers send data among each other. Servers have the form of \textit{rack servers} which allows to efficiently stack them in \textit{rack units} (RU). A DC has multiple RUs. Racks are modular - they can contain servers, storage, routers etc.\\
+\textbf{Data centers:} All these single machines need to live somewhere - in a data center. A data center is essentially a collection of \textit{1'000 - 100'000 servers}, each of which has \textit{1-100 cores}. Having more than 100'000 servers in a single DC is hard because of coordination but mainly due to energy consumption for power and cooling. Each server has \textit{1-20TB of storage} and \textit{16GB - 6TB of RAM}. Servers are connected and the network achieves \textit{1-100 GB/s throughput} - high network throughput is very important since servers send data among each other. Servers have the form of \textit{rack servers} which allows to efficiently stack them in racks. A \textit{rack unit} (RU) refers to the height of a rack server. A DC has multiple racks. Racks are modular - they can contain servers, storage, routers etc.\\
 
 \textbf{Take away message: how to scale out?} Simplify the model, buy (lots of) cheap hardware, remove schemas.
 
@@ -623,7 +648,7 @@ API (application programming interface) is a set of rules and mechanisms by whic
 
 We want certain properties for databases. But:\\
 \textbf{CAP theorem:} One cannot achieve consistency, availability and partition tolerance all at the same time.\\
-\textit{Proof:} Imagine a system (e.g. bank) that is in a partitioned state. At right that time, someone requests the service (e.g. ATM). The system can now either serve the user - giving up partition tolerance (service will change state which won't be propagated globally due to the partition) \textit{OR} the system can not serve the user - giving up availability.
+\textit{Proof:} Imagine a system (e.g. bank) that is in a partitioned state. At right that time, someone requests the service (e.g. ATM). The system can now either serve the user - giving up partition tolerance (service will change state which won't be propagated globally due to the partition) \textit{OR} the system cannot serve the user - giving up availability.
 
 \begin{compactitem}
 	\item (Atomic) Consistency:	All nodes see the same data.
@@ -749,7 +774,7 @@ Azure thus has one more layer of indirection: account, container, blob. Further,
 	\end{subfigure}
 \end{figure}
 
-\textbf{Stream Layer:} Stores the bits on disk and is in charge of distributing and replicating the data across many servers to keep data durable within a storage stamp. Can be thought of as a distributed file system layer within a stamp.\\
+\textbf{Stream Layer:} Stores the bits on disk and is in charge of distributing and replicating the data across many servers to keep data durable within a storage stamp. Can be thought of as a distributed file system layer within a stamp. The default replication policy is to keep 3 replicas within a storage stamp.\\
 \textbf{Partition Layer:} Built for (a) managing and understanding higher level data abstractions (Blob, Table, Queue), (b) providing a scalable object namespace, (c) providing transaction ordering and strong consistency for objects, (d) storing object data on top of the stream layer, and (e) caching object data to reduce disk I/O.\\
 \textbf{Front-End Layer:} Set of stateless servers that take incoming requests.\\
 
@@ -811,7 +836,7 @@ How to achieve fault tolerance and robustness on clusters:
 	\item Sequential access (scan the file from the beginning (reading)/ append to file (update): this is easier for distributed clusters, that's why (most) do it like this
 \end{compactitem}
 
-Appends: You can only append, can't go back and change something. This is suitable for sensor data, logs and also intermediate data. \textbf{Note:} Since we have a distributed FS, we have 100s of clients in parallel reading/writing $\rightarrow$ we want atomicity.
+Appends: You can only append, can't go back and change something. This is suitable for sensor data, logs and also intermediate data. \textbf{Note:} Since we have a distributed FS, we have 100s of clients in parallel reading/writing $\rightarrow$ we want atomicity. HDFS implements a single-writer, multiple-reader model.
 
 \textbf{Performance requirements:}
 
@@ -841,7 +866,7 @@ Again, rememeber data independence: separate the logical model from the physical
 \textbf{Terminology}: HDFS: Block, GFS: Chunk.
 We thus have a hierarchy of files where each file is associated with a chain of blocks.\\
 
-\textbf{Why blocks?} 1) The files are bigger than a disk (PBs) , there is no way the files fit on a single machine $\rightarrow$ need blocks. 2) Simple level of abstraction and blocks are easy to distribute over multiple nodes.
+\textbf{Why blocks?} 1) The files are bigger than a disk (PBs), there is no way the files fit on a single machine $\rightarrow$ need blocks. 2) Simple level of abstraction and blocks are easy to distribute over multiple nodes.
 
 \textbf{Block size:} Every file is a multiple of blocks. In a simple file system, we have a block size of 4kB $\rightarrow$ good size for local machines, good compromise. However, in distributed file systems, things are different: blocks travel over the network and we have very large (PB) files. Due to the throughput-latency discrepancy, we want larger blocks (for small blocks, the latency would outweigh the transfer time). Further, large blocks lead to less blocks being read per file. The block size in distributed file systems is \textbf{64MB - 128MB}. This is a good compromise - not too many blocks for big files, but also small enough to have several blocks on one machine.\\
 
@@ -901,7 +926,7 @@ Client writes a file:
 	\item Namenode sends datanodes (all replicas) for first block
 	\item Client organizes pipeline by contacting one datanode and tells the datanode which other datanodes to forward the data to
 	\item Client then sends the data over to the datanode
-	\item Datanode sends Ack
+	\item Datanode sends Ack to client
 	\item Namenode sends datanodes for second block (writing happens block by block, for every block the client contacts a datanode which will also forward to other datanodes (note: if the blocks were very small, this would have large overhead))
 	\item ...
 	\item Client sends close/release lock
@@ -910,7 +935,7 @@ Client writes a file:
 	\item Namenode can tell datanodes to replicate further asynchronously
 \end{compactenum}
 
-This block-by-block writing is all done simultaneously under DFSOutputStream (streaming through), checksums are used to provide data integrity.
+This block-by-block writing is all done simultaneously under DFSOutputStream (streaming through), checksums are used to provide data integrity. Clients write by obtaining leases on files. If a client does not release a lease after writing, after the expire of a hard limit, the NameNode assumes the client quit.
 
 \begin{figure}[t!]
 	\centering
@@ -973,7 +998,7 @@ We can interact with HDFS as with a normal POSIX file system:
 $ hadoop fs -ls
 $ hadoop fs -cat /dir/file
 $ hadoop fs -rm /dir/file
-$ hadoop ds -mkdir /dir2
+$ hadoop fs -mkdir /dir2
 \end{verbatim}
 
 HDFS Shell: upload and download
@@ -999,7 +1024,10 @@ $ hadoop fs -copyToLocal /user/hadoop/file localfile
 	\item Files and directories are represented on the NameNode by inodes, which record attributes like permissions, modification and access times, namespace and disk space quotas. The file content is split into large blocks (typically 128 megabytes, but user selectable file-by-file) and each block of the file is independently replicated at multiple DataNodes (typically three, but user selectable file-by-file).
 	\item Each block replica on a DataNode is represented by two files in the local host’s native file system. The first file contains the data itself and the second file is block’s metadata including checksums for the block data and the block’s generation stamp.
 	\item Unlike conventional file systems, HDFS provides an API that exposes the locations of a file blocks. This allows applications like the MapReduce framework to schedule a task to where the data are located, thus improving the read performance.
-	\item An application adds data to HDFS by creating a new file and writing the data to it. After the file is closed, the bytes written cannot be altered or removed except that new data can be added to the file by reopening the file for append. HDFS implements a single-writer, multiple-reader model.
+	\item An application adds data to HDFS by creating a new file and writing the data to it. After the file is closed, the bytes written cannot be altered or removed except that new data can be added to the file by reopening the file for append. HDFS implements a single-writer, multiple-reader model. The HDFS client that opens a file for writing is granted a lease for the file; no other client can write to the file. 
+	\item The BackupNode can be viewed as a read-only NameNode. It contains all file system metadata information except for block locations. It can perform all operations of the regular NameNode that do not involve modification of the namespace or knowledge of block locations. Use of a BackupNode provides the option of running the NameNode without persistent storage, delegating responsibility for the namespace state persisting to the BackupNode.
+	\item HDFS generates and stores	checksums for each data block of an HDFS file. Checksums are
+	verified by the HDFS client while reading to help detect any corruption caused either by client, DataNodes, or network. When a client creates an HDFS file, it computes the checksum sequence for each block and sends it to a DataNode along with	the data.
 \end{compactitem}
 
 
@@ -1054,7 +1082,7 @@ In CSV (Comma separated values), we essentially have rows of text, where the top
 	\item Boyce-Codd Normal Form: have plenty of small tables that do one thing instead of one big table
 \end{compactitem}
 
-Relational databases are highly normalized whereas in big data have data denormalization (NoSQL). A highly normalized DB should be write-intensive and should avoid update anomalies. A highly denormalized DB should be read-intensive and should avoid joins.\\
+Relational databases are highly normalized whereas in big data we have data denormalization (NoSQL). A highly normalized DB should be write-intensive and should avoid update anomalies. A highly denormalized DB should be read-intensive and should avoid joins.\\
 Nesting (i.e. tables in tables) is \textit{not} possible with CSV.
 
 \subsection{JSON}
@@ -1099,7 +1127,8 @@ JSON can represent a normal table (collection of tuples) \textit{but} also neste
 
 \begin{compactitem}
 	\item Keys need to be strings (i.e. require double-quotes "")
-	\item Keys (should syntactically but really:) need to be distinct\\
+	\item Keys (should syntactically but really:) need to be distinct
+	\item No backslashes in strings! (need to escape \textbackslash\textbackslash)\\
 \end{compactitem}
 
 \subsection{XML}
@@ -1171,8 +1200,6 @@ How do you tell well-formedness? An editor (oXygen, ...) will tell you. Note: In
 
 \textbf{CDATA sections:} If you don't want to escape every single $<$ and \& (e.g source code) you can enclose sample of literal code in a CDATA section. A CDATA section is set off by \verb|<![CDATA[ and ]]>|. Everything between the \verb|<![CDATA[ and the ]]>| is treated as raw character data. Less-than signs don’t begin tags. Ampersands don’t start entity references. Everything is simply character data, not markup.
 
-\newpage
-
 \subsubsection{XML as a data format}
 
 Why Use XML for Data? Before XML, individual programmers had to invent a new data format every time they needed to save a file or send a message. Programmers thus often just used the most convenient format to store data - this made understanding the data format and loading it into any other program extremely difficult. The unique strengths of using XML as a software data format include: simple syntax, support for nesting, easy to debug, language- and platform-independent.
@@ -1199,7 +1226,7 @@ currency:
 name: 'Swiss Franc'
 code: 'CHF'
 confederation: true
-president : Ueli Maurer'
+president : 'Ueli Maurer'
 capital: null
 cities:
 - 'Zurich'
@@ -1231,7 +1258,6 @@ Solution: \textbf{HBase}:
 \begin{compactitem}
 	\item an open-source tech that allows you to store a relational table on a cluster
 	\item By design running on a scalable cluster of commodity hardware
-	\item By design running on a scalable cluster of commodity hardware
 	\item HBase uses HDFS to store data (use a distributed FS to run a DB in a distributed way)
 \end{compactitem}
 
@@ -1260,7 +1286,7 @@ Unlike in the RDBMS landscape, there is no domain-specific language, such as SQL
 	\item GET: get row by ID (similar to key-value model)
 	\item PUT: put new row with id \& columns into table
 	\item SCAN: ask HBase to completely scan the table (typically do something on every row, e.g. comparison) (doesn't exist in KV-model)
-	\item DELETE: delete row. When a user deletes a value in an HBase table, this does \textit{not} remove a KeyValue in the MemStore and/or in the HFile where it was stored. HDFS does not support random access. Deleting a value on the logical level creates, on the physical level, a new version of the value flagged as deleted. That way, the next time a query potentially includes this value, it will be omitted from the output by HBase.
+	\item DELETE: delete row. When a user deletes a value in an HBase table, this does \textit{not} remove a KeyValue in the MemStore and/or in the HFile where it was stored. HDFS does not support random access. Deleting a value on the logical level creates, on the physical level, a new version of the value flagged as deleted. That way, the next time a query potentially includes this value, it will be omitted from the output by HBase.\\
 \end{compactitem}
 
 \textbf{Some terminology:}
@@ -1448,11 +1474,7 @@ HDFS may redistribute blocks which could cause some blocks to be on different Da
 \subsection{Best practices}
 
 \begin{compactitem}
-	\item Number of rows:
-	\begin{compactitem}
-		\item Millions: RDBMS
-		\item Billions: HBase
-	\end{compactitem}
+	\item Number of rows: Millions: RDBMS, Billions: HBase
 	\item Number of nodes: HBase needs many nodes to be useful (\textbf{$> 5$}). With just 1 node: use a RDBMS.
 	\item Row IDs and column names: Keep them short. Why? Keys are made of row IDs and column names. The keys are stored in every key-value pair $\rightarrow$ long keys use just too much memory.
 \end{compactitem}
@@ -1462,6 +1484,55 @@ HDFS may redistribute blocks which could cause some blocks to be on different Da
 HBase is a distributed, persistent, strictly consistent storage system with near-optimal write—in terms of I/O channel saturation—and excellent read performance, and it makes efficient use of disk space by supporting pluggable compression algorithms that can be selected based on the nature of the data in specific column families.\\
 There is no declarative query language as part of the core implementation, and it has limited support for transactions. Row atomicity and read-modify-write operations make up for this in practice, as they cover most use cases and remove the wait or deadlock-related pauses experienced with other systems.\\
 HBase handles shifting load and failures gracefully and transparently to the clients. Scalability is built in, and clusters can be grown or shrunk while the system is in production. Changing the cluster does not involve any complicated rebalancing or resharding procedure, but is completely automated.
+
+\subsection{HBase shell commands}
+
+\begin{compactitem}
+	\item Start shell: hbase shell, Create table: create $<$table$>$, $<$columFamily$>$, $<$columFamily$>$, ...
+	\item Check schema: describe $<$table$>$, Count rows: count $<$table$>$
+	\item Insert row: put $<$table$>$, $<$rowId$>$, $<$columnFamily:columnQualifier$>$, $<$value$>$
+	\item Query row: get $<$table$>$, $<$rowId$>$
+	\item Filter by value: scan 'sentences', {FILTER =$>$ "ValueFilter(=, 'binary:English')"}
+	\item Column value substring: scan 'sentences', \{COLUMNS =$>$ 'words:subject', FILTER =$>$ "ValueFilter(=, 'substring:I')"\}
+	\item Row key prefix: scan 'sentences', \{COLUMNS =$>$ 'words:object', ROWPREFIXFILTER =$>$ 'row'\}
+\end{compactitem}
+
+\subsection{Pure row stores vs. pure column stores vs. wide column stores}
+
+\begin{table}[hb!]
+\begin{tabular}{|p{15mm}|p{80mm}|p{80mm}|}
+	\hline 
+	& \textbf{Advantages} & \textbf{Disadvantages} \\ 
+	\hline 
+	Pure row stores & Good for workloads with point lookups and updates. Retrieving (updating) a single row is efficient as the row is colocated. & Scans are more expensive (whole row is always retrieved). \\ 
+	\hline 
+	Pure column stores & Scans are very efficient (only specific columns can be retrieved). & To retrieve (or update) a whole row, many random accesses need to be performed. \\ 
+	\hline 
+	Wide column stores & 
+	\begin{compactitem}
+		\item Column families offer a 'middle ground' between pure row- and column-oriented storages. Columns frequently accessed together can be colocated, very wide columns (affecting scan speed) can be isolated into separate column families.
+		\item Flexible schema (column names stored for each row) offer flexibility for cases where schema is not known upfront (or in cases of sparse columns).
+	\end{compactitem}  & 
+	\begin{compactitem}
+		\item Performance penalties, point lookups not as fast as pure row store, scans not as fast as pure column store.
+		\item The key holds the row key, the column family name, the column qualifier, etc. This can result in a considerable storage
+		overhead if the values that we want to store are small in comparison the key.
+	\end{compactitem}\\
+	\hline 
+\end{tabular} 
+\end{table}
+
+\subsection{Advantages and disadvantages of Denormalization}
+
+\textbf{Advantages:} All operations are either scans or point lookups. No need for expensive joining of multiple relations (all data is colocated or easily mapped).\\
+
+\textbf{Disadvantages:}
+\begin{compactitem}
+\item It is difficult to enforce (maintain) consistency in cases of updates
+\item Storage (memory) overhead, due to duplicated data
+\item Scan processing can be more expensive 
+\end{compactitem}
+
 
 \newpage
 
@@ -1568,7 +1639,7 @@ The 11 XML Information Items:
 	\begin{compactitem}
 		\item Element Information Item: title
 		\item \verb|[local name]| title
-		\item \verb|[children]| Element Information Items: Systems Group
+		\item \verb|[children]| Text Information Items: Systems Group
 		\item \verb|[attributes]| Attribute Information Items: language=en, year=2019
 		\item \verb|[parent]| Element Information Item: metadata\\
 	\end{compactitem}
@@ -1577,9 +1648,9 @@ The 11 XML Information Items:
 	\begin{compactitem}
 	\item Element Information Item: publisher
 	\item \verb|[local name]| publisher
-	\item \verb|[children]| Element Information Items: ETH Zurich
+	\item \verb|[children]| Text Information Items: ETH Zurich
 	\item \verb|[attributes]| Attribute Information Items \verb|<empty>|
-	\item \verb|[parent]| Element Information Item: dc:metadata
+	\item \verb|[parent]| Element Information Item: metadata
 \end{compactitem}
 
 \textbf{Attribute Information Items:}
@@ -1806,43 +1877,51 @@ Validation can only be checked on a well-formed document! We thus have to first 
 
 An XML Schema is an XML document containing a formal description of what comprises a valid XML document. An XML document described by a schema is called an instance document.
 
-\begin{multicols}{2}
-	\begin{verbatim}
-	<?xml version="1.0" encoding="UTF-8"?>
-	<xs:schema
-	  xmlns:xs="http://www.w3.org/2001/XMLSchema">
-	  <xs:element name="foo" type="xs:string"/>
-	</xs:schema>
-	\end{verbatim}
-	
-	\begin{verbatim}
-	<?xml version="1.0" encoding="UTF-8"?>
-	<foo>
-	  This is text.
-	</foo>
-	\end{verbatim}
-\end{multicols}
-
-This is well-formed XML. We can define a schema on this XML document such that element \verb|foo| has type string.
+The following is well-formed XML. We can define a schema on this XML document such that element \verb|foo| has type string (or int,...).
 
 \begin{multicols}{2}
-	\begin{verbatim}
-	<?xml version="1.0" encoding="UTF-8"?>
-	<xs:schema
-	  xmlns:xs="http://www.w3.org/2001/XMLSchema">
-	  <xs:element name="foo" type="xs:integer"/>
-	</xs:schema>
-	\end{verbatim}
+\lstset{language=XML}
+\begin{lstlisting}
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="foo" type="xs:string"/>
+</xs:schema>
+\end{lstlisting}
 	
-	\begin{verbatim}
-	<?xml version="1.0" encoding="UTF-8"?>
-	<foo>
-	  142857
-	</foo>
-	\end{verbatim}
+\lstset{language=XML}
+\begin{lstlisting}
+<?xml version="1.0" encoding="UTF-8"?>
+<foo>
+  This is text.
+</foo>
+\end{lstlisting}
 \end{multicols}
 
-Simple Types: Built-in
+\begin{multicols}{2}
+\lstset{language=XML}
+\begin{lstlisting}
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="foo" type="xs:integer"/>
+</xs:schema>
+\end{lstlisting}
+	
+\lstset{language=XML}
+\begin{lstlisting}
+<?xml version="1.0" encoding="UTF-8"?>
+<foo>
+  142857
+</foo>
+\end{lstlisting}
+\end{multicols}
+
+\subsubsection{Simple Types}
+
+A simple element is an XML element that contains only text. It cannot contain any other elements or attributes.
+
+Built-in:
 
 \begin{tabular}{|l|p{150mm}|}
 	\hline 
@@ -1872,15 +1951,15 @@ Simple Types: Built-in
 
 \subsubsection{Complex types}
 
+A complex element contains other elements and/or attributes. There are four kinds of complex elements: empty elements, elements that contain only other elements, elements that contain only text, elements that contain both other elements and text. Each of these elements may contain attributes as well!
+
+
 \begin{compactitem}
-	\item Empty, e.g. \verb|<foo/>|
+	\item Empty, e.g. \verb|<product pid="1345"/> |
 	\item Simple content, e.g. \verb|<foo>text</foo>|
 	\item Complex Content, e.g.
 	\begin{verbatim}
-		<foo>
-		  <a/>
-		  <b/>
-		</foo>
+		<foo><a/><b/></foo>
 	\end{verbatim}
 	\item Mixed Content: character data can appear along elements in body of associated element, e.g.
 	\begin{verbatim}
@@ -1889,6 +1968,214 @@ Simple Types: Built-in
 		</foo>
 	\end{verbatim}
 \end{compactitem}
+
+\subsection{XML schemas: some examples}
+
+\lstset{language=XML}
+\begin{lstlisting}
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+targetNamespace="https://www.w3schools.com"
+xmlns="https://www.w3schools.com"
+elementFormDefault="qualified">
+
+<xs:element name="note">
+ <xs:complexType>
+  <xs:sequence>
+   <xs:element name="to" type="xs:string"/>
+   <xs:element name="from" type="xs:string"/>
+   <xs:element name="heading" type="xs:string"/>
+   <xs:element name="body" type="xs:string"/>
+  </xs:sequence>
+ </xs:complexType>
+</xs:element>
+
+</xs:schema> 
+\end{lstlisting}
+
+A corresponding XML document that references the schema:
+
+\lstset{language=XML}
+\begin{lstlisting}
+<?xml version="1.0"?>
+<note xmlns="https://www.w3schools.com"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="https://www.w3schools.com note.xsd">
+
+<note>
+ <to>Tove</to>
+ <from>Jani</from>
+ <heading>Reminder</heading>
+ <body>Don't forget me this weekend!</body>
+</note> 
+\end{lstlisting}
+
+\textbf{Simple element}:
+
+\lstset{language=XML}
+\begin{lstlisting}
+<xs:element name="lastname" type="xs:string"/>
+<xs:element name="age" type="xs:integer"/>
+<xs:element name="dateborn" type="xs:date"/>
+<xs:element name="color" type="xs:string" default="red"/> 
+<xs:element name="color" type="xs:string" fixed="red"/> 
+\end{lstlisting}
+
+Simple elements can have a default OR a fixed value specified.\\
+
+\textbf{Attributes}: Simple elements cannot have attributes. If an element has attributes, it is considered to be of a complex type. But the attribute itself is always declared as a simple type.
+
+\lstset{language=XML}
+\begin{lstlisting}
+<xs:attribute name="xxx" type="yyy"/> 
+<xs:attribute name="lang" type="xs:string" default="EN"/> 
+<xs:attribute name="lang" type="xs:string" fixed="EN"/> 
+<xs:attribute name="lang" type="xs:string" use="required"/> 
+\end{lstlisting}
+Attributes may have a default value OR a fixed value specified. A default value is automatically assigned to the attribute when no other value is specified. Attributes are optional by default. To specify that the attribute is required, use the "use" attribute.\\
+
+\textbf{Restrictions:} Restrictions are used to define acceptable values for XML elements or attributes. Restrictions on XML elements are called facets.
+
+The example below defines an element called "car" with a restriction. The only acceptable values are: Audi, BMW:
+\lstset{language=XML}
+\begin{lstlisting}
+<xs:element name="car">
+ <xs:simpleType>
+  <xs:restriction base="xs:string">
+   <xs:enumeration value="Audi"/>
+   <xs:enumeration value="BMW"/>
+  </xs:restriction>
+ </xs:simpleType>
+</xs:element>
+\end{lstlisting}
+
+The example below defines an element called "letter" with a restriction. The only acceptable value is ONE of the LOWERCASE letters from a to z:
+\lstset{language=XML}
+\begin{lstlisting}
+<xs:element name="letter">
+ <xs:simpleType>
+  <xs:restriction base="xs:string">
+   <xs:pattern value="[a-z]"/>
+  </xs:restriction>
+ </xs:simpleType>
+</xs:element>
+\end{lstlisting}
+
+The next example defines an element called "choice" with a restriction. The only acceptable value is ONE of the following letters: x, y, OR z:
+\lstset{language=XML}
+\begin{lstlisting}
+<xs:element name="choice">
+ <xs:simpleType>
+  <xs:restriction base="xs:string">
+   <xs:pattern value="[xyz]"/>
+  </xs:restriction>
+ </xs:simpleType>
+</xs:element> 
+\end{lstlisting}
+
+\newpage
+
+The next example defines an element called "gender" with a restriction. The only acceptable value is male OR female:
+\lstset{language=XML}
+\begin{lstlisting}
+<xs:element name="gender">
+ <xs:simpleType>
+  <xs:restriction base="xs:string">
+   <xs:pattern value="male|female"/>
+  </xs:restriction>
+ </xs:simpleType>
+</xs:element> 
+\end{lstlisting}
+
+This example defines another element called "password" with a restriction. The value must be minimum five characters and maximum eight characters:
+\lstset{language=XML}
+\begin{lstlisting}
+<xs:element name="password">
+ <xs:simpleType>
+  <xs:restriction base="xs:string">
+   <xs:minLength value="5"/>
+   <xs:maxLength value="8"/>
+  </xs:restriction>
+ </xs:simpleType>
+</xs:element> 
+\end{lstlisting}
+
+\textbf{Complex elements:}
+
+Complex element \textit{employee} with simple elements \textit{firstname, lastname} as children.
+\lstset{language=XML}
+\begin{lstlisting}
+<xs:element name="employee">
+ <xs:complexType>
+  <xs:sequence>
+   <xs:element name="firstname" type="xs:string"/>
+   <xs:element name="lastname" type="xs:string"/>
+  </xs:sequence>
+ </xs:complexType>
+</xs:element> 
+\end{lstlisting}
+
+Complex Empty Element \verb|<product prodid="1345" />|:
+\lstset{language=XML}
+\begin{lstlisting}
+<xs:element name="product">
+ <xs:complexType>
+  <xs:complexContent>
+   <xs:restriction base="xs:integer">
+    <xs:attribute name="prodid" type="xs:positiveInteger"/>
+   </xs:restriction>
+  </xs:complexContent>
+ </xs:complexType>
+</xs:element> 
+\end{lstlisting}
+
+Complex simple content: The following example declares a complexType, "shoesize". The content is defined as an integer value, and the "shoesize" element also contains an attribute named "country":
+\lstset{language=XML}
+\begin{lstlisting}
+<xs:element name="shoesize">
+ <xs:complexType>
+  <xs:simpleContent>
+   <xs:extension base="xs:integer">
+    <xs:attribute name="country" type="xs:string" />
+   </xs:extension>
+  </xs:simpleContent>
+ </xs:complexType>
+</xs:element> 
+\end{lstlisting}
+
+\newpage
+
+\textbf{Order Indicators:} Order indicators are used to define the order of the elements.
+\begin{compactitem}
+\item The $<$all$>$ indicator specifies that the child elements can appear in any order, and that each child element must occur only once.
+\item The $<$choice$>$ indicator specifies that either one child element or another can occur.
+\item The $<$sequence$>$ indicator specifies that the child elements must appear in a specific order.
+\end{compactitem}
+
+\textbf{Occurrence Indicators:} Occurrence indicators are used to define how often an element can occur.
+\begin{compactitem}
+\item The $<$maxOccurs$>$ indicator specifies the maximum number of times an element can occur.
+\item The $<$minOccurs$>$ indicator specifies the minimum number of times an element can occur.
+\item The $<$sequence$>$ indicator specifies that the child elements must appear in a specific order.
+\end{compactitem}
+
+\subsection{JSON schema example}
+
+\begin{lstlisting}[basicstyle=\footnotesize]
+schema={
+ 'type': 'object',
+ 'properties': {
+  'target': {'type': 'string'},
+  'choices': {'type': 'array', 'items': {'type': 'string'}},
+  'guess': {'type': 'string'},
+  'date': {'type': 'string'},
+  'country': {'type': 'string'},
+  'sample': {'type': 'string'}
+ },
+'required': ['target', 'choices', 'date', 'country', 'sample']}
+\end{lstlisting}
+
+
 
 \newpage
 
@@ -1985,9 +2272,9 @@ MapReduce can run on different storage layers: Local file system, HDFS (most com
 \item TaskTracker (Slave): A TaskTracker runs on each one of the nodes that run DataNodes, and spawns 0,1, or more mappers as well as 0,1, or more reducers according to pre-allocated map and reduce slots. Mappers mostly read their input locally. When all mappers have completed their tasks, the reducers start requesting the intermediate output relevant to them (shuffle). When the reducers have completed, they mostly write their output locally. The TaskTracker typically runs on the same machine as a DataNode.
 \end{compactitem}
 
-Running the TaskTracker on the same machine as the DataNode allows the TaskTracker to work with \textit{local data} $\rightarrow$ \textbf{short-circuiting, bring the query to the data}. We don't need to bring the blocks anywhere, bring the query to the data and ececute on the machine where the blocks are.\\
+Running the TaskTracker on the same machine as the DataNode allows the TaskTracker to work with \textit{local data} $\rightarrow$ \textbf{short-circuiting, bring the query to the data}. We don't need to bring the blocks anywhere, bring the query to the data and execute on the machine where the blocks are.\\
 
-\textbf{Mapping phase:} In MapReduce, the input data is \textit{split} (= shard/chunk of the input data). Generally, we have on split per block (128MB) and we only look at one replica per block. The JobTracker's task is to tell the machines which mappings to do where $\rightarrow$ split the input (HDFS file), arrange s.t. split ~ HDFS block and every mapper is working locally on a block. Occasionally it can happen that a mapper will have to fetch a block remotely over the network. Typically, you may have more mapping tasks than mapping slots (slot = just some reserved resource) $\rightarrow$ do it sequentially paralll (e.g. 100 tasks, 10 slots $\rightarrow$ each slot 10 task sequence). During the mapping phase, reducer slots are idle; they need to wait for the mapping to finish. The mapping phase outputs key-value pairs to memory (intermediate represenation) $\rightarrow$ may overfill the memory. Key-value pairs are thus spilled to disk if necessary (local disk not HDFS), spilling is done with sorted KV-pairs. Why spill to local disk? Map output is intermediate output: it’s processed by reduce tasks to produce the final output, and once the job is complete, the map output can be thrown away. So, storing it in HDFS with replication would be overkill. If the node running the map task fails before the map output has been consumed by the reduce task, then Hadoop will automatically rerun the map task on another node to re-create the map output.
+\textbf{Mapping phase:} In MapReduce, the input data is \textit{split} (= shard/chunk of the input data). Generally, we have one split per block (128MB) and we only look at one replica per block. The number of mappers is equal to the number of splits. The JobTracker's task is to tell the machines which mappings to do where $\rightarrow$ split the input (HDFS file), arrange s.t. split $\sim$ HDFS block and every mapper is working locally on a block. Occasionally it can happen that a mapper will have to fetch a block remotely over the network. Typically, you may have more mapping tasks than mapping slots (slot = just some reserved resource) $\rightarrow$ do it sequentially parallel (e.g. 100 tasks, 10 slots $\rightarrow$ each slot 10 task sequence). During the mapping phase, reducer slots are idle; they need to wait for the mapping to finish. The mapping phase outputs key-value pairs to memory (intermediate representation) $\rightarrow$ may overfill the memory. Key-value pairs are thus spilled to disk if necessary (local disk not HDFS), spilling is done with sorted KV-pairs. Why spill to local disk? Map output is intermediate output: it’s processed by reduce tasks to produce the final output, and once the job is complete, the map output can be thrown away. So, storing it in HDFS with replication would be overkill. If the node running the map task fails before the map output has been consumed by the reduce task, then Hadoop will automatically rerun the map task on another node to re-create the map output.\\
 
 \textbf{Shuffling Phase:} After the mapping is done, we have all the intermediate key-value pairs, on the same machines as the mappers that produced them. The reducers have to wait until \textit{all} mappers have finished (very strict 2-phase algorithm). Once all mappers have finished, the reducers connect to every TaskTracker and ask for their respective keys. Each TaskTracker runs an HTTP server. The reducers can thus just connect to each TaskTracker HTTP server and request the key they are responsible for (assigned by JobTracker). The reducers then receive all IR key-value pairs for the keys they requested. When there are multiple reducers, the map tasks partition their output, each creating one partition for each reduce task. There can be many keys (and their associated values) in each partition, but the records for any given key are all in a single partition.
 
@@ -2043,6 +2330,7 @@ Often (90\%) the combine function and the reduce function are equivalent. We thu
 \item Reduce function must be commutative (a+b=b+a) and associative (a+(b+c)=(a+b)+c).
 \end{compactitem}
 
+\newpage
 
 \subsection{MapReduce: the APIs}
 
@@ -2083,17 +2371,19 @@ MapReduce solves this by doing the splits on a more logical level, i.e. a split 
 
 \section{Resource Management}
 
-There are some issues with MapReduce 1:
+There are some issues with MapReduce 1 that YARN addresses:
 
 \begin{compactitem}
 \item Scalability: MapReduce 1 only works with $<$4000 nodes and $<$ 40'000 tasks.
 \item Bottleneck on the JobTracker: the JobTracker has too many responsibilities. The JobTracker needs to do resource management, scheduling, monitoring, job life-cycle, fault tolerance - a lot of things and there is only one JobTracker.
 \item Jack of all trades, master of none: JobTracker is not specialized and thus not efficient since it needs to do so many different things.
 \item Static allocation, fixed size: Map \& Reduce slots are assigned statically at configuration time (i.e. before the job starts), which leads to them often being idle, which does not fully use cluster resources.
-\item Not fungible: Reduce slots are idle during map phase and map slots are idle during reduce phase.\\
+\item Not fungible: Reduce slots are idle during map phase and map slots are idle during reduce phase.
+\item Need for non-MapReduce workloads. Ability to share cluster with MPI, graph processing, and any user code.
+\item Agility. Ability to maintain MapReduce frameworks of different versions.\\
 \end{compactitem}
 
-\subsection{YARN (Yet Another Resource Manager)}
+\subsection{YARN (Yet Another Resource Negotiator)}
 
 YARN is a resource management tool that separates the JobTrackers responsibilities. The responsibilities are split into:
 
@@ -2108,10 +2398,7 @@ YARN can be used for many applications: MapReduce, DAG distributed processing, m
 \subsubsection{YARN architecture}
 
 Again, we use a master-slave architecture. We have the ResourceManager (RM) as master and NodeManagers (NM) as slaves. The ResourceManager acts as the central authority arbitrating resources among
-various competing applications in the cluster (decides who gets which container). The NodeManager is the “worker” daemon in YARN. It authenticates container leases, manages containers’ dependencies, monitors their execution, and provides a set of services to containers. The NM will also kill containers as directed by the RM or the AM. We further have the notion of slots again, here called \textit{containers}. Containers do the virtualization of resources, mapping and reducing will be done in containers. This allows for more fine grained resource requests (memory and CPU only for now). Application Masters (AM) are the "head" of a job, managing all lifecycle aspects including dynamically increasing and decreasing resources consumption, managing the flow of execution (e.g., running reducers against the output of maps), handling faults and computation skew, and performing other local optimizations. The AM is the process that coordinates the application’s execution in the cluster, but it itself is run in the cluster just like any other container. \\
-
-\textbf{YARN process:} When a client submits a job, it is first sent to the RM. The RM then distributes the containers. The RM then allocates an AM (can be different for every machine) - the Application Master takes care of monitoring. The AM requests resources (containers) from the RM. Typically, an AM will need to harness the resources (CPUs, RAM, disks etc.) available on multiple nodes to complete a job. To obtain resources (containers), AM issues resource requests to the RM.  The NM only assigns containers locally, the Application Master needs the authorization from the Resource Manager. When a resource is allocated on behalf of an AM, the RM generates a lease for the resource, which is pulled by a subsequent AM
-heartbeat.  At the beginning, the AM only requests mapping resources. Once mapping is done, only then does it request reducing resources.
+various competing applications in the cluster (decides who gets which container). The NodeManager is the “worker” daemon in YARN. It authenticates container leases, manages containers’ dependencies, monitors their execution, and provides a set of services to containers. The NM will also kill containers as directed by the RM or the AM. We further have the notion of slots again, here called \textit{containers}. Containers do the virtualization of resources, mapping and reducing will be done in containers. This allows for more fine grained resource requests (memory and CPU only for now). Communications between RM and NMs are heartbeatbased for scalability. Application Masters (AM) are the "head" of a job, managing all lifecycle aspects including dynamically increasing and decreasing resources consumption, managing the flow of execution (e.g., running reducers against the output of maps), handling faults and computation skew, and performing other local optimizations. The AM is the process that coordinates the application’s execution in the cluster, but it itself is run in the cluster just like any other container. \\
 
 \begin{figure}[hb!]
 	\centering
@@ -2128,6 +2415,9 @@ heartbeat.  At the beginning, the AM only requests mapping resources. Once mappi
 	\caption{YARN}
 \end{figure}
 
+\textbf{YARN process:} When a client submits a job, it is first sent to the RM. The RM then distributes the containers. The RM then allocates an AM (can be different for every machine) - the Application Master takes care of monitoring. The AM requests resources (containers) from the RM. Typically, an AM will need to harness the resources (CPUs, RAM, disks etc.) available on multiple nodes to complete a job. To obtain resources (containers), AM issues resource requests to the RM.  The NM only assigns containers locally, the Application Master needs the authorization from the Resource Manager. When a resource is allocated on behalf of an AM, the RM generates a lease for the resource, which is pulled by a subsequent AM
+heartbeat.  At the beginning, the AM only requests mapping resources. Once mapping is done, only then does it request reducing resources.
+
 The resulting process is then essentially MapReduce with YARN around it.
 
 The ResourceManager is a pure scheduler, it does not monitor tasks and it does not restart upon failure. Different scheduling strategies exist:
@@ -2141,12 +2431,22 @@ The ResourceManager is a pure scheduler, it does not monitor tasks and it does n
 
 Note: people say MapReduce and Spark are slow. But: these technologies are not built to minimize latency but to maximize cluster optimization.
 
+\subsection{Reading assignment: Apache Hadoop YARN: Yet Another Resource Negotiator}
+
+\begin{compactitem}
+\item The ResourceManager exposes two public interfaces towards: 1) clients submitting applications, and 2) ApplicationMaster(s) dynamically negotiating access to resources, and one internal interface towards NodeManagers for cluster monitoring and resource access management.
+\item The AM periodically heartbeats to the RM to affirm its liveness and to update the record of its demand. After building a model of its requirements, the AM encodes its preferences and constraints in a heartbeat message to the RM.
+\end{compactitem}
+
+
+
+\newpage
 
 \section{Distributed Computations II: Spark}
 
 \subsection{Introduction to Spark}
 
-Both MapReduce 1 and MapReduce 2 (YARN) use a rather restricted data flow model: data is first mapped to an intermediate representation and the reduce to an output. This is a very specific topology (\textit{not} DAG-based). YARN is capable of much more because it supports any DAG data flow. Let's build something much more general.
+Both MapReduce 1 and MapReduce 2 (YARN) use a rather restricted data flow model: data is first mapped to an intermediate representation and then reduced to an output. This is a very specific topology (\textit{not} DAG-based). Spark is capable of much more because it supports any DAG data flow. Let's build something much more general.
 
 \begin{figure}[hb!]
 	\centering
@@ -2163,15 +2463,13 @@ Both MapReduce 1 and MapReduce 2 (YARN) use a rather restricted data flow model:
 	\caption{MapReduce dataflow vs. DAG dataflow}
 \end{figure}
 
-Spark uses RDDs (Resilient Distributed Dataset) as data format. An RDD is a big collection of values (not limited to key-values!) that can be recomputed and is spread over machines. RDDs are partitioned (like MapReduce uses splits).
+Spark uses \textbf{RDDs (Resilient Distributed Dataset)} as data format. An RDD is a big collection of values (not limited to key-values!) that can be recomputed and is spread over machines. RDDs are partitioned (like MapReduce uses splits).
 
-\textbf{RDD lifecycle:} RDDs can be created on the fly from data in HDFS - RDD is just the data read from RDD and partitioned along HDFS blocks. RDDs can be transformed into other RDDs (many-to-many transform) (like mapping/reducing in MapReduce). An RDD is only returned (output) once an action is taken on the RDD. RDDs and their transforms can be represented by a directed acyclic graph (DAG) where nodes are RDDs and egdes are transformations. This lineage graph use lazy evaluations - nothing happens (no transformations are executed) until an action is requested at some RDD. Only then will the data flow through the graph and be transformed and output.
-
-Spark can be executed in application or shell.
+\textbf{RDD lifecycle:} RDDs can be created on the fly from data in HDFS - RDD is just the data read from HDFS and partitioned along HDFS blocks. RDDs can be transformed into other RDDs (many-to-many transform) (like mapping/reducing in MapReduce). An RDD is only returned (output) once an action is taken on the RDD. RDDs and their transforms can be represented by a directed acyclic graph (DAG) where nodes are RDDs and egdes are transformations. This lineage graph uses lazy evaluations - nothing happens (no transformations are executed) until an action is requested at some RDD. Only then will the data flow through the graph and be transformed and output. Spark can be executed in application or shell.
 
 \begin{figure}[hb!]
 	\centering
-	\includegraphics[width=0.35\linewidth]{figures/spark_hello_world}
+	\includegraphics[width=0.25\linewidth]{figures/spark_hello_world}
 	\caption{Example program in Spark}
 	\label{fig:sparkhelloworld}
 \end{figure}
@@ -2179,13 +2477,13 @@ Spark can be executed in application or shell.
 
 \subsection{Spark: overview of transformations}
 
-As we've seen, RDDs can be transformed. Many different (~100) transformations exist.
+As we've seen, RDDs can be transformed. Many different ($\sim$100) transformations exist.
 
 \textbf{Transformation on one RDDs:}
 \begin{compactitem}
-\item filter: eliminate RDDs that don't fulfill some test (= SELECTION in rel. algebra). Narrow dependency.
+\item filter: eliminate values that don't fulfill some test (= SELECTION in rel. algebra). Narrow dependency.
 \item map: map each value in input to some value in output (\#input values = \#output values). Narrow dependency.
-\item flatMap: Map map to multiple outputs, but outputs are flattened. Narrow dependency.
+\item flatMap: Map to multiple outputs, but outputs are flattened. Narrow dependency.
 \item distinct: eliminate duplicates/ Wide dependency.
 \item sample: pick inputs randomly.
 \end{compactitem}
@@ -2235,26 +2533,27 @@ As we've seen, RDDs can be transformed. Many different (~100) transformations ex
 	\centering
 	\begin{subfigure}[t]{.21\textwidth}
 		\centering
-		\includegraphics[width=0.9\linewidth]{figures/spark_union}
+		\includegraphics[width=0.7\linewidth]{figures/spark_union}
 		\caption{union}
 	\end{subfigure}%
 	\begin{subfigure}[t]{.21\textwidth}
 		\centering
-		\includegraphics[width=0.9\linewidth]{figures/spark_intersection}\
+		\includegraphics[width=0.7\linewidth]{figures/spark_intersection}\
 		\caption{intersection}
 	\end{subfigure}
 	\begin{subfigure}[t]{.21\textwidth}
 		\centering
-		\includegraphics[width=0.9\linewidth]{figures/spark_substract}
+		\includegraphics[width=0.7\linewidth]{figures/spark_substract}
 		\caption{substract}
 	\end{subfigure}
 	\begin{subfigure}[t]{.21\textwidth}
 	\centering
-	\includegraphics[width=0.9\linewidth]{figures/spark_cart_product}
+	\includegraphics[width=0.7\linewidth]{figures/spark_cart_product}
 	\caption{cartesian product}
 	\end{subfigure}
 \end{figure}
 
+\newpage
 
 \subsection{Spark: overview of actions}
 
@@ -2270,7 +2569,7 @@ As we've seen, RDDs can be transformed. Many different (~100) transformations ex
 
 \subsection{Spark: pair RDDs}
 
-We can have RDDs of values that are pairs (like MapReduce with key-values).
+We can have RDDs of values that are pairs (like MapReduce with key-values). Spark provides special operations on RDDs containing key/value pairs. These RDDs are called pair RDDs. Pair RDDs are a useful building block in many programs, as they expose operations that allow you to act on each key in parallel or regroup data across the network. 
 
 \textbf{Transformation:}
 
@@ -2287,6 +2586,7 @@ We can have RDDs of values that are pairs (like MapReduce with key-values).
 \item lookup
 \end{compactitem}
 
+\newpage
 
 \subsection{Physical layer}
 
@@ -2306,7 +2606,7 @@ We again want parallel execution. The input data is split (mostly according to H
 	\end{subfigure}
 \end{figure}
 
-\textbf{Sequence of (parallelizable) transformations:} We can further improve parallelization by grouping together series of transformations on the same level (not ancestor/child of each other) with narrow dependencies. We can group these transformations together as if they were a single transformation. This can reduce the amnount of data that needs to be shuffled around. We should try to execute transformations that have dependencies on a machine on that machine, as long as the transformations allow this - compute locally as much as possible.
+\textbf{Sequence of (parallelizable) transformations:} We can further improve parallelization by grouping together series of transformations on the same level (not ancestor/child of each other) with narrow dependencies. We can group these transformations together as if they were a single transformation. This can reduce the amount of data that needs to be shuffled around. We should try to execute transformations that have dependencies on a machine on that machine, as long as the transformations allow this - compute locally as much as possible.
 
 \begin{figure}[hb!]
 	\centering
@@ -2353,7 +2653,7 @@ Once we encounter a \textit{wide dependency}, the stage is finished, we need to 
 
 Consider any DAG with multiple output RDDs. Remember that evaluation is lazy - transformation are only executed once an action is applied on an RDD. If we apply an actions to multiple RDDs that all have common ancestor RDDs, the ancestor RDDs are calculated multiple times equivalently. This is very inefficient since we keep recomputing the same RDDs over and over.\\
 
-\textbf{Persisting RDDs:} We can instruct Spark to persist some RDDs (cache them). Considering Figure \ref{fig:sparkpersrdds}, an action on output RDDs then only requires one single transformation.
+\textbf{Persisting RDDs:} We can instruct Spark to persist some RDDs (cache them). Considering Figure \ref{fig:sparkpersrdds}, an action on output RDDs then only requires one single transformation. After computing it the first time, Spark will store the RDD contents in memory (partitioned across the machines in your cluster), and reuse them in future actions. Persisting RDDs on disk instead of memory is also possible. If you attempt to cache too much data to fit in memory, Spark will automatically evict old partitions using a Least Recently Used (LRU) cache policy. 
 
 \begin{figure}[t!]
 	\centering
@@ -2399,7 +2699,7 @@ Spark also offers additional optimizations to deal with nested data:
 \item Objects: Spark allows accessing fields of objects using SQL, using a '.' notation (like class attribute). This allows us to explore tables with objects in them. 
 \end{compactitem}
 
-\begin{figure}[hb!]
+\begin{figure}[t!]
 	\centering
 	\begin{subfigure}[t]{.5\textwidth}
 		\centering
@@ -2411,6 +2711,141 @@ Spark also offers additional optimizations to deal with nested data:
 	\end{subfigure}
 \end{figure}
 
+\newpage
+
+\subsection{Apache Spark Architecture (Exercise)}
+
+Spark is a cluster computing platform designed to be fast and general purpose. Spark extends the MapReduce model to efficiently cover a wide range of workloads that previously required separate distributed systems, including interactive queries and stream processing. Spark offers the ability to run computations in memory.
+At a high level, every Spark application consists of a driver program that launches various parallel operations on a cluster. The driver program contains your application's main function and defines distributed datasets on the cluster, then applies operations to them.
+
+Driver programs access Spark through a SparkContext object, which represents a connection to a computing cluster. There is no need to create a SparkContext; it is created for you automatically when you run the first code cell in the Jupyter. The driver communicates with a potentially large number of distributed workers called executors. The driver runs in its own process and each executor is a separate process. A driver and its executors are together termed a Spark application.
+
+
+\subsection{PySpark API}
+
+Commonly used transformations:
+
+\begin{compactitem}
+\item \texttt{filter()} returns a new RDD containing only the elements that satisfy a predicate.
+\item \texttt{map()} returns a new RDD by applying a function to each element of this RDD.
+\item \texttt{distinct()} returns a new RDD containing the distinct elements in this RDD.
+\item \texttt{sortBy()} sorts the RDD by the given keyfunc.
+\item \texttt{groupByKey()} groups the values for each key in the RDD into a single sequence.
+\item \texttt{groupBy()} returns an RDD of grouped items.
+\item \texttt{reduceByKey()} merges the values for each key using an associative and commutative reduce function.
+\item \texttt{mapValues()} passes each value in the key-value pair RDD through a map function without changing the keys; this also retains the original RDD’s partitioning.
+\end{compactitem}
+
+Commonly used actions:
+
+\begin{compactitem}
+\item \texttt{count()} returns the number of elements in the RDD.
+\item \texttt{collect()} returns a list that contains all of the elements in this RDD.
+\item \texttt{countByKey()} counts the number of elements for each key, and return the result to the master as a dictionary.
+\item \texttt{countByValue()} returns the count of each unique value in this RDD as a dictionary of (value, count) pairs.
+\end{compactitem}
+
+
+
+In the following, we show a set of example queries using pyspark on \textit{The Great Language Game} dataset. An entry has the following structure:
+
+\begin{lstlisting}[basicstyle=\small,columns=flexible]
+[
+ {
+  "guess": "German",
+  "target": "German",
+  "country": "AU",
+  "choices": ["German", "Serbian", "Swedish", "Vietnamese"],
+  "sample": "e77d97b712adffc39e531e20237a5589",
+  "date": "2013-08-19"
+ }
+]
+\end{lstlisting}
+
+Find all games such that the guessed language is correct (=target), and such that this language is Russian. How long is the resulting sequence?
+
+\begin{lstlisting}[language=Python,basicstyle=\small,columns=flexible]
+match = entries.filter(lambda e: e['guess'] == e['target'] and e['target'] == 'Russian').count()
+\end{lstlisting}
+
+
+
+For those cases where the guess matched the target, list what the guessed language was.  How many times was Hindi correctly guessed?
+
+\begin{lstlisting}[language=Python,basicstyle=\small,columns=flexible]
+matching = entries.filter(lambda e: e['guess'] == e['target'] == 'Hindi').count()
+\end{lstlisting}
+
+Find all distinct values of the target languages (i.e. the target field). How many distinct languages are there?
+
+\begin{lstlisting}[language=Python,basicstyle=\small,columns=flexible]
+matching = entries.map(lambda e: (e['target'])).distinct().count()
+\end{lstlisting}
+
+Return the top three games where the guessed language is correct (=target) ordered by language (ascending), then country (ascending), then date (ascending).
+
+\begin{lstlisting}[language=Python,basicstyle=\small,columns=flexible]
+matching = entries.filter(lambda e: e['guess'] == e['target'])
+matching = matching.sortBy(lambda e: (e['target'], e['country'], e['date'])).take(3)
+\end{lstlisting}
+
+Aggregate all games by country and target language, counting the number of guessing games that were done for each pair (country, target).
+
+\begin{lstlisting}[language=Python,basicstyle=\small,columns=flexible]
+matching = entries.map(lambda e: (e['country']+e['target'])).countByValue()
+\end{lstlisting}
+
+Among all the games where the guess was correct (=target), what is the percentage of cases where the first choice (among the array of possible answers) was the target?
+
+\begin{lstlisting}[language=Python,basicstyle=\small,columns=flexible]
+correct = entries.filter(lambda e: e['guess'] == e['target'])
+perc = correct.filter(lambda e: e['choices'][0] == e['target']).count() / correct.count()
+\end{lstlisting}
+
+For each target language, compute the percentage of successful guess games (i.e. guess == target) relative to all games for that target language, and display the pairs (target\_language, percentage) in ascending order of the percentage.
+
+\begin{lstlisting}[language=Python,basicstyle=\small,columns=flexible]
+outcomes = entries.map(lambda e: (e['target'], e['target'] == e['guess'])).groupByKey()
+matching = outcomes.mapValues(lambda e: float(list(e).count(True)/len(e)))
+matching = matching.sortBy(lambda e: e[1], ascending=False).take(3)
+\end{lstlisting}
+
+Group the games by the index of the correct answer in the choices array and output all counts.
+
+\begin{lstlisting}[language=Python,basicstyle=\small,columns=flexible]
+matching = entries.map(lambda e: e['choices'].index(e['target'])).countByValue()
+\end{lstlisting}
+
+For the cases where the guess matched the target and target = 'French', report what is the count of each possible number of choices (e.g. if you have 2 games where there are 3 possible choices, then you should report something like (3, 2) for this number of choices). 
+
+\begin{lstlisting}[language=Python,basicstyle=\small,columns=flexible]
+matching = entries.filter(lambda e: e['guess'] == e['target'] == 'French')
+matching = matching.map(lambda e: len(e['choices'])).countByValue()
+\end{lstlisting}
+
+What is the language of the sample that has the highest successful guess rate?
+
+\begin{lstlisting}[language=Python,basicstyle=\small,columns=flexible]
+def perc(l):
+    tot = len(l)
+    corr = list(l).count(True)
+    return corr/tot
+matching = entries.map(lambda e: (e['sample']+e['target'], e['guess'] == e['target'])).groupByKey()
+matching = matching.mapValues(perc).sortBy(lambda e: e[1], ascending=False).take(3)
+\end{lstlisting}
+
+Return all games played on the latest day.
+
+\begin{lstlisting}[language=Python,basicstyle=\small,columns=flexible]
+matching = entries.map(lambda e: (e['date'], 1)).reduceByKey(lambda x,y: x+y)
+matching = matching.sortBy(lambda e: e[0], ascending=False).take(3)
+\end{lstlisting}
+
+\subsection{Dataframes and SparkSQL}
+
+Spark Dataframes allow the user to perform simple and efficient operations on data, as long as the data is structured and has a schema. Dataframes are similar to relational tables in relational databases: conceptually a dataframe is a specialization of a Spark RDD with schema information attached. 
+
+\newpage
 
 \section{Document stores}
 
@@ -2419,7 +2854,7 @@ Documents are just trees. Document stores are often referred to as NoSQL (= not 
 \textbf{Remember: relational model}\\
 Typical relational stack: bits $\rightarrow$ text $\rightarrow$ well-formed CSV $\rightarrow$ relational schema $\rightarrow$ queryable tables.
 
-Relational tables fulfill relational integrity (all rows have the same columns), atomic integrity (no nested tables), domain integrity (strict type per column). Relational algebra provides an way to query data with SQL being an easy query language.
+Relational tables fulfill relational integrity (all rows have the same columns), atomic integrity (no nested tables), domain integrity (strict type per column). Relational algebra provides a way to query data with SQL being an easy query language.
 
 Remember: We want to rebuild that stack for clusters. Up until now, we have rebuilt the stack for tables on clusters. Now: we want to do the same for the tree data model.
 
@@ -2484,33 +2919,29 @@ Ideally, we'd want to query document stores with a language like SQL. On a lower
 	\hline 
 	Desc & Low level query & SQL equivalent\\ 
 	\hline 
-	Read & db.scientists.find(
-	\{"Theory" : "Relativity"\}
-	) & SELECT *
-	FROM scientists
+	Read & db.scientists.find(\{"Theory": "Relativity"\}) & SELECT * FROM scientists
 	WHERE Theory = "Relativity" \\ 
 	\hline 
-	Read: projection & db.scientists.find(
-	\{ "Theory" : "Relativity" \},
+	Read: projection & db.scientists.find(\{ "Theory": "Relativity"\},
 	\{ "Name" : 1, "Last": 1 \}
 	) & SELECT Name, Last
 	FROM scientists
 	WHERE Theory = "Relativity" \\ 
 	\hline 
-	Read: AND & db.scientists.find(\{"Theory": "Relativity", "Last": "Einstein"\}) & SELECT Name, Last
+	Read: AND & db.scientists.find(\{"Theory": "Relativity", "Last": "Einstein"\}, \{ "Name" : 1, "Last": 1 \}) & SELECT Name, Last
 	FROM scientists
-	WHERE Theory = "Particle Physics"
+	WHERE Theory = "Relativity"
 	AND Last = "Einstein" \\ 
 	\hline 
 	Read: OR & db.scientists.find(
-	\{\$or : [\{ "Last" : "Newton" \},	\{"Last": "Einstein" \}]\}) & SELECT Name, Last
+	\{\$or : [\{ "Last" : "Newton" \},	\{"Last": "Einstein" \}]\}) & SELECT *
 	FROM scientists
 	WHERE Last = "Newton"
 	OR Last = "Einstein" \\ 
 	\hline 
-	Read: Comparison & db.scientists.find(\{ "Publications": \{\$gte: 100\}\}) & SELECT Name, Last
+	Read: Comparison & db.scientists.find(\{"Publications": \{\$gte: 100\}\}) & SELECT *
 	FROM scientists
-	WHERE Publications >= 100 \\ 
+	WHERE Publications $>$= 100 \\ 
 	\hline 
 \end{tabular}
 \end{table}
@@ -2522,7 +2953,7 @@ These low level queries further support heterogeneity, i.e. they still work if w
 \centering
 \begin{tabular}{|p{40mm}|p{135mm}|}
 	\hline 
-	Desc & Low level query \\ 
+	\textbf{Desc} & \textbf{Low level query} \\ 
 	\hline 
 	Read: nestedness (objects) & db.scientists.find(\{"Name.First": "Albert"\}) \\ 
 	\hline 
@@ -2538,10 +2969,12 @@ These low level queries further support heterogeneity, i.e. they still work if w
 	\hline 
 	Duplicates & db.scientists.distinct("name") \\ 
 	\hline 
+	Access array element & db.scientists.find(\{"Theories.0": "Special relativity"\}) \\
+	\hline
 \end{tabular} 
 \end{table}
 
-Possible confusion: \texttt{db.scientists.find(\{"Name.First": "Albert"\})} finds all documents where the "First" field of the "Name" object is "Albert". \texttt{db.scientists.find(\{"Name": \{"First": "Albert"\}\})} however searches for the \textit{exact} object "Name" of from \texttt{\{"First": "Albert"\}}.
+Possible confusion: \texttt{db.scientists.find(\{"Name.First": "Albert"\})} finds all documents where the "First" field of the "Name" object is "Albert". \texttt{db.scientists.find(\{"Name": \{"First": "Albert"\}\})} however searches for the \textit{exact} object "Name" of form \texttt{\{"First": "Albert"\}}.
 
 Note on \textit{Read: nestedness (arrays)}: If we have an array, just searching for \texttt{\{"Theories": "Special relativity"\}} works, this will check if "Special relativity" is in the array "Theories".
 
@@ -2562,9 +2995,9 @@ There also exist aggregation and pipelines (like in Spark). But there is an easi
 \centering
 \begin{tabular}{|c|c|}
 	\hline 
-	Desc & Low level query \\ 
+	\textbf{Desc} & \textbf{Low level query} \\ 
 	\hline 
-	Insert & db.flights.insertOne(\{"Name": "Einstein", "Theory": "Relativity"\}) \\ 
+	Insert & db.scientists.insertOne(\{"Name": "Einstein", "Theory": "Relativity"\}) \\ 
 	\hline 
 	Update & db.scientists.updateMany(\{"Name": "Einstein"\},
 	{ \$set: {"Century": "20"}}) \\ 
@@ -2662,7 +3095,7 @@ Querying without an index requires scanning through the entire collection in mem
 \textbf{Index (hash):} db.scientists.createIndex(\{"Name.Last": "hash"\})\\
 \textbf{Query:} db.scientists.find(\{"Name.Last": "Einstein"\}) - very fast.\\
 
-\textbf{Index (hash):} db.scientists.createIndex(\{"Name.Profession": "hash"\})\\
+\textbf{Index (hash):} db.scientists.createIndex(\{"Profession": "hash"\})\\
 \textbf{Query:} db.scientists.find(\{"Profession": "Physicist", "Theories": "Relativity"\}) - very fast, collection can be prefiltered on "Profession" (using indices) and then postfiltered in memory on "Theories".\\
 
 \textbf{Index (compound (only B+-tree!)):} db.scientists.createIndex(\{"Birth": 1, "Death" : 1\})\\
@@ -2671,24 +3104,45 @@ Querying without an index requires scanning through the entire collection in mem
 \textbf{Index (compound (only B+-tree!)):} db.scientists.createIndex(\{"Birth": 1, "Death" : -1\})\\
 \textbf{Query:} db.scientists.find(\{"Birth": 1887\}) - faster as well, even though it only looks at "Birth" not "Death".\\
 
+\newpage
+
 \textbf{Index (compound (only B+-tree!)):} db.scientists.createIndex(\{"Birth": 1, "Death" : -1\})\\
-\textbf{Query:} db.scientists.find(\{"\$gte" : 1980\}) - very fast.\\
+\textbf{Query:} db.scientists.find(\{"Birth": \{"\$gte" : 1980\}\}) - very fast.\\
 
 \textbf{Index (compound (only B+-tree!)):} db.scientists.createIndex(\{"Birth": 1, "Death" : -1\})\\
 \textbf{Query:} db.scientists.find({"Death" : 1887) - \textit{not fast} because the index first sorts on "Birth", then on "Death". The query only checks the second field.\\
 
+\subsection{MongoDB: commonly used operators and commands}
+
+\textbf{Operators:}
+
+\begin{compactitem}
+\item \texttt{\$elemMatch}: matches documents that contain an array field with at least one element that matches all the specified query criteria.
+\item \texttt{\$all}: selects the documents where the value of a field is an array that contains all the specified elements.
+\end{compactitem}
+
+\subsection{Exercise}
+
+What are advantages of document stores over relational databases?  Flexibility. Not every record needs to store the same properties. New properties can be added on the fly (Flexible schema).
+
+Can the data in document stores be normalized? Yes. References can be used for data normalization.
+
+How does denormalization affect performance? All data for an object is stored in a single record. In general, it provides better performance for read operations (since expensive joins can be omitted), as well as the ability to request and retrieve related data in a single database operation. In addition, embedded
+data models make it possible to update related data in a single atomic write operation.
+
+\newpage
 
 \section{Querying trees}
 
-In document stores, we have large collections of small trees and we can query with nested and heterogeneous data. We now want a querying layer above the data store (document store) in the stack.
+In document stores, we have large collections of small trees and we can query with nested and heterogeneous data. We now want a querying layer above the data store (document store) in the stack.\\
 
-\textbf{Data independence:} We want a logical data model with a query language independent of the physical implementation. The physical layer can be changed while the logical layer stays. For ecample, Spark SQL allows to query Spark using an SQL-like language, while on the physical level, Spark translates the SQL queries to transformations and actions. Due to data independence, this translation needs to be done only once, not everytime by the user.\\
+\textbf{Data independence:} We want a logical data model with a query language independent of the physical implementation. The physical layer can be changed while the logical layer stays. For example, Spark SQL allows to query Spark using an SQL-like language, while on the physical level, Spark translates the SQL queries to transformations and actions. Due to data independence, this translation needs to be done only once, not everytime by the user.\\
 
 However, we've seen that nested and heterogeneous data is still a problem for SQL. Using DataFrames, Spark SQL provides possible ways to deal with nestedness (explode arrays) or heterogeneity (convert everything to string) but the approach is suboptimal. We want a language that is similar to SQL but handles nestedness and heterogeneity natively $\rightarrow$ \textbf{JSONiq} (others exist).\\
 
 Declarative language: declare \textit{what} you want (e.g. I want a cake) - vs. imperative language: declare how you want it (e.g. put sugar, flour, etc. in and bake for 30min).
 
-Function language: everything transforms (functions) several instances into an instance.
+Functional language: everything transforms (functions) several instances into an instance.
 
 Set-based languages: always returns collections (e.g. rows).\\
 
@@ -2697,9 +3151,9 @@ Set-based languages: always returns collections (e.g. rows).\\
 \begin{table}[hb!]
 \begin{tabular}{|c|c|c|}
 	\hline 
-	& XML & JSON \\ 
+	& \textbf{XML} & \textbf{JSON} \\ 
 	\hline 
-	Navigation & Navigation & JSONPath,
+	Navigation & XPath & JSONPath,
 	JSONSelect \\ 
 	\hline 
 	Transform & XSLT & JSONT \\ 
@@ -2745,22 +3199,17 @@ JSONiq is a functional language that always operates on sequences of items ($\ci
 \begin{table}[hb!]
 \begin{tabular}{|p{100mm}|p{80mm}|}
 	\hline 
-	Query & Description \\ 
+	\textbf{Query} & \textbf{Description} \\ 
 	\hline 
-	json
-	-doc("myfile.json") & Open a JSON doc and returns an object (i.e. an item), which is a sequence of one item. \\ 
+	json-doc("myfile.json") & Open a JSON doc and returns an object (i.e. an item), which is a sequence of one item. \\ 
 	\hline 
-	json
-	-doc("myfile.json").countries & Navigate the object using ".", returns array = item = seq. of items \\ 
+	json-doc("myfile.json").countries & Navigate the object using ".", returns array = item = seq. of items \\ 
 	\hline 
-	json
-	-doc("myfile.json").countries[] & Unbox an array with []. Returns a sequence of all array items. \\ 
+	json-doc("myfile.json").countries[] & Unbox an array with []. Returns a sequence of all array items. \\ 
 	\hline 
-	json
-	-doc("myfile.json").countries[].name & Returns sequence of country name strings \\ 
+	json-doc("myfile.json").countries[].name & Returns sequence of country name strings \\ 
 	\hline 
-	json
-	-doc("myfile.json").countries[].code & Returns sequence of country code strings \\ 
+	json-doc("myfile.json").countries[].code & Returns sequence of country code strings \\ 
 	\hline 
 	json-doc("myfile.json").countries[][\$\$.code = "CH"] & \$\$: special variable for filtering. \$\$.code: look at code field for every object and compare it (= SELECTION) \\ 
 	\hline 
@@ -2791,7 +3240,7 @@ JSONiq is a functional language that always operates on sequences of items ($\ci
 
 \subsection{JSONiq: Basic Operations}
 
-\textbf{Arithmetics:} All operators have the form of \textit{seq. of items $\circ$ seq. of items}: 1 + 1, 42 - 1-, 6 * 7, 42.3 div 7.2 (division), 42 idiv 9 (integer division), 42 mod 9 (modulo). Type conversion is automatically taken care of. Don't use /. \% for div and mod!
+\textbf{Arithmetics:} All operators have the form of \textit{seq. of items $\circ$ seq. of items}: 1 + 1, 42 - 1, 6 * 7, 42.3 div 7.2 (division), 42 idiv 9 (integer division), 42 mod 9 (modulo). Type conversion is automatically taken care of. Don't use /. \% for div and mod!
 
 \textbf{Empty sequence:} () + 1 = ()
 
@@ -2801,7 +3250,7 @@ JSONiq is a functional language that always operates on sequences of items ($\ci
 
 \textbf{Strings:}
 \begin{compactitem}
-\item concatenation: "foo" | | "bar", concat("foo", "bar"), string-join(("foo", "bar", "foobar"), "-")
+\item concatenation: "foo" $||$ "bar", concat("foo", "bar"), string-join(("foo", "bar", "foobar"), "-")
 \item sub-string: substr("foobar", 4, 3)
 \item length: string-length("foobar")
 \end{compactitem}
@@ -2821,7 +3270,7 @@ If you want to e.g. concat "foo" and 2, you need to first cast 2 to string. JSON
 \textbf{General Comparison}
 \begin{compactitem}
 \item Existential quantification (tells if at least one item in the sequence is equal to the righthand item): (1,2,3,4,5) = 1 (=true) ((1,2,3,4,5) eq 1 would throw an error)
-\item General comparison: (1, 2, 3, 4, 5) < (2, 3, 4, 5, 6) (=true, at least one item in the left sequence is smaller than at least one item in the right sequence: 1<3), (1, 2, 3, 4, 5) >= (6, 7, 8, 9, 10) (=false, no item in the left sequence is greater or equal at least one item in the right sequence), (1, 2, 3, 4, 5) >= ("foo", 7, 8, 9, 10) (ERROR)
+\item General comparison: (1, 2, 3, 4, 5) $<$ (2, 3, 4, 5, 6) (=true, at least one item in the left sequence is smaller than at least one item in the right sequence: 1$<$3), (1, 2, 3, 4, 5) $>$= (6, 7, 8, 9, 10) (=false, no item in the left sequence is greater or equal at least one item in the right sequence), (1, 2, 3, 4, 5) $>$= ("foo", 7, 8, 9, 10) (ERROR)
 \end{compactitem}
 
 This structure is driven by practical use cases, which allows us to quickly check if a large collection contains a match.
@@ -2843,7 +3292,7 @@ This structure is driven by practical use cases, which allows us to quickly chec
 \textbf{Rule of thumb:} Any Expression can be the operand of any other expression.
 
 \begin{compactitem}
-\item (1 + ((\{"b":[{"a": \textbf{2+2\}}]}).b[].a)) to 50
+\item (1 + ((\{"b":[\{"a": \textbf{2+2}\}]\}).b[].a)) to 50
 \item (1 + ((\{"b":[\{"a": 4\}]\})\textbf{.b[]}.a)) to 50 (access field b and get value (unboxed array))
 \item (1 + ([\{"a": 4\}][].a)) to 50
 \end{compactitem}
@@ -2903,11 +3352,11 @@ let $x := 2
 return $x * $x
 \end{lstlisting}
 
-\textbf{For clauses:} \$x is first bound to 1, then to 2, then to 4, ... Return is sequence of integers (left), sequence of objects (right), ...
+\textbf{For clauses:} \$x is first bound to 1, then to 2, then to 4, ... The return is a sequence of objects. 
 
 \begin{lstlisting}
-for $x in (1, 2, 4)		for $x in 1 to 10
-return $x * $x			return {"number": $x,"square": $x * $x}
+for $x in (1, 2, 4)
+return {"number": $x,"square": $x * $x}
 \end{lstlisting}
 
 \textbf{Where clauses:} The where clause is applied to each item in the for clause 
@@ -3006,10 +3455,19 @@ Complex types: by kind e.g. object\\
 \textbf{Type usage:} 
 
 You can (but don't have to) specify a type for a variable. For example:
+
+\begin{minipage}{.45\textwidth}
 \begin{lstlisting}
-let $x as integer := 2		let $x as object := { "foo" : 1, "bar" : 2 }
-return $x + $x			return $x.foo + $x.bar
+let $x as integer := 2
+return $x + $x
 \end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}{.45\textwidth}
+\begin{lstlisting}
+let $x as object := { "foo" : 1, "bar" : 2 }
+return $x.foo + $x.bar
+\end{lstlisting}
+\end{minipage}
 
 You can check if a type is matched in a return (throws an error if type is not matched). For example:
 \begin{lstlisting}
@@ -3018,10 +3476,20 @@ return $x + $x treat as integer
 \end{lstlisting}
 
 You can change the type of a return:
+
+\begin{minipage}{.45\textwidth}
 \begin{lstlisting}
-for $x as array in ([1], [2])		for $x as array in ([1], [2])
-return $x + $x cast as double		return double($x + $x)
+for $x as array in ([1], [2])
+return $x + $x cast as double
 \end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}{.45\textwidth}
+\begin{lstlisting}
+for $x as array in ([1], [2])
+return double($x + $x)
+\end{lstlisting}
+\end{minipage}
+
 
 You can check if an item is of instance or can be casted to an instance:
 \begin{lstlisting}
@@ -3056,11 +3524,11 @@ A query needs to be compiled (=text of code needs to be translated into an AST (
 	\end{subfigure}%
 	\begin{subfigure}[t]{.3\textwidth}
 		\centering
-		\includegraphics[width=0.6\linewidth]{figures/querytrees_processing_2}
+		\includegraphics[width=0.8\linewidth]{figures/querytrees_processing_2}
 	\end{subfigure}
 	\begin{subfigure}[t]{.3\textwidth}
 		\centering
-		\includegraphics[width=0.6\linewidth]{figures/querytrees_processing_3}
+		\includegraphics[width=0.8\linewidth]{figures/querytrees_processing_3}
 	\end{subfigure}
 	\begin{subfigure}[t]{.3\textwidth}
 		\centering
@@ -3074,14 +3542,118 @@ A query needs to be compiled (=text of code needs to be translated into an AST (
 	\vspace*{-6mm}
 \end{figure}
 
+\newpage
+
 The actual execution can be of two types:
 
 \begin{compactitem}
-\item Materialized execution: The entire sequence is computed synchronously before returning. For example, in a for loop, every single loop is executed and each tuple is produce. Only once all tuples are produce is the return applied. Imagine a for loop over $10^9$ objects.. This takes lots of memory and is very inefficient. Streaming is more efficient.
-\item Streamed execution: Directly return after materializing one single object and then forget it. For example, in a for loop produce one tuple and directly return. In order to make this sequential process even faster, one can use parallelization. We can split the data into shards and do the execution in parallel. This parallel execution strategy is orthogonal to the runtime iterator tree (is just a query plan). Rumble is constantly switching between local and parallelized. \textbf{Note:} this is not always possible! Selection, projection is ok, but group by, order by is not possible with streaming. In some cases, we have no choice but to use materialized execution.
+\item Materialized execution: The entire sequence is computed synchronously before returning. For example, in a for loop, every single loop is executed and each tuple is produced. Only once all tuples are produced is the return applied. Imagine a for loop over $10^9$ objects.. This takes lots of memory and is very inefficient. Streaming is more efficient.
+\item Streamed execution: Directly return after materializing one single object and then forget it. For example, in a for loop produce one tuple and directly return. In order to make this sequential process even faster, one can use parallelization. We can split the data into shards and do the execution in parallel. This parallel execution strategy is orthogonal to the runtime iterator tree (is just a query plan). Rumble is constantly switching between local and parallelized. \textbf{Note:} this is not always possible! Selection, projection is ok, but group by, order by is not possible with streaming. In some cases, we have no choice but to use materialized execution.\\
 \end{compactitem}
 
-\section{ Performance at large scales}
+\subsection{JSONiq language}
+
+In the following section, we describe some important queries, function, etc. of the JSONiq language.\\
+
+\textbf{Sequences:}
+
+JSONiq supports sequences of values. You can build a sequence using commas: \texttt{ (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)}, \texttt{(1 to 100)}. Unlike arrays, sequences are flat. The sequence (3) is identical to the integer 3, and (1, (2, 3)) is identical to (1, 2, 3).
+
+\textbf{Variables:}
+
+You can bind a sequence of values to a (dollar-prefixed) variable, like so: \texttt{let \$x := ("Kirk", "Picard", "Sisko") return string-join(\$x, " and ")} returns "Kirk and Picard and Sisko".
+
+\textbf{Iteration:}
+
+In a way very similar to let, you can iterate over a sequence of values with the "for" keyword. Instead of binding the entire sequence of the variable, it will bind each value of the sequence in turn to this variable.
+
+\texttt{for \$i in 1 to 10 return \$i * 2}
+
+\textbf{Arrays:}
+
+The [[]] operator retrieves the entry at the given position: \texttt{let \$friends := [ "Jim", "Mary", "Jennifer"] return \$friends[[1+1]]} returns "Mary".
+
+The [] operator returns all elements in an array, as a sequence.
+
+\textbf{Access external data:}
+
+Rumble reads input through json-file(), parquet-file(), json-doc(), text-file(), csv-file() as well as structured-json-file().
+
+\textbf{Sequence functions:}
+
+\begin{compactitem}
+\item Distinct values: \texttt{distinct-values((1, 1, 4, 3, 1, 1, "foo", 4, "foo", true, 3, 1, true, 5, 3, 1, 1))}. returns (1, 4, 3, "foo", true, 5). This is pushed down to Spark and works on big sequences.
+\item Empty: \texttt{empty(1 to 10)} returns a boolean indicating whether the input sequence is empty or not.
+\end{compactitem}
+
+\newpage
+
+\textbf{Aggregation functions:}
+
+\begin{compactitem}
+\item Sum: \texttt{let \$x := (1, 2, 3, 4) return sum(\$x)} returns 10.
+\item Count: \texttt{let \$x := (1, 2, 3, 4) return count(\$x)} returns 4. Count calls are pushed down to Spark, so this works on billions of items as well.
+\item Min, max, avg: \texttt{min(), max(), avg()}
+\end{compactitem}
+
+\textbf{String functions:}
+
+\begin{compactitem}
+\item Concatenation: \texttt{concat("Hello ", "Captain ", "Kirk")}
+\item Substring: \text{substring("Mister Spock", 8, 5)} gives "Spock"
+\item Contains: \texttt{contains("foobar", "ob")}
+\item RegEx matching: \texttt{matches("foobar", "\string^fo+.*")}. Uses regex semantics of Java's Pattern class.
+\item Starts with: \texttt{starts-with("foobar", "foo")} returns true.
+\item String length: \texttt{string-length("foo")} returns 3.
+\end{compactitem}
+
+
+\textbf{Object functions:}
+
+\begin{compactitem}
+\item Keys: \texttt{keys({"foo" : "bar", "bar" : "foobar"})} returns ("foo", "bar"). Also works on an input sequence, eliminating duplicates.
+\item Values: \texttt{values({"foo" : "bar", "bar" : "foobar"})} returns ("bar", "foobar"). Also works on an input sequence, in a distributive way.
+\end{compactitem}
+
+\textbf{Array functions:}
+
+\begin{compactitem}
+\item Size: \texttt{size([1 to 100])} returns 100. Also works if the empty sequence is supplied, in which case it returns the empty sequence.
+\item Members: \texttt{members([1 to 100])} returns the members as an array, but not recursively, i.e., nested arrays are not unboxed.
+\item Flatten: \texttt{flatten(([1, 2], [[3, 4], [5, 6]], [7, [8, 9]]))} unboxes arrays recursively, stopping the recursion when any other item is reached (object or atomic).
+\end{compactitem}\
+
+\textbf{Group clauses:}
+
+Grouping is also supported, like in SQL. For each incoming tuple, the expression in the group clause is evaluated to an atomic (a grouping key). The incoming tuples are then grouped according to the key they are associated with. For each group, a tuple is output, with a binding from the grouping variable to the key of the group.
+
+\begin{lstlisting}[basicstyle=\small]
+for $x in collection("captains")
+group by $century := $x.century
+return { "century" : $century, "count" : count($x) }
+\end{lstlisting}
+
+has result \texttt{\{"century":21,"count":1\}, \{"century":22,"count":1\}, \{"century":23,"count":1\}, \{"century":24,"count":4\}}.\\
+
+As for the other (non-grouping) variables, their values within one group are all concatenated, keeping the same name. Aggregations can thus be done on these variables. I.e. in the above example, the iteration variable \$x refers to the grouped set of variables, thus any aggregation such as counting can be done directly on \$x.
+
+Other example: Sort the languages by increasing overall percentage of correct guesses.
+
+\begin{lstlisting}[basicstyle=\small]
+for $i in json-file("/confusion.json", 10)
+  group by $target := $i.target
+  let $correct :=
+  for $j in $i
+    where $j.target eq $j.guess
+    return $j
+  let $percentage := count($correct) div count($i)
+  order by $percentage ascending
+  return $target
+\end{lstlisting}
+
+\newpage
+
+\section{Performance at large scales}
 
 \subsection{Speed up}
 
@@ -3118,7 +3690,7 @@ $Speedup = \frac{Latency_{old}}{Latency_{new}}$\\
 
 \textbf{Amdahl's law:} When you fix a bottleneck, you only fix one part of the system. The rest of the system that doesn't depend on this will not improve. $Speedup = \frac{1}{1-p+p/s}$\\
 
-\textbf{Gustafson's law:} Gustofson assumes that once we have a speedup, people will just come with more data (more realistic). What stays constant is the computing power. $Speedup = 1-p+sp$\\
+\textbf{Gustafson's law:} Gustofson assumes that once we have a speedup, people will just come with more data (more realistic). What stays constant is the computing power. $Speedup = 1-p+ps$\\
 
 with $p$ how much of the execution is parallelizable and $s$ the speedup on the parallelizable part.\\
 
@@ -3155,7 +3727,7 @@ Example with Spark: 8 nodes, each with 16 cores and 128GB of memory. How many re
 
 \begin{compactenum}
 \item 1 container per machine (keep 1 core for application master)
-\item 1 container per core (16 conrainers per machine)
+\item 1 container per core (16 containers per machine)
 \item Middle ground: 3 containers per machine (5 cores, 30GB memory). This is usually a sweet spot.
 \end{compactenum}
 

@@ -22,5 +22,5 @@ The main focus of my studies is secure and reliable systems and machine learning
 | Probabilistic Artificial Intelligence                | AS20     | [:globe_with_meridians:](https://las.inf.ethz.ch/pai-f20)                                            | :heavy_check_mark:       |
 | Program Analysis for System Security and Reliability | SS20     | [:globe_with_meridians:](https://eth-sri.github.io/teaching/pass2020)                                | :heavy_multiplication_x: |
 | Reliable and Interpretable Artificial Intelligence   | AS20     | [:globe_with_meridians:](https://www.sri.inf.ethz.ch/teaching/riai2020)                              | :heavy_check_mark:       |
-| System Security                                      |          | [:globe_with_meridians:](https://syssec.ethz.ch/education/system_security/system_security_as20.html) | :heavy_check_mark:       |
+| System Security                                      | AS20     | [:globe_with_meridians:](https://syssec.ethz.ch/education/system_security/system_security_as20.html) | :heavy_check_mark:       |
 

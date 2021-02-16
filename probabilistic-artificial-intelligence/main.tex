@@ -24,8 +24,7 @@
 \usepackage{anyfontsize}
 \usepackage{nicefrac}
 \usepackage{scalerel}
-\usepackage{scalerel}
-\usepackage{scalerel}
+\usepackage{datatool}
 
 
 \let\bar\overline
@@ -75,6 +74,21 @@ Yannick Merkli,~page~\thepage~of~2
                                 {\sffamily\bfseries}
 }
 
+\newcommand{\sortitem}[1]{%
+	\DTLnewrow{list}% Create a new entry
+	\DTLnewdbentry{list}{description}{#1}% Add entry as description
+}
+\newenvironment{sortedlist}{%
+	\DTLifdbexists{list}{\DTLcleardb{list}}{\DTLnewdb{list}}% Create new/discard old list
+}{%
+	\DTLsort{description}{list}% Sort list
+	\setdefaultleftmargin{1em}{2em}{}{}{}{}
+	\begin{compactitem}%
+		\DTLforeach*{list}{\theDesc=description}{%
+			\item \theDesc}% Print each item
+	\end{compactitem}%
+}
+
 \newcommand*{\rsection}{%
 	\@startsection{section}%
 	{1}% level
@@ -106,11 +120,11 @@ Yannick Merkli,~page~\thepage~of~2
 
 
 \begin{document}
-	
-\section*{Disclaimer}
 
 \small
 \begin{multicols*}{4}
+	
+\section*{Disclaimer}
 	
 This document is an exam summary that follows the slides of the \textit{Probabilistic Artificial Intelligence} lecture  at ETH Zurich. The contribution to this is a short summary that includes the most important concepts, formulas and algorithms. This summary was created during the fall semester 2020. Due to updates to the syllabus content, some material may no longer be relevant for future versions of the lecture. This work is published as CC BY-NC-SA.
 
@@ -119,6 +133,56 @@ This document is an exam summary that follows the slides of the \textit{Probabil
 \end{center}
 
 I do not guarantee correctness or completeness, nor is this document endorsed by the lecturers. Feel free to point out any erratas. For the full \LaTeX \ source code, consider \texttt{\href{https://github.com/ymerkli/eth-summaries}{github.com/ymerkli/eth-summaries}}.
+
+\vspace*{140mm}
+
+\columnbreak
+
+\section*{Terms and Acronyms}
+
+Consult the following list of acronyms in case any of them are unclear:\\
+
+\begin{sortedlist}
+	\sortitem{CoV: Change of Variable}
+	\sortitem{CDF: Cumulative Distribution Function}
+	\sortitem{PDF: Probability Density Function}
+	\sortitem{KL: Kullback–Leibler divergence}
+	\sortitem{BLinR: Bayesian Linear Regression}
+	\sortitem{BLogR: Bayesian Logistic Regression}
+	\sortitem{RV: Random Variable}
+	\sortitem{PSD: Positive Semi-Definite}
+	\sortitem{GP: Gaussian Process}
+	\sortitem{VI: Variational Inference/ Value Iteration}
+	\sortitem{FITC:  Fully Independent Training Conditional}
+	\sortitem{MC: Markov Chain}
+	\sortitem{MCMC: Markov Chain Monte Carlo}
+	\sortitem{DBE: Detailed Balance Equation}
+	\sortitem{GS: Gibbs Sampling}
+	\sortitem{BNN: Bayesian Neural Network}
+	\sortitem{MAP: Maximum A Posteriori}
+	\sortitem{SGD: Stochastic Gradient Descent}
+	\sortitem{BbB: Bayes by Backprop}
+	\sortitem{SGLD: Stochastic gradient Langevin dynamics}
+	\sortitem{SG-HMC: Stochastic Gradient Hamiltonian Monte Carlo}
+	\sortitem{BALD: Bayesian Active Learning by Disagreement}
+	\sortitem{GP-UCB: Gaussian Process Upper Confidence Bound}
+	\sortitem{EI: Expected Improvement}
+	\sortitem{MDP: Markov Decision Process}
+	\sortitem{PI: Policy Iteration}
+	\sortitem{POMDP: Partially observable Markov decision process}
+	\sortitem{HMM: Hidden Markov Model}
+	\sortitem{TD-Learning: Temporal Difference Learning}
+	\sortitem{FA: Function Approximation}
+	\sortitem{DDPG: Deep Deterministic Policy Gradient}
+	\sortitem{MLE: Maximum Likelihood Estimation}
+	\sortitem{RM: Robbins Monro}
+	\sortitem{MPC: Model Predictive Control}
+	\sortitem{PETS: Probabilistic Ensembles with Trajectory Sampling}
+	\sortitem{BE: Bellman Equation}
+\end{sortedlist}
+
+
+
 
 \newpage
 

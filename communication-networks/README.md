@@ -1,5 +1,13 @@
 # Communication Networks
 
+Semester: Spring semester 2018
+
+Lecturer: Prof. Laurent Vanbever
+
+Website: https://comm-net.ethz.ch/
+
+## Summary
+
 This course covered the fundamental concepts of communication networks and internet-based communications. Specifically:
 
 * how the Internet works;

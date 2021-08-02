@@ -125,7 +125,7 @@ $a < b$: \mhl{$l(x) = \frac{f(b) - f(a)}{b - a} \cdot x + f(a) - \frac{f(b) - f(
 
 \subsection{Abstract Interpretation}
 
-Symbolic shape $z$ semantically represents a set of concrete values $x = \gamma(z)$. \mhl{Concretization $\gamma$}: defines the concrete values an abstract element $z$ represents. Concrete transformer $F(\cdot)$ ($F(x)$ generally uncomputable), abstract transformer $F^\#(\cdot)$, $F^\#(z)$ applies abstract transformer to $z$. Soundness: $F^\#$ needs to over-approximate $F$: \hl{$\gamma(F^\#(x)) \supseteq F(x) = F(\gamma(z))$}
+Symbolic shape $z$ semantically represents a set of concrete values $x = \gamma(z)$. \mhl{Concretization $\gamma$}: defines the concrete values an abstract element $z$ represents. Concrete transformer $F(\cdot)$ ($F(x)$ generally uncomputable), abstract transformer $F^\#(\cdot)$, $F^\#(z)$ applies abstract transformer to $z$. Soundness: $F^\#$ needs to over-approximate $F$: \hl{$\gamma(F^\#(z)) \supseteq F(x) = F(\gamma(z))$}
 
 $F^\#$ soundness: $\forall z: F(\gamma(z)) \subseteq \gamma(F^\#(z))$
 
